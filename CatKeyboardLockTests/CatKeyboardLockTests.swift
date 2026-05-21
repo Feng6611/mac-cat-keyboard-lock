@@ -17,13 +17,19 @@ final class CatKeyboardLockTests: XCTestCase {
             actions: noOpActions
         )
 
-        XCTAssertEqual(items.compactMap(\.title), [
+        var expectedTitles = [
             "Ready to lock",
             "Lock Keyboard",
             "Settings...",
             "Upgrade to Pro...",
             "Quit Cat Keyboard Lock"
-        ])
+        ]
+#if DEBUG
+        expectedTitles.insert("Test Paid Access", at: expectedTitles.count - 1)
+        expectedTitles.insert("Clear Test Override", at: expectedTitles.count - 1)
+#endif
+
+        XCTAssertEqual(items.compactMap(\.title), expectedTitles)
         XCTAssertEqual(menuItem(titled: "Ready to lock", in: items)?.isEnabled, false)
         XCTAssertEqual(menuItem(titled: "Lock Keyboard", in: items)?.isEnabled, true)
         XCTAssertEqual(
@@ -110,6 +116,44 @@ final class CatKeyboardLockTests: XCTestCase {
         XCTAssertNil(menuItem(titled: "Upgrade to Lock...", in: lockedItems))
     }
 
+#if DEBUG
+    func testDebugPaidAccessToggleAppearsInMenu() {
+        var didToggle = false
+        var didClear = false
+        let items = CatKeyboardLockMenuModel.items(
+            config: .default,
+            lockState: .unlocked,
+            lockSettings: LockSettings(defaults: isolatedDefaults()),
+            entitlement: CatKeyboardLockEntitlementSnapshot(status: .pro(plan: .supporterLifetime, originalPurchaseDate: nil)),
+            actions: CatKeyboardLockMenuActions(
+                lock: {},
+                unlock: {},
+                openSettings: {},
+                openPaywall: {},
+                toggleDebugProAccess: { didToggle = true },
+                clearDebugProAccessOverride: { didClear = true },
+                quit: {}
+            )
+        )
+
+        guard case .toggle(_, true, true, let toggleAction) = menuItem(titled: "Test Paid Access", in: items) else {
+            XCTFail("Expected a checked debug Pro toggle.")
+            return
+        }
+
+        toggleAction()
+        XCTAssertTrue(didToggle)
+
+        guard case .action(_, _, true, let clearAction) = menuItem(titled: "Clear Test Override", in: items) else {
+            XCTFail("Expected a clear override action.")
+            return
+        }
+
+        clearAction()
+        XCTAssertTrue(didClear)
+    }
+#endif
+
     func testDefaultPolicyOnlyLocksKeyboardEvents() {
         let policy = InputLockPolicy(
             lockKeyboard: true,
@@ -167,6 +211,7 @@ final class CatKeyboardLockTests: XCTestCase {
         let reloaded = LockSettings(defaults: defaults)
         XCTAssertTrue(reloaded.triggerCornerEnabled)
         XCTAssertEqual(reloaded.triggerCorner, .bottomLeft)
+        XCTAssertEqual(reloaded.triggerCornerConfiguration.edgeSize, 40)
     }
 
     func testTriggerCornerGeometryHandlesMultipleScreens() {
@@ -610,6 +655,47 @@ final class CatKeyboardLockTests: XCTestCase {
         XCTAssertEqual(defaults.object(forKey: CatKeyboardLockProDefaults.Keys.trialStartedAt) as? Date, originalStart)
         XCTAssertEqual(manager.status, .expired)
     }
+
+#if DEBUG
+    func testDebugProAccessOverrideForcesPaidAndUnpaid() {
+        let defaults = isolatedDefaults()
+        let now = Date(timeIntervalSince1970: 1_700_000_000)
+        defaults.set(now, forKey: CatKeyboardLockProDefaults.Keys.trialStartedAt)
+        let expectedTrial = CatKeyboardLockProStatus.trial(
+            daysRemaining: 2,
+            expiresAt: now.addingTimeInterval(CatKeyboardLockProStatusManager.Constants.trialDuration)
+        )
+        let manager = CatKeyboardLockProStatusManager(
+            defaults: defaults,
+            commerceClient: MockCommerceClient(),
+            now: { now }
+        )
+
+        XCTAssertNil(manager.debugProAccessOverride)
+        XCTAssertEqual(manager.status, expectedTrial)
+
+        manager.setDebugProAccessOverride(true)
+
+        XCTAssertEqual(manager.debugProAccessOverride, true)
+        XCTAssertEqual(manager.debugProAccessOverrideDisplayName, "Paid")
+        XCTAssertEqual(manager.status, .pro(plan: .supporterLifetime, originalPurchaseDate: nil))
+        XCTAssertTrue(manager.hasCompletedOnboarding)
+
+        manager.setDebugProAccessOverride(false)
+
+        XCTAssertEqual(manager.debugProAccessOverride, false)
+        XCTAssertEqual(manager.debugProAccessOverrideDisplayName, "Unpaid")
+        XCTAssertEqual(manager.status, .expired)
+        XCTAssertFalse(manager.shouldShowOnboarding)
+
+        manager.clearDebugProAccessOverride()
+
+        XCTAssertNil(manager.debugProAccessOverride)
+        XCTAssertEqual(manager.debugProAccessOverrideDisplayName, "Off")
+        XCTAssertEqual(manager.status, expectedTrial)
+        XCTAssertNil(defaults.object(forKey: CatKeyboardLockProDefaults.Keys.debugProAccessOverride))
+    }
+#endif
 
     func testPurchasePlansUnlockPro() async throws {
         let now = Date(timeIntervalSince1970: 1_700_000_000)

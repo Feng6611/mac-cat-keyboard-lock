@@ -7,7 +7,27 @@ struct CatKeyboardLockMenuActions {
     let unlock: () -> Void
     let openSettings: () -> Void
     let openPaywall: () -> Void
+    let toggleDebugProAccess: () -> Void
+    let clearDebugProAccessOverride: () -> Void
     let quit: () -> Void
+
+    init(
+        lock: @escaping () -> Void,
+        unlock: @escaping () -> Void,
+        openSettings: @escaping () -> Void,
+        openPaywall: @escaping () -> Void,
+        toggleDebugProAccess: @escaping () -> Void = {},
+        clearDebugProAccessOverride: @escaping () -> Void = {},
+        quit: @escaping () -> Void
+    ) {
+        self.lock = lock
+        self.unlock = unlock
+        self.openSettings = openSettings
+        self.openPaywall = openPaywall
+        self.toggleDebugProAccess = toggleDebugProAccess
+        self.clearDebugProAccessOverride = clearDebugProAccessOverride
+        self.quit = quit
+    }
 }
 
 enum CatKeyboardLockMenuModel {
@@ -48,6 +68,22 @@ enum CatKeyboardLockMenuModel {
                 action: actions.openPaywall
             ))
         }
+
+#if DEBUG
+        items.append(.separator)
+        items.append(.toggle(
+            title: "Test Paid Access",
+            isOn: entitlement.isPro,
+            isEnabled: true,
+            action: actions.toggleDebugProAccess
+        ))
+
+        items.append(.action(
+            title: "Clear Test Override",
+            isEnabled: true,
+            action: actions.clearDebugProAccessOverride
+        ))
+#endif
 
         items.append(contentsOf: [
             .separator,

@@ -9,6 +9,7 @@ final class LockSettings: ObservableObject {
     static let defaultOverlayEffectLevel = 4
     static let overlayEffectLevels = [1, 2, 3, 4, 5]
     static let defaultTriggerCorner = KikiTriggerCorner.topRight
+    static let triggerCornerEdgeSize: CGFloat = 40
 
     @Published var lockKeyboard: Bool {
         didSet { defaults.set(lockKeyboard, forKey: Keys.lockKeyboard) }
@@ -69,6 +70,14 @@ final class LockSettings: ObservableObject {
 
     var overlayGlowIntensity: Double {
         Double(overlayEffectLevel) / Double(Self.overlayEffectLevels.count)
+    }
+
+    var triggerCornerConfiguration: KikiTriggerCornerConfiguration {
+        KikiTriggerCornerConfiguration(
+            isEnabled: triggerCornerEnabled,
+            corner: triggerCorner,
+            edgeSize: Self.triggerCornerEdgeSize
+        )
     }
 
     private static func validLockDurationMinutes(_ value: Int?) -> Int {

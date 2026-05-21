@@ -22,6 +22,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
   RevenueCatCommerceKit-backed purchase and restore handling.
 - Added two one-time Pro plan surfaces: Lifetime at `$5.99` and recommended
   Supporter Lifetime at `$10.99`.
+- Added a Debug-only test entry for forcing paid or unpaid Pro access while
+  testing local builds.
+- Set the trigger corner hot zone to 40pt for more reliable edge activation.
 
 ### Changed
 - Reframed the starter paywall/mock entitlement flow during MVP development

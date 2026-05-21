@@ -84,6 +84,10 @@ struct CatKeyboardLockSettingsView: View {
                 }
             }
 
+#if DEBUG
+            debugTestingSection
+#endif
+
             Section {
                 KikiSettingsToggleRow("Keyboard", isOn: $lockSettings.lockKeyboard, systemImage: "keyboard")
                 KikiSettingsToggleRow("Clicks", isOn: $lockSettings.lockMouseClicks)
@@ -126,6 +130,37 @@ struct CatKeyboardLockSettingsView: View {
             .disabled(!proStatusManager.status.isActive)
         }
     }
+
+#if DEBUG
+    private var debugTestingSection: some View {
+        Section {
+            KikiSettingsStatusRow(
+                title: "Test override",
+                value: proStatusManager.debugProAccessOverrideDisplayName,
+                systemImage: "hammer",
+                valueColor: proStatusManager.debugProAccessOverride == nil ? .secondary : .orange
+            )
+
+            KikiSettingsToggleRow("Paid access", isOn: debugProAccessBinding, systemImage: "sparkles")
+
+            Button("Clear Test Override") {
+                proStatusManager.clearDebugProAccessOverride()
+            }
+            .disabled(proStatusManager.debugProAccessOverride == nil)
+        } header: {
+            Text("Developer Testing")
+        } footer: {
+            KikiSettingsHelperText("Debug builds only. Forces the local Pro gate without making or restoring a purchase.")
+        }
+    }
+
+    private var debugProAccessBinding: Binding<Bool> {
+        Binding(
+            get: { proStatusManager.debugProAccessToggleIsOn },
+            set: { proStatusManager.setDebugProAccessOverride($0) }
+        )
+    }
+#endif
 
     private var systemPane: some View {
         KikiSettingsPane {

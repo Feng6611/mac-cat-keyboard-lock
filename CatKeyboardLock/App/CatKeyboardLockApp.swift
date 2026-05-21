@@ -58,10 +58,7 @@ final class CatKeyboardLockAppDelegate: NSObject, NSApplicationDelegate {
                 return .disabled
             }
 
-            return KikiTriggerCornerConfiguration(
-                isEnabled: self.lockSettings.triggerCornerEnabled,
-                corner: self.lockSettings.triggerCorner
-            )
+            return self.lockSettings.triggerCornerConfiguration
         },
         onTrigger: { [weak self] in
             self?.toggleFromTriggerCorner()
@@ -112,6 +109,16 @@ final class CatKeyboardLockAppDelegate: NSObject, NSApplicationDelegate {
                 unlock: { [weak self] in self?.inputLockController.unlock(reason: .manual) },
                 openSettings: { [weak self] in self?.openSettings() },
                 openPaywall: { [weak self] in self?.openPaywall() },
+                toggleDebugProAccess: { [weak self] in
+#if DEBUG
+                    self?.proStatusManager.toggleDebugProAccessOverride()
+#endif
+                },
+                clearDebugProAccessOverride: { [weak self] in
+#if DEBUG
+                    self?.proStatusManager.clearDebugProAccessOverride()
+#endif
+                },
                 quit: { NSApp.terminate(nil) }
             )
         )

@@ -17,6 +17,9 @@ final class CatKeyboardLockProStatusManager: ObservableObject {
     @Published private(set) var isRestoringPurchases = false
     @Published private(set) var paywallErrorMessage: String?
     @Published private(set) var paywallSuccessMessage: String?
+#if DEBUG
+    @Published private(set) var debugProAccessOverride: Bool?
+#endif
 
     private let defaults: UserDefaults
     private let commerceClient: any CommerceClient
@@ -36,7 +39,13 @@ final class CatKeyboardLockProStatusManager: ObservableObject {
     }
 
     var shouldShowOnboarding: Bool {
-        !hasCompletedOnboarding && !status.isPro
+#if DEBUG
+        if debugProAccessOverride != nil {
+            return false
+        }
+#endif
+
+        return !hasCompletedOnboarding && !status.isPro
     }
 
     var currentEntitlementSnapshot: CommerceEntitlement? {
@@ -63,6 +72,9 @@ final class CatKeyboardLockProStatusManager: ObservableObject {
         self.purchaseInProgressPlan = nil
         self.paywallErrorMessage = nil
         self.paywallSuccessMessage = nil
+#if DEBUG
+        self.debugProAccessOverride = Self.readDebugProAccessOverride(defaults: defaults)
+#endif
         self.status = Self.computeStatus(entitlementSnapshot: cachedSnapshot, defaults: defaults, now: now)
         scheduleExpirationIfNeeded()
     }
@@ -133,6 +145,39 @@ final class CatKeyboardLockProStatusManager: ObservableObject {
     func completeOnboardingWithoutTrial() {
         defaults.set(true, forKey: CatKeyboardLockProDefaults.Keys.hasCompletedOnboarding)
     }
+
+#if DEBUG
+    var debugProAccessToggleIsOn: Bool {
+        debugProAccessOverride ?? status.isPro
+    }
+
+    var debugProAccessOverrideDisplayName: String {
+        guard let debugProAccessOverride else {
+            return "Off"
+        }
+
+        return debugProAccessOverride ? "Paid" : "Unpaid"
+    }
+
+    func setDebugProAccessOverride(_ isPro: Bool) {
+        defaults.set(isPro, forKey: CatKeyboardLockProDefaults.Keys.debugProAccessOverride)
+        defaults.set(true, forKey: CatKeyboardLockProDefaults.Keys.hasCompletedOnboarding)
+        debugProAccessOverride = isPro
+        clearPaywallMessages()
+        applyStatus(computeStatus())
+    }
+
+    func toggleDebugProAccessOverride() {
+        setDebugProAccessOverride(!debugProAccessToggleIsOn)
+    }
+
+    func clearDebugProAccessOverride() {
+        defaults.removeObject(forKey: CatKeyboardLockProDefaults.Keys.debugProAccessOverride)
+        debugProAccessOverride = nil
+        clearPaywallMessages()
+        applyStatus(computeStatus())
+    }
+#endif
 
     func purchase(_ plan: CatKeyboardLockPurchasePlan) async throws {
         configureIfNeeded()
@@ -290,6 +335,14 @@ final class CatKeyboardLockProStatusManager: ObservableObject {
         defaults: UserDefaults,
         now: () -> Date
     ) -> CatKeyboardLockProStatus {
+#if DEBUG
+        if let debugProAccessOverride = readDebugProAccessOverride(defaults: defaults) {
+            return debugProAccessOverride
+                ? .pro(plan: .supporterLifetime, originalPurchaseDate: nil)
+                : .expired
+        }
+#endif
+
         if let entitlementSnapshot,
            let plan = CatKeyboardLockPurchasePlan(commercePlan: entitlementSnapshot.plan) {
             return .pro(plan: plan, originalPurchaseDate: entitlementSnapshot.originalPurchaseDate)
@@ -309,6 +362,16 @@ final class CatKeyboardLockProStatusManager: ObservableObject {
 
         return .expired
     }
+
+#if DEBUG
+    private static func readDebugProAccessOverride(defaults: UserDefaults) -> Bool? {
+        guard defaults.object(forKey: CatKeyboardLockProDefaults.Keys.debugProAccessOverride) != nil else {
+            return nil
+        }
+
+        return defaults.bool(forKey: CatKeyboardLockProDefaults.Keys.debugProAccessOverride)
+    }
+#endif
 
     private static func packageMetadata(from offering: CommerceOffering?) -> [CatKeyboardLockPurchasePlan: CatKeyboardLockProPlanPackageMetadata]? {
         guard let offering, !offering.isEmpty else {

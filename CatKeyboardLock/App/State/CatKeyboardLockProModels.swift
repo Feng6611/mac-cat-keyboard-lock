@@ -145,5 +145,8 @@ enum CatKeyboardLockProDefaults {
     enum Keys {
         static let trialStartedAt = "CatKeyboardLock.Pro.trialStartedAt"
         static let hasCompletedOnboarding = "CatKeyboardLock.Pro.hasCompletedOnboarding"
+#if DEBUG
+        static let debugProAccessOverride = "CatKeyboardLock.Pro.debugProAccessOverride"
+#endif
     }
 }
