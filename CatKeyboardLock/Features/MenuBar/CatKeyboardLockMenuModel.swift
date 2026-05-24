@@ -103,9 +103,19 @@ enum CatKeyboardLockMenuModel {
         entitlement: CatKeyboardLockEntitlementSnapshot,
         actions: CatKeyboardLockMenuActions
     ) -> KikiMenuItem {
+        let coreInput = CatKeyboardLockCoreInput(
+            access: CatKeyboardLockCoreAccess(status: entitlement.status),
+            lockState: CatKeyboardLockCoreLockState(state),
+            accessibilityTrusted: true,
+            lockKeyboard: lockSettings.lockKeyboard,
+            lockMouseClicks: lockSettings.lockMouseClicks,
+            lockPointerMovement: lockSettings.lockPointerMovement
+        )
+        let evaluation = CatKeyboardLockCore.evaluate(coreInput)
+
         if state.isLocked {
             return .action(
-                title: "Unlock",
+                title: evaluation.menuLockTitle,
                 shortcut: lockShortcut,
                 action: actions.unlock
             )
@@ -113,17 +123,37 @@ enum CatKeyboardLockMenuModel {
 
         guard entitlement.isAccessActive else {
             return .action(
-                title: entitlement.canStartTrial ? "Start Trial / Upgrade..." : "Upgrade to Lock...",
+                title: evaluation.menuLockTitle,
                 shortcut: lockShortcut,
                 action: actions.openPaywall
             )
         }
 
-        let title = lockSettings.hasPointerLock ? "Lock Input" : "Lock Keyboard"
         return .action(
-            title: title,
+            title: evaluation.menuLockTitle,
             shortcut: lockShortcut,
             action: actions.lock
         )
+    }
+}
+
+private extension CatKeyboardLockCoreAccess {
+    init(status: CatKeyboardLockProStatus) {
+        switch status {
+        case .notStarted:
+            self = .notStarted
+        case .trial:
+            self = .trial
+        case .expired:
+            self = .expired
+        case .pro:
+            self = .pro
+        }
+    }
+}
+
+private extension CatKeyboardLockCoreLockState {
+    init(_ state: InputLockState) {
+        self = state.isLocked ? .locked : .unlocked
     }
 }

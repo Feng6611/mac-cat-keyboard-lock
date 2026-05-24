@@ -116,6 +116,69 @@ final class CatKeyboardLockTests: XCTestCase {
         XCTAssertNil(menuItem(titled: "Upgrade to Lock...", in: lockedItems))
     }
 
+    func testCoreEvaluationRoutesInactiveAccessToPaywall() {
+        let evaluation = CatKeyboardLockCore.evaluate(
+            CatKeyboardLockCoreInput(
+                access: .notStarted,
+                accessibilityTrusted: false,
+                lockKeyboard: true,
+                lockMouseClicks: false,
+                lockPointerMovement: false
+            )
+        )
+
+        XCTAssertEqual(evaluation.menuLockTitle, "Start Trial / Upgrade...")
+        XCTAssertEqual(evaluation.lockRequestAction, .openPaywall)
+        XCTAssertEqual(evaluation.statusText, "Trial not started")
+        XCTAssertEqual(evaluation.permissionText, "Needs permission")
+    }
+
+    func testCoreEvaluationRoutesActiveMissingPermissionToPermissionSetup() {
+        let evaluation = CatKeyboardLockCore.evaluate(
+            CatKeyboardLockCoreInput(
+                access: .trial,
+                accessibilityTrusted: false,
+                lockKeyboard: true,
+                lockMouseClicks: false,
+                lockPointerMovement: false
+            )
+        )
+
+        XCTAssertEqual(evaluation.menuLockTitle, "Lock Keyboard")
+        XCTAssertEqual(evaluation.lockRequestAction, .openPermission)
+        XCTAssertEqual(evaluation.statusText, "Needs Accessibility")
+        XCTAssertEqual(evaluation.warnings, ["Accessibility is required before input can be locked."])
+    }
+
+    func testCoreEvaluationNamesPointerLockAndEmptyPolicy() {
+        let pointerEvaluation = CatKeyboardLockCore.evaluate(
+            CatKeyboardLockCoreInput(
+                access: .pro,
+                accessibilityTrusted: true,
+                lockKeyboard: true,
+                lockMouseClicks: true,
+                lockPointerMovement: true
+            )
+        )
+
+        XCTAssertEqual(pointerEvaluation.menuLockTitle, "Lock Input")
+        XCTAssertEqual(pointerEvaluation.lockRequestAction, .lock)
+        XCTAssertEqual(pointerEvaluation.policySummary, ["keyboard", "clicks", "movement"])
+
+        let emptyEvaluation = CatKeyboardLockCore.evaluate(
+            CatKeyboardLockCoreInput(
+                access: .pro,
+                accessibilityTrusted: true,
+                lockKeyboard: false,
+                lockMouseClicks: false,
+                lockPointerMovement: false
+            )
+        )
+
+        XCTAssertEqual(emptyEvaluation.lockRequestAction, .chooseInput)
+        XCTAssertEqual(emptyEvaluation.statusText, "Choose input to lock")
+    }
+
 #if DEBUG
     func testDebugPaidAccessToggleAppearsInMenu() {
         var didToggle = false

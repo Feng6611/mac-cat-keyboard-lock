@@ -2,6 +2,10 @@
 set -euo pipefail
 
 MODE="${1:-run}"
+if [[ $# -gt 0 ]]; then
+  shift
+fi
+APP_ARGS=("$@")
 APP_NAME="CatKeyboardLock"
 BUNDLE_ID="dev.kkuk.catkeyboardlock"
 PROJECT_NAME="CatKeyboardLock.xcodeproj"
@@ -51,10 +55,12 @@ mkdir -p "$DIST_DIR"
 /usr/bin/xattr -dr com.apple.quarantine "$APP_BUNDLE" >/dev/null 2>&1 || true
 
 open_app() {
-  /usr/bin/open -n "$APP_BUNDLE"
+  /usr/bin/open -n "$APP_BUNDLE" --args "${APP_ARGS[@]}"
 }
 
 case "$MODE" in
+  --build-only|build)
+    ;;
   run)
     open_app
     ;;
@@ -75,7 +81,7 @@ case "$MODE" in
     pgrep -f "$APP_BUNDLE/Contents/MacOS/$APP_NAME" >/dev/null
     ;;
   *)
-    echo "usage: $0 [run|--debug|--logs|--telemetry|--verify]" >&2
+    echo "usage: $0 [run|--build-only|--debug|--logs|--telemetry|--verify] [app args...]" >&2
     exit 2
     ;;
 esac

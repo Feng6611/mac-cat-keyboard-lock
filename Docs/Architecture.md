@@ -30,6 +30,19 @@ infrastructure.
 Feature code may import SwiftUI and Kiki. It should not own `CGEventTap`
 lifecycle or other direct system interception behavior.
 
+### Core
+
+`Core/` owns product rules that do not need AppKit or SwiftUI:
+
+- access state interpretation for not started, trial, expired, and Pro users.
+- lock request routing into lock, unlock, permission setup, paywall, or input
+  selection.
+- menu lock title decisions shared by the app and the CLI test harness.
+
+Core must stay deterministic and command-line testable. It should not read
+`UserDefaults`, open windows, call RevenueCat, inspect system permissions, or
+install event taps.
+
 ### Platform
 
 `Platform/InputLock/` owns direct macOS input interception:

@@ -39,13 +39,48 @@ enum CatKeyboardLockSettingsTab: String, CaseIterable, Identifiable {
     }
 }
 
+enum CatKeyboardLockInitialSettingsTab: String {
+    case lock
+    case system
+    case about
+
+    var settingsTab: CatKeyboardLockSettingsTab {
+        switch self {
+        case .lock:
+            return .lock
+        case .system:
+            return .system
+        case .about:
+            return .about
+        }
+    }
+}
+
 struct CatKeyboardLockSettingsView: View {
     let config: CatKeyboardLockAppConfig
     @ObservedObject var lockSettings: LockSettings
     @ObservedObject var inputLockController: InputLockController
     @ObservedObject var proStatusManager: CatKeyboardLockProStatusManager
     let openPaywall: () -> Void
-    @StateObject private var navigation = KikiSettingsNavigationModel<CatKeyboardLockSettingsTab>(selectedTab: .lock)
+    @StateObject private var navigation: KikiSettingsNavigationModel<CatKeyboardLockSettingsTab>
+
+    init(
+        config: CatKeyboardLockAppConfig,
+        lockSettings: LockSettings,
+        inputLockController: InputLockController,
+        proStatusManager: CatKeyboardLockProStatusManager,
+        initialTab: CatKeyboardLockInitialSettingsTab = .lock,
+        openPaywall: @escaping () -> Void
+    ) {
+        self.config = config
+        self.lockSettings = lockSettings
+        self.inputLockController = inputLockController
+        self.proStatusManager = proStatusManager
+        self.openPaywall = openPaywall
+        _navigation = StateObject(
+            wrappedValue: KikiSettingsNavigationModel(selectedTab: initialTab.settingsTab)
+        )
+    }
 
     var body: some View {
         KikiSettingsShell(

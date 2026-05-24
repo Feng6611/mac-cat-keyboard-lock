@@ -25,6 +25,7 @@ Settings.
 ## Architecture
 
 - `App/`: app lifecycle, AppKit glue, and Kiki wiring.
+- `Core/`: pure product rules that can be tested from CLI without launching the app.
 - `Features/`: menu, settings, onboarding, and paywall surfaces.
 - `Platform/InputLock/`: `CGEventTap` wrapper, lock state, policy, permissions,
   timeout, and fallback unlock detection.
@@ -52,8 +53,24 @@ Useful variants:
 
 ## Test
 
+Core rule check:
+
+```sh
+./script/catlock_core.sh evaluate --access trial --accessibility denied --keyboard on
+```
+
+UI smoke screenshot:
+
+```sh
+./script/catlock_ui.sh smoke
+```
+
+App integration:
+
 ```sh
 xcodebuild test -project CatKeyboardLock.xcodeproj \
   -scheme CatKeyboardLock \
   -destination 'platform=macOS,arch=arm64'
 ```
+
+See [Docs/Testing.md](Docs/Testing.md) for the test layers and release smoke flow.

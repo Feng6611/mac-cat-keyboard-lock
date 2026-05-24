@@ -17,6 +17,7 @@ struct CatKeyboardLockApp: App {
                 lockSettings: appDelegate.lockSettings,
                 inputLockController: appDelegate.inputLockController,
                 proStatusManager: appDelegate.proStatusManager,
+                initialTab: appDelegate.launchOptions.settingsTab ?? .lock,
                 openPaywall: { appDelegate.openPaywall() }
             )
         }
@@ -29,6 +30,7 @@ final class CatKeyboardLockAppDelegate: NSObject, NSApplicationDelegate {
     let lockSettings = LockSettings()
     lazy var inputLockController = InputLockController(settings: lockSettings)
     let proStatusManager = CatKeyboardLockProStatusManager()
+    let launchOptions = CatKeyboardLockLaunchOptions.current()
 
     private let settingsWindowController = KikiSettingsWindowController(
         frameAutosaveName: "CatKeyboardLock.SettingsWindow",
@@ -86,11 +88,16 @@ final class CatKeyboardLockAppDelegate: NSObject, NSApplicationDelegate {
         inputLockController.refreshPermissions()
         proStatusManager.configureIfNeeded()
         updateTriggerCornerMonitor()
-        onboardingWindowController.showIfNeeded()
+        if launchOptions.scene == .onboarding {
+            onboardingWindowController.show()
+        } else {
+            onboardingWindowController.showIfNeeded()
+        }
         Task { @MainActor [weak self] in
             await self?.proStatusManager.refresh()
             self?.updateTriggerCornerMonitor()
         }
+        presentLaunchSceneIfNeeded()
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -148,6 +155,27 @@ final class CatKeyboardLockAppDelegate: NSObject, NSApplicationDelegate {
 
     func openPaywall() {
         paywallWindowController.show()
+    }
+
+    private func presentLaunchSceneIfNeeded() {
+        guard let scene = launchOptions.scene else {
+            return
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { [weak self] in
+            guard let self else {
+                return
+            }
+
+            switch scene {
+            case .onboarding:
+                self.onboardingWindowController.show()
+            case .settings:
+                self.openSettings()
+            case .paywall:
+                self.openPaywall()
+            }
+        }
     }
 
     private func bindLockStateToStatusItem() {
@@ -277,5 +305,50 @@ final class CatKeyboardLockAppDelegate: NSObject, NSApplicationDelegate {
         case .failed:
             return "\(config.appName): lock failed"
         }
+    }
+}
+
+enum CatKeyboardLockLaunchScene: Equatable {
+    case onboarding
+    case settings
+    case paywall
+}
+
+struct CatKeyboardLockLaunchOptions: Equatable {
+    let scene: CatKeyboardLockLaunchScene?
+    let settingsTab: CatKeyboardLockInitialSettingsTab?
+
+    static func current(arguments: [String] = ProcessInfo.processInfo.arguments) -> Self {
+        var scene: CatKeyboardLockLaunchScene?
+        var settingsTab: CatKeyboardLockInitialSettingsTab?
+        var index = 0
+
+        while index < arguments.count {
+            let argument = arguments[index]
+
+            switch argument {
+            case "--ui-smoke-onboarding":
+                scene = .onboarding
+            case "--ui-smoke-paywall":
+                scene = .paywall
+            case "--ui-smoke-settings":
+                scene = .settings
+                if index + 1 < arguments.count,
+                   let tab = CatKeyboardLockInitialSettingsTab(rawValue: arguments[index + 1]) {
+                    settingsTab = tab
+                    index += 1
+                }
+            default:
+                if argument.hasPrefix("--ui-smoke-settings=") {
+                    scene = .settings
+                    let rawTab = String(argument.dropFirst("--ui-smoke-settings=".count))
+                    settingsTab = CatKeyboardLockInitialSettingsTab(rawValue: rawTab)
+                }
+            }
+
+            index += 1
+        }
+
+        return Self(scene: scene, settingsTab: settingsTab)
     }
 }

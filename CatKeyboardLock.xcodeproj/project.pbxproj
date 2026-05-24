@@ -45,6 +45,7 @@
 		A00100000000000000000028 /* KikiTriggerCorner in Frameworks */ = {isa = PBXBuildFile; productRef = A00B00000000000000000008 /* KikiTriggerCorner */; };
 		A00100000000000000000029 /* KikiAuthorization in Frameworks */ = {isa = PBXBuildFile; productRef = A00B00000000000000000009 /* KikiAuthorization */; };
 		A0010000000000000000002A /* KikiAuthorization in Frameworks */ = {isa = PBXBuildFile; productRef = A00B00000000000000000009 /* KikiAuthorization */; };
+		A0010000000000000000002B /* CatKeyboardLockCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0020000000000000000001D /* CatKeyboardLockCore.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -82,6 +83,7 @@
 		A0020000000000000000001A /* CatKeyboardLockRevenueCatConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/State/CatKeyboardLockRevenueCatConfiguration.swift; sourceTree = "<group>"; };
 		A0020000000000000000001B /* CatKeyboardLockProStatusManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/State/CatKeyboardLockProStatusManager.swift; sourceTree = "<group>"; };
 		A0020000000000000000001C /* CatKeyboardLockOnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Onboarding/CatKeyboardLockOnboardingView.swift; sourceTree = "<group>"; };
+		A0020000000000000000001D /* CatKeyboardLockCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Core/CatKeyboardLockCore.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -135,6 +137,7 @@
 			isa = PBXGroup;
 			children = (
 				A00700000000000000000005 /* App */,
+				A00700000000000000000014 /* Core */,
 				A0070000000000000000000A /* Features */,
 				A00700000000000000000010 /* Platform */,
 				A0070000000000000000000E /* Shared */,
@@ -149,6 +152,14 @@
 				A00700000000000000000006 /* State */,
 			);
 			name = App;
+			sourceTree = "<group>";
+		};
+		A00700000000000000000014 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				A0020000000000000000001D /* CatKeyboardLockCore.swift */,
+			);
+			name = Core;
 			sourceTree = "<group>";
 		};
 		A00700000000000000000006 /* State */ = {
@@ -405,6 +416,7 @@
 				A00100000000000000000023 /* CatKeyboardLockRevenueCatConfiguration.swift in Sources */,
 				A00100000000000000000024 /* CatKeyboardLockProStatusManager.swift in Sources */,
 				A00100000000000000000025 /* CatKeyboardLockOnboardingView.swift in Sources */,
+				A0010000000000000000002B /* CatKeyboardLockCore.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
