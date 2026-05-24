@@ -668,7 +668,7 @@
 /* Begin XCRemoteSwiftPackageReference section */
 		A00D00000000000000000001 /* XCRemoteSwiftPackageReference "Kiki_mackit" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "git@github.com:Feng6611/Kiki_mackit.git";
+			repositoryURL = "https://github.com/Feng6611/Kiki_mackit.git";
 			requirement = {
 				branch = main;
 				kind = branch;

@@ -4,7 +4,7 @@
     {
       "identity" : "kiki_mackit",
       "kind" : "remoteSourceControl",
-      "location" : "git@github.com:Feng6611/Kiki_mackit.git",
+      "location" : "https://github.com/Feng6611/Kiki_mackit.git",
       "state" : {
         "branch" : "main",
         "revision" : "ed3ec805b4f8b2b3fe3a2deaf41924cc4414061e"
