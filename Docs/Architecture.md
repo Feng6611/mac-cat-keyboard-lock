@@ -25,6 +25,7 @@ infrastructure.
 - Menu item declaration in `CatKeyboardLockMenuModel`.
 - Settings `Lock`, `System`, and `About` panes.
 - Lightweight onboarding and RevenueCat-backed paywall presentation.
+- Accessibility setup copy and routing into the app's permission request flow.
 
 Feature code may import SwiftUI and Kiki. It should not own `CGEventTap`
 lifecycle or other direct system interception behavior.
@@ -77,6 +78,8 @@ Kiki remains reusable infrastructure:
   presentation.
 - `KikiTriggerCorner`: trigger-corner geometry, dwell/cooldown state, and
   AppKit monitor for host-owned actions.
+- `KikiAuthorization`: Accessibility status, system prompt, and System Settings
+  helper overlay.
 
 Do not move cat keyboard lock input policy, unlock reasons, event tap behavior,
 or Pro gating into Kiki.

@@ -18,6 +18,8 @@ Settings.
 - Two one-time Pro purchases: Lifetime and Supporter Lifetime. Both unlock the
   same features.
 - Accessibility is required for locking.
+- KikiAuthorization opens the Accessibility setup path from onboarding and
+  Settings.
 - RevenueCatCommerceKit-backed paywall and restore flow.
 
 ## Architecture

@@ -3,9 +3,15 @@ import Foundation
 struct CatKeyboardLockAppConfig: Equatable {
     let appName: String
     let statusItemTitle: String
+    let bundleID: String
+    let officialURL: String
+    let officialDisplayName: String
     let supportURL: String
     let privacyURL: String
     let repositoryURL: String
+    let repositoryDisplayName: String
+    let contactEmailAddress: String
+    let contactEmailURL: String
     let plans: [CatKeyboardLockPlanConfig]
     let features: [String]
     let stats: [CatKeyboardLockStatConfig]
@@ -13,9 +19,15 @@ struct CatKeyboardLockAppConfig: Equatable {
     static let `default` = CatKeyboardLockAppConfig(
         appName: "Cat Keyboard Lock",
         statusItemTitle: "Cat Lock",
-        supportURL: "https://github.com/Feng6611/Kiki_mackit",
-        privacyURL: "https://example.com/privacy",
+        bundleID: "dev.kkuk.catkeyboardlock",
+        officialURL: "https://github.com/Feng6611/mac-cat-keyboard-lock#readme",
+        officialDisplayName: "GitHub README",
+        supportURL: "https://github.com/Feng6611/mac-cat-keyboard-lock/issues",
+        privacyURL: "https://github.com/Feng6611/mac-cat-keyboard-lock/blob/main/PRIVACY.md",
         repositoryURL: "https://github.com/Feng6611/mac-cat-keyboard-lock",
+        repositoryDisplayName: "Feng6611/mac-cat-keyboard-lock",
+        contactEmailAddress: "fchen6611@gmail.com",
+        contactEmailURL: "mailto:fchen6611@gmail.com",
         plans: [
             CatKeyboardLockPlanConfig(
                 purchasePlan: .lifetime,

@@ -66,29 +66,6 @@ struct CatKeyboardLockSettingsView: View {
     private var lockPane: some View {
         KikiSettingsPane {
             Section {
-                KikiSettingsStatusRow(
-                    title: "Pro access",
-                    value: proStatusManager.status.displayName,
-                    systemImage: "sparkles",
-                    valueColor: proStatusManager.status.isActive ? .secondary : .orange
-                )
-
-                if !proStatusManager.status.isActive {
-                    Button(proStatusManager.status.canStartTrial ? "Start Trial / Upgrade..." : "Upgrade to Pro...") {
-                        openPaywall()
-                    }
-                }
-            } footer: {
-                if !proStatusManager.status.isActive {
-                    KikiSettingsHelperText("Start the trial or upgrade to enable input locking controls.")
-                }
-            }
-
-#if DEBUG
-            debugTestingSection
-#endif
-
-            Section {
                 KikiSettingsToggleRow("Keyboard", isOn: $lockSettings.lockKeyboard, systemImage: "keyboard")
                 KikiSettingsToggleRow("Clicks", isOn: $lockSettings.lockMouseClicks)
                 KikiSettingsToggleRow("Movement", isOn: $lockSettings.lockPointerMovement)
@@ -97,7 +74,6 @@ struct CatKeyboardLockSettingsView: View {
                     "Keyboard is the core lock. Clicks and movement are optional extensions; movement includes dragging and scrolling."
                 )
             }
-            .disabled(!proStatusManager.status.isActive)
 
             Section {
                 KikiSettingsValueRow("Lock / unlock shortcut") {
@@ -114,7 +90,6 @@ struct CatKeyboardLockSettingsView: View {
                     "Use the shortcut or menu bar item to switch lock state. The app also releases the lock after the selected duration."
                 )
             }
-            .disabled(!proStatusManager.status.isActive)
 
             Section {
                 KikiSettingsToggleRow("Trigger corner", isOn: $lockSettings.triggerCornerEnabled, systemImage: "cursorarrow")
@@ -127,7 +102,6 @@ struct CatKeyboardLockSettingsView: View {
                     "Move the pointer into the selected corner and hold briefly to lock or unlock. This uses pointer position polling and does not add another permission."
                 )
             }
-            .disabled(!proStatusManager.status.isActive)
         }
     }
 
@@ -173,7 +147,7 @@ struct CatKeyboardLockSettingsView: View {
                 )
 
                 if !inputLockController.permissionStatus.accessibilityTrusted {
-                    Button("Grant Accessibility Access") {
+                    Button("Open Accessibility Settings") {
                         inputLockController.requestPermissions()
                     }
                 }
@@ -216,44 +190,64 @@ struct CatKeyboardLockSettingsView: View {
     }
 
     private var aboutPane: some View {
-        KikiAboutPane(
-            appName: config.appName,
-            versionText: "Cat Keyboard Lock 1.0"
-        ) {
-            KikiSettingsStatusRow(
-                title: "Mode",
-                value: "Manual menu bar lock",
-                systemImage: "menubar.rectangle"
-            )
-            KikiSettingsStatusRow(
-                title: "Privacy",
-                value: "Local only",
-                systemImage: "lock.shield"
-            )
-            KikiSettingsStatusRow(
-                title: "Plan",
-                value: proStatusManager.status.displayName,
-                systemImage: "sparkles"
-            )
-        } links: {
-            KikiSettingsLinkRow(
-                title: "Built with Kiki",
-                value: "Framework",
-                urlString: config.supportURL,
-                systemImage: "shippingbox"
-            )
-            KikiSettingsLinkRow(
-                title: "Source code",
-                value: "GitHub",
-                urlString: config.repositoryURL,
-                systemImage: "chevron.left.forwardslash.chevron.right"
-            )
-            KikiSettingsCopyRow(
-                title: "Bundle ID",
-                value: "dev.kkuk.catkeyboardlock",
-                systemImage: "number"
-            )
+        KikiSettingsPane {
+            Section {
+                KikiAppIdentityView(
+                    appName: config.appName,
+                    versionText: versionText
+                )
+                .padding(.vertical, 20)
+            }
+
+            Section {
+                KikiSettingsStatusRow(
+                    title: "Status",
+                    value: proStatusManager.status.displayName,
+                    systemImage: "checkmark.seal",
+                    valueColor: proStatusManager.status.isActive ? .secondary : .orange,
+                    trailingSystemImage: aboutStatusTrailingSystemImage,
+                    action: aboutStatusAction
+                )
+            }
+
+            Section {
+                KikiSettingsLinkRow(
+                    title: "Official",
+                    value: config.officialDisplayName,
+                    urlString: config.officialURL,
+                    systemImage: "globe"
+                )
+                KikiSettingsCopyRow(
+                    title: "Email",
+                    value: config.contactEmailAddress,
+                    systemImage: "envelope"
+                )
+                KikiSettingsLinkRow(
+                    title: "GitHub",
+                    value: config.repositoryDisplayName,
+                    urlString: config.repositoryURL,
+                    systemImage: "chevron.left.forwardslash.chevron.right"
+                )
+            }
+
+#if DEBUG
+            debugTestingSection
+#endif
         }
+    }
+
+    private var versionText: String {
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
+        let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
+        return "Version \(version) (\(build))"
+    }
+
+    private var aboutStatusTrailingSystemImage: String? {
+        proStatusManager.status.isPro ? nil : "chevron.right"
+    }
+
+    private var aboutStatusAction: (() -> Void)? {
+        proStatusManager.status.isPro ? nil : openPaywall
     }
 
 }

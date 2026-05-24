@@ -608,6 +608,27 @@ final class CatKeyboardLockTests: XCTestCase {
         XCTAssertEqual(controller.state, .unlocked)
     }
 
+    func testRequestPermissionsShowsAuthorizationHelpWhenDenied() {
+        let settings = LockSettings(defaults: isolatedDefaults())
+        var didPresentPermissionHelp = false
+        let controller = InputLockController(
+            settings: settings,
+            permissionClient: .denied,
+            presentPermissionHelp: {
+                didPresentPermissionHelp = true
+            },
+            eventTapFactory: { _, _, _ in FakeInputLockEventTap() }
+        )
+
+        controller.requestPermissions()
+
+        XCTAssertTrue(didPresentPermissionHelp)
+        XCTAssertEqual(
+            controller.state,
+            .permissionRequired(reason: "Cat Keyboard Lock needs Accessibility to block input.")
+        )
+    }
+
     func testProStatusDoesNotStartTrialOnInitialization() {
         let defaults = isolatedDefaults()
         let now = Date(timeIntervalSince1970: 1_700_000_000)
@@ -773,6 +794,14 @@ final class CatKeyboardLockTests: XCTestCase {
         XCTAssertEqual(plan.title, "Supporter Lifetime")
         XCTAssertEqual(plan.displayPrice, "$10.99")
         XCTAssertEqual(plan.badge, "Recommended")
+    }
+
+    func testAppConfigAboutLinks() {
+        let config = CatKeyboardLockAppConfig.default
+
+        XCTAssertEqual(config.bundleID, "dev.kkuk.catkeyboardlock")
+        XCTAssertEqual(config.repositoryDisplayName, "Feng6611/mac-cat-keyboard-lock")
+        XCTAssertEqual(config.contactEmailAddress, "fchen6611@gmail.com")
     }
 
     func testOverlayPresentationsMapLockLifecycle() {

@@ -1,15 +1,18 @@
-import ApplicationServices
 import CoreGraphics
 import Foundation
+import KikiAuthorization
 import OSLog
 
 struct InputLockPermissionClient {
-    let isAccessibilityTrusted: (_ prompt: Bool) -> Bool
+    let isAccessibilityTrusted: @MainActor (_ prompt: Bool) -> Bool
 
     static let live = InputLockPermissionClient(
         isAccessibilityTrusted: { prompt in
-            let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: prompt] as CFDictionary
-            return AXIsProcessTrustedWithOptions(options)
+            if prompt {
+                return KikiAuthorizationPanel.accessibility.requestSystemPrompt()
+            }
+
+            return KikiAuthorizationPanel.accessibility.isAuthorized
         }
     )
 }
@@ -46,6 +49,7 @@ final class InputLockController: ObservableObject {
 
     private let settings: LockSettings
     private let permissionClient: InputLockPermissionClient
+    private let presentPermissionHelp: @MainActor () -> Void
     private let eventTapFactory: EventTapFactory
     private var eventTap: InputLockEventTapping?
     private var timeoutTimer: Timer?
@@ -55,6 +59,12 @@ final class InputLockController: ObservableObject {
     init(
         settings: LockSettings,
         permissionClient: InputLockPermissionClient = .live,
+        presentPermissionHelp: @escaping @MainActor () -> Void = {
+            KikiAuthorizationAssistant.shared.present(
+                panel: .accessibility,
+                instruction: "Turn on Cat Keyboard Lock in Accessibility so it can block input while locked."
+            )
+        },
         eventTapFactory: @escaping EventTapFactory = { policy, onFallbackUnlock, onTapDisabled in
             InputLockEventTap(
                 policy: policy,
@@ -65,6 +75,7 @@ final class InputLockController: ObservableObject {
     ) {
         self.settings = settings
         self.permissionClient = permissionClient
+        self.presentPermissionHelp = presentPermissionHelp
         self.eventTapFactory = eventTapFactory
     }
 
@@ -170,6 +181,7 @@ final class InputLockController: ObservableObject {
     func requestPermissions() {
         let status = checkPermissions(promptAccessibility: true)
         if !status.accessibilityTrusted {
+            presentPermissionHelp()
             state = .permissionRequired(reason: Self.accessibilityRequiredReason)
         } else if case .permissionRequired(let reason) = state,
                   reason == Self.accessibilityRequiredReason {

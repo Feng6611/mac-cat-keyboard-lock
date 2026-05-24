@@ -29,8 +29,9 @@ keyboard input while keeping the machine awake and visible.
 - Fallback unlock is `Control + Option + Command + L` held for 1 second.
 - Lock duration is selectable: 5, 10, 30, or 60 minutes. The default is
   10 minutes.
-- First launch shows a lightweight onboarding window. Starting the trial from
-  onboarding or the paywall begins a one-time 2-day Pro trial.
+- First launch shows a lightweight onboarding window covering the lock model,
+  Accessibility setup, recovery, and optional trial start. Starting the trial
+  from onboarding or the paywall begins a one-time 2-day Pro trial.
 - Trial and Pro unlock the full input-lock feature set. When the trial has not
   started or has expired, new lock attempts open the paywall instead of starting
   a lock.
@@ -77,6 +78,9 @@ keyboard input while keeping the machine awake and visible.
   filter is active.
 - If event tap creation fails, the app shows a permission or failure state
   instead of pretending the system is locked.
+- If Accessibility is missing, onboarding and Settings route setup through
+  `KikiAuthorization`; closing onboarding does not block Settings, Quit, or
+  later permission setup.
 
 ## Privacy
 

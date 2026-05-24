@@ -45,6 +45,7 @@ final class CatKeyboardLockAppDelegate: NSObject, NSApplicationDelegate {
     )
     private lazy var onboardingWindowController = CatKeyboardLockOnboardingWindowController(
         proStatusManager: proStatusManager,
+        inputLockController: inputLockController,
         onFinish: { [weak self] in
             self?.updateTriggerCornerMonitor()
         }

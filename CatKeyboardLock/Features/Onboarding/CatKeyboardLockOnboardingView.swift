@@ -1,10 +1,12 @@
 import AppKit
+import KikiAuthorization
 import KikiWindow
 import SwiftUI
 
 @MainActor
 final class CatKeyboardLockOnboardingWindowController {
     private let proStatusManager: CatKeyboardLockProStatusManager
+    private let inputLockController: InputLockController
     private let onFinish: () -> Void
     private var isCompletingIntentionally = false
 
@@ -21,6 +23,7 @@ final class CatKeyboardLockOnboardingWindowController {
     ) { [weak self, proStatusManager] in
         CatKeyboardLockOnboardingView(
             proStatusManager: proStatusManager,
+            inputLockController: self?.inputLockController,
             onFinish: {
                 self?.finish()
             },
@@ -30,8 +33,13 @@ final class CatKeyboardLockOnboardingWindowController {
         )
     }
 
-    init(proStatusManager: CatKeyboardLockProStatusManager, onFinish: @escaping () -> Void) {
+    init(
+        proStatusManager: CatKeyboardLockProStatusManager,
+        inputLockController: InputLockController,
+        onFinish: @escaping () -> Void
+    ) {
         self.proStatusManager = proStatusManager
+        self.inputLockController = inputLockController
         self.onFinish = onFinish
     }
 
@@ -75,6 +83,7 @@ final class CatKeyboardLockOnboardingWindowController {
 
 struct CatKeyboardLockOnboardingView: View {
     @ObservedObject var proStatusManager: CatKeyboardLockProStatusManager
+    @ObservedObject var inputLockController: InputLockController
 
     let onFinish: () -> Void
     let onClose: () -> Void
@@ -83,6 +92,18 @@ struct CatKeyboardLockOnboardingView: View {
     @State private var isStartingTrial = false
 
     private let pages = CatKeyboardLockOnboardingPage.allCases
+
+    init(
+        proStatusManager: CatKeyboardLockProStatusManager,
+        inputLockController: InputLockController?,
+        onFinish: @escaping () -> Void,
+        onClose: @escaping () -> Void
+    ) {
+        self.proStatusManager = proStatusManager
+        self.inputLockController = inputLockController ?? InputLockController(settings: LockSettings())
+        self.onFinish = onFinish
+        self.onClose = onClose
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -103,6 +124,12 @@ struct CatKeyboardLockOnboardingView: View {
         }
         .frame(width: 560, height: 560)
         .background(Color(nsColor: .windowBackgroundColor))
+        .onAppear {
+            inputLockController.refreshPermissions()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            inputLockController.refreshPermissions()
+        }
     }
 
     private var pageContent: some View {
@@ -144,7 +171,40 @@ struct CatKeyboardLockOnboardingView: View {
             }
             .frame(maxWidth: 380, alignment: .leading)
             .padding(.top, 2)
+
+            if page == .permission {
+                permissionCard
+            }
         }
+    }
+
+    private var permissionCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 10) {
+                Image(systemName: KikiAuthorizationPanel.accessibility.systemImage)
+                    .foregroundStyle(inputLockController.permissionStatus.accessibilityTrusted ? Color.secondary : Color.orange)
+                    .frame(width: 20)
+                Text("Accessibility")
+                    .font(.callout.weight(.semibold))
+                Spacer(minLength: 0)
+                Text(inputLockController.permissionStatus.accessibilityText)
+                    .font(.callout)
+                    .foregroundStyle(inputLockController.permissionStatus.accessibilityTrusted ? Color.secondary : Color.orange)
+            }
+
+            if !inputLockController.permissionStatus.accessibilityTrusted {
+                Button("Open Accessibility Settings") {
+                    inputLockController.requestPermissions()
+                }
+                .buttonStyle(.bordered)
+            }
+        }
+        .frame(maxWidth: 380, alignment: .leading)
+        .padding(14)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color.secondary.opacity(0.08))
+        )
     }
 
     private var pageIndicators: some View {
@@ -221,6 +281,7 @@ struct CatKeyboardLockOnboardingView: View {
 
 private enum CatKeyboardLockOnboardingPage: CaseIterable {
     case protect
+    case permission
     case recover
     case trial
 
@@ -228,6 +289,8 @@ private enum CatKeyboardLockOnboardingPage: CaseIterable {
         switch self {
         case .protect:
             return "keyboard.badge.ellipsis"
+        case .permission:
+            return "accessibility"
         case .recover:
             return "lock.rotation"
         case .trial:
@@ -239,6 +302,8 @@ private enum CatKeyboardLockOnboardingPage: CaseIterable {
         switch self {
         case .protect:
             return "Lock input when you step away"
+        case .permission:
+            return "Set up Accessibility"
         case .recover:
             return "Recovery stays simple"
         case .trial:
@@ -250,6 +315,8 @@ private enum CatKeyboardLockOnboardingPage: CaseIterable {
         switch self {
         case .protect:
             return "Cat Keyboard Lock keeps accidental typing, clicks, movement, and scrolls away from the current Mac session."
+        case .permission:
+            return "macOS requires Accessibility before an app can block input. You can finish setup now or continue and grant it later."
         case .recover:
             return "The app favors safe recovery: menu unlock, automatic timeout, and a fallback shortcut remain available."
         case .trial:
@@ -263,6 +330,11 @@ private enum CatKeyboardLockOnboardingPage: CaseIterable {
             return [
                 "Keyboard, click, and pointer movement locks",
                 "Manual menu bar control"
+            ]
+        case .permission:
+            return [
+                "Used only for the active input lock",
+                "Settings and menu controls remain reachable"
             ]
         case .recover:
             return [
