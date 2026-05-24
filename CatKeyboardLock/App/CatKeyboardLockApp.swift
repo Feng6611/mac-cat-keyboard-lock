@@ -150,7 +150,18 @@ final class CatKeyboardLockAppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func openSettings() {
+        let previousPolicy = NSApp.activationPolicy()
+        if previousPolicy == .accessory {
+            NSApp.setActivationPolicy(.regular)
+        }
+
         settingsOpener.open()
+
+        if previousPolicy == .accessory {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                NSApp.setActivationPolicy(.accessory)
+            }
+        }
     }
 
     func openPaywall() {

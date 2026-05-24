@@ -1,10 +1,30 @@
-# Architecture
+# Software Architecture
 
 `cat keyboard lock` is a small macOS menu bar app built from the
 `Kiki_menubar_starter` structure. AppKit owns the menu bar shell and platform
 event tap. SwiftUI owns settings, onboarding, and paywall UI. Kiki packages own
 reusable window, settings, menu, paywall, overlay, and trigger-corner
 infrastructure.
+
+## Current Review
+
+The current split is intentionally app-target based, not package-first:
+
+- `App/` owns lifecycle and cross-feature wiring.
+- `Features/` owns user-facing surfaces.
+- `Core/` exists only for pure product rules that now have a second consumer:
+  the CLI test harness.
+- `Platform/InputLock/` owns direct macOS input interception.
+- `Shared/` owns app-local constants and copy.
+
+This is enough separation for the current risk level. Do not add another
+domain/service/use-case layer unless a file becomes hard to understand, a rule
+needs another consumer, or tests need a cleaner seam. The goal is stable
+behavior and readable ownership, not more folders.
+
+The main redundancy risk is `Core/`: it is justified today because menu routing
+rules are command-line testable, but it should not absorb SwiftUI view state,
+RevenueCat state, defaults, Kiki adapters, or platform permissions.
 
 ## Boundaries
 
@@ -17,6 +37,9 @@ infrastructure.
 - Long-lived menu bar, settings, paywall, and input-lock controllers.
 - App-owned Pro status, local trial persistence, onboarding presentation, and
   wiring between user actions, access state, lock state, and feature views.
+- Settings scene presentation from an accessory app. Opening Settings may
+  temporarily use regular activation so SwiftUI can create a visible settings
+  window, then return to accessory mode.
 
 ### Features
 
@@ -102,6 +125,34 @@ app shell, presentation, and lightweight platform primitives; product IDs,
 RevenueCat configuration, local trial state, restore behavior, and gating
 decisions remain app-owned.
 
+## Testing-First Shape
+
+The architecture exposes three test surfaces:
+
+1. Core CLI: deterministic product rules without launching the app.
+2. Xcode tests: app integration, model behavior, purchase-state adapters,
+   trigger-corner logic, and platform wrappers that can be tested safely.
+3. UI smoke CLI: fixed onboarding, settings, and paywall entry points that
+   launch the built app and capture screenshots.
+
+UI smoke launch arguments only choose the first scene. They must still wake the
+same app-owned actions used by real menu items and buttons: `openSettings()`,
+`openPaywall()`, onboarding `show()`, and the normal lock/unlock controller
+methods. Do not add test-only Settings windows, duplicate Kiki panes, or
+parallel paywall/onboarding surfaces for screenshots.
+
+This is why `Core/` is present. If a rule can be expressed as plain input to
+plain output, it belongs there and should be reachable from `script/catlock_core.sh`.
+`script/catlock_core.sh matrix` is the default quick proof for access,
+permission, lock routing, menu title, and warning rules.
+If a behavior depends on SwiftUI, AppKit windows, Kiki presentation, RevenueCat,
+or permissions, keep it in `App/`, `Features/`, or `Platform/` and test it with
+Xcode or UI smoke instead.
+
+The UI smoke layer is not a replacement for manual safety checks. It proves
+that key windows open and are visually reviewable. It does not grant
+Accessibility, lock real input, make purchases, or restore purchases.
+
 ## Safety Model
 
 - The event tap is installed only while locked and is removed on unlock,
@@ -126,3 +177,8 @@ decisions remain app-owned.
 The project generates its Info.plist from Xcode build settings. Before shipping,
 configure signing, notarization, app icon, privacy/support URLs, and any final
 entitlements required by the chosen distribution route.
+
+Before release, use `Docs/Testing.md` as the checklist. Real Accessibility
+grant, real lock, unlock, timeout, purchase, and restore remain manual smoke
+tests because automating them can make the local Mac hard to recover or depend
+on external App Store state.

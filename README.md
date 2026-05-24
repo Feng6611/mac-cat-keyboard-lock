@@ -57,6 +57,7 @@ Core rule check:
 
 ```sh
 ./script/catlock_core.sh evaluate --access trial --accessibility denied --keyboard on
+./script/catlock_core.sh matrix
 ```
 
 UI smoke screenshot:
