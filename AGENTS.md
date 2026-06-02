@@ -14,7 +14,9 @@ workflow.
 5. Keep UI smoke launch arguments wired to the same app-owned actions used by
    real menu items and buttons. Do not add test-only Settings windows or
    duplicate Kiki panes for screenshots.
-6. Verify with unit tests and the local run script.
+6. Open Settings through `KikiSettingsOpener.openForMenuBarApp()` and keep the
+   app in accessory mode; Settings must not create a temporary Dock icon.
+7. Verify with unit tests and the local run script.
 
 ## Boundaries
 

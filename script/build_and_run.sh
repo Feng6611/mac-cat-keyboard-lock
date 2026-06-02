@@ -55,7 +55,11 @@ mkdir -p "$DIST_DIR"
 /usr/bin/xattr -dr com.apple.quarantine "$APP_BUNDLE" >/dev/null 2>&1 || true
 
 open_app() {
-  /usr/bin/open -n "$APP_BUNDLE" --args "${APP_ARGS[@]}"
+  if [[ ${#APP_ARGS[@]} -gt 0 ]]; then
+    /usr/bin/open -n "$APP_BUNDLE" --args "${APP_ARGS[@]}"
+  else
+    /usr/bin/open -n "$APP_BUNDLE"
+  fi
 }
 
 case "$MODE" in

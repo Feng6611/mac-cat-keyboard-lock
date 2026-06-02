@@ -37,9 +37,9 @@ RevenueCat state, defaults, Kiki adapters, or platform permissions.
 - Long-lived menu bar, settings, paywall, and input-lock controllers.
 - App-owned Pro status, local trial persistence, onboarding presentation, and
   wiring between user actions, access state, lock state, and feature views.
-- Settings scene presentation from an accessory app. Opening Settings may
-  temporarily use regular activation so SwiftUI can create a visible settings
-  window, then return to accessory mode.
+- Settings scene presentation from an accessory app. Opening Settings uses
+  `KikiSettingsOpener.openForMenuBarApp()` and must keep accessory mode so it
+  does not create a temporary Dock icon.
 
 ### Features
 

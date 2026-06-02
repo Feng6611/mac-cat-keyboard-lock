@@ -61,3 +61,5 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 - Moved reusable trigger-corner geometry, dwell/cooldown timing, and pointer
   polling into `KikiTriggerCorner`; the app now owns only settings persistence,
   access gating, and lock/unlock callback wiring.
+- Kept Settings opening in accessory mode through `KikiSettingsOpener` so opening
+  Settings does not create a temporary Dock icon.
