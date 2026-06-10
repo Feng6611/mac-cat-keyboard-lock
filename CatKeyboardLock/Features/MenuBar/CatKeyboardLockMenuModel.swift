@@ -108,8 +108,7 @@ enum CatKeyboardLockMenuModel {
             lockState: CatKeyboardLockCoreLockState(state),
             accessibilityTrusted: true,
             lockKeyboard: lockSettings.lockKeyboard,
-            lockMouseClicks: lockSettings.lockMouseClicks,
-            lockPointerMovement: lockSettings.lockPointerMovement
+            lockMouseClicks: lockSettings.lockMouseClicks
         )
         let evaluation = CatKeyboardLockCore.evaluate(coreInput)
 

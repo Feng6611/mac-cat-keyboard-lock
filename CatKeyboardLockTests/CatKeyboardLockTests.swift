@@ -122,8 +122,7 @@ final class CatKeyboardLockTests: XCTestCase {
                 access: .notStarted,
                 accessibilityTrusted: false,
                 lockKeyboard: true,
-                lockMouseClicks: false,
-                lockPointerMovement: false
+                lockMouseClicks: false
             )
         )
 
@@ -139,8 +138,7 @@ final class CatKeyboardLockTests: XCTestCase {
                 access: .trial,
                 accessibilityTrusted: false,
                 lockKeyboard: true,
-                lockMouseClicks: false,
-                lockPointerMovement: false
+                lockMouseClicks: false
             )
         )
 
@@ -150,28 +148,26 @@ final class CatKeyboardLockTests: XCTestCase {
         XCTAssertEqual(evaluation.warnings, ["Accessibility is required before input can be locked."])
     }
 
-    func testCoreEvaluationNamesPointerLockAndEmptyPolicy() {
-        let pointerEvaluation = CatKeyboardLockCore.evaluate(
+    func testCoreEvaluationNamesClickLockAndEmptyPolicy() {
+        let clickEvaluation = CatKeyboardLockCore.evaluate(
             CatKeyboardLockCoreInput(
                 access: .pro,
                 accessibilityTrusted: true,
                 lockKeyboard: true,
-                lockMouseClicks: true,
-                lockPointerMovement: true
+                lockMouseClicks: true
             )
         )
 
-        XCTAssertEqual(pointerEvaluation.menuLockTitle, "Lock Input")
-        XCTAssertEqual(pointerEvaluation.lockRequestAction, .lock)
-        XCTAssertEqual(pointerEvaluation.policySummary, ["keyboard", "clicks", "movement"])
+        XCTAssertEqual(clickEvaluation.menuLockTitle, "Lock Input")
+        XCTAssertEqual(clickEvaluation.lockRequestAction, .lock)
+        XCTAssertEqual(clickEvaluation.policySummary, ["keyboard", "clicks"])
 
         let emptyEvaluation = CatKeyboardLockCore.evaluate(
             CatKeyboardLockCoreInput(
                 access: .pro,
                 accessibilityTrusted: true,
                 lockKeyboard: false,
-                lockMouseClicks: false,
-                lockPointerMovement: false
+                lockMouseClicks: false
             )
         )
 
@@ -220,28 +216,29 @@ final class CatKeyboardLockTests: XCTestCase {
     func testDefaultPolicyOnlyLocksKeyboardEvents() {
         let policy = InputLockPolicy(
             lockKeyboard: true,
-            lockMouseClicks: false,
-            lockPointerMovement: false
+            lockMouseClicks: false
         )
 
-        XCTAssertTrue(policy.includes(.keyDown))
-        XCTAssertTrue(policy.includes(.keyUp))
-        XCTAssertTrue(policy.includes(.flagsChanged))
-        XCTAssertFalse(policy.includes(.leftMouseDown))
-        XCTAssertFalse(policy.includes(.scrollWheel))
+        XCTAssertEqual(policy.suppressedEventTypes, [.keyDown, .keyUp, .flagsChanged])
     }
 
-    func testPointerOptionsExtendPolicyMask() {
+    func testClickOptionExtendsPolicyMask() {
         let policy = InputLockPolicy(
             lockKeyboard: true,
-            lockMouseClicks: true,
-            lockPointerMovement: true
+            lockMouseClicks: true
         )
 
-        XCTAssertTrue(policy.includes(.leftMouseDown))
-        XCTAssertTrue(policy.includes(.leftMouseDragged))
-        XCTAssertTrue(policy.includes(.mouseMoved))
-        XCTAssertTrue(policy.includes(.scrollWheel))
+        XCTAssertEqual(policy.suppressedEventTypes, [
+            .keyDown,
+            .keyUp,
+            .flagsChanged,
+            .leftMouseDown,
+            .leftMouseUp,
+            .rightMouseDown,
+            .rightMouseUp,
+            .otherMouseDown,
+            .otherMouseUp
+        ])
     }
 
     func testVisualFeedbackSettingsPersistAndMapToOverlayStyle() {
@@ -518,11 +515,10 @@ final class CatKeyboardLockTests: XCTestCase {
         XCTAssertEqual(triggerCount, 1)
     }
 
-    func testFallbackUnlockEventsStayObservedForPointerOnlyLock() {
+    func testFallbackUnlockEventsStayObservedForClickOnlyLock() {
         let policy = InputLockPolicy(
             lockKeyboard: false,
-            lockMouseClicks: true,
-            lockPointerMovement: false
+            lockMouseClicks: true
         )
 
         XCTAssertTrue(policy.includes(.keyDown))

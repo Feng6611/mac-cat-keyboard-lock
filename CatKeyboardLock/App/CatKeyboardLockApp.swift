@@ -17,8 +17,8 @@ struct CatKeyboardLockApp: App {
                 lockSettings: appDelegate.lockSettings,
                 inputLockController: appDelegate.inputLockController,
                 proStatusManager: appDelegate.proStatusManager,
-                initialTab: appDelegate.launchOptions.settingsTab ?? .lock,
-                openPaywall: { appDelegate.openPaywall() }
+                navigationModel: appDelegate.settingsNavigation,
+                initialTab: appDelegate.launchOptions.settingsTab ?? .lock
             )
         }
     }
@@ -30,6 +30,7 @@ final class CatKeyboardLockAppDelegate: NSObject, NSApplicationDelegate {
     let lockSettings = LockSettings()
     lazy var inputLockController = InputLockController(settings: lockSettings)
     let proStatusManager = CatKeyboardLockProStatusManager()
+    let settingsNavigation = CatKeyboardLockSettingsNavigationModel.shared
     let launchOptions = CatKeyboardLockLaunchOptions.current()
 
     private let settingsWindowController = KikiSettingsWindowController(
@@ -41,11 +42,8 @@ final class CatKeyboardLockAppDelegate: NSObject, NSApplicationDelegate {
         windowTitle: "Settings"
     )
     private lazy var settingsOpener = KikiSettingsOpener(windowController: settingsWindowController)
-    private lazy var paywallWindowController = CatKeyboardLockPaywallWindowController(
-        config: config,
-        proStatusManager: proStatusManager
-    )
     private lazy var onboardingWindowController = CatKeyboardLockOnboardingWindowController(
+        config: config,
         proStatusManager: proStatusManager,
         inputLockController: inputLockController,
         onFinish: { [weak self] in
@@ -149,12 +147,24 @@ final class CatKeyboardLockAppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    private func openSettings() {
+    private func openSettings(
+        initialTab: CatKeyboardLockInitialSettingsTab? = nil,
+        presentsPaywall: Bool = false
+    ) {
+        if let initialTab {
+            settingsNavigation.selectedTab = initialTab.settingsTab
+        }
+
+        if presentsPaywall {
+            settingsNavigation.selectedTab = .about
+            settingsNavigation.isPaywallSheetPresented = true
+        }
+
         settingsOpener.openForMenuBarApp()
     }
 
     func openPaywall() {
-        paywallWindowController.show()
+        openSettings(initialTab: .about, presentsPaywall: true)
     }
 
     private func presentLaunchSceneIfNeeded() {
@@ -171,7 +181,7 @@ final class CatKeyboardLockAppDelegate: NSObject, NSApplicationDelegate {
             case .onboarding:
                 self.onboardingWindowController.show()
             case .settings:
-                self.openSettings()
+                self.openSettings(initialTab: self.launchOptions.settingsTab)
             case .paywall:
                 self.openPaywall()
             }

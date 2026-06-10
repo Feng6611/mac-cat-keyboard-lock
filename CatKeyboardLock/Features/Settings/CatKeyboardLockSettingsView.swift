@@ -56,29 +56,42 @@ enum CatKeyboardLockInitialSettingsTab: String {
     }
 }
 
+@MainActor
+final class CatKeyboardLockSettingsNavigationModel: ObservableObject {
+    static let shared = CatKeyboardLockSettingsNavigationModel()
+
+    @Published var selectedTab: CatKeyboardLockSettingsTab
+    @Published var isPaywallSheetPresented = false
+
+    init(selectedTab: CatKeyboardLockSettingsTab = .lock) {
+        self.selectedTab = selectedTab
+    }
+}
+
 struct CatKeyboardLockSettingsView: View {
     let config: CatKeyboardLockAppConfig
     @ObservedObject var lockSettings: LockSettings
     @ObservedObject var inputLockController: InputLockController
     @ObservedObject var proStatusManager: CatKeyboardLockProStatusManager
-    let openPaywall: () -> Void
-    @StateObject private var navigation: KikiSettingsNavigationModel<CatKeyboardLockSettingsTab>
+    @StateObject private var navigation: CatKeyboardLockSettingsNavigationModel
 
     init(
         config: CatKeyboardLockAppConfig,
         lockSettings: LockSettings,
         inputLockController: InputLockController,
         proStatusManager: CatKeyboardLockProStatusManager,
-        initialTab: CatKeyboardLockInitialSettingsTab = .lock,
-        openPaywall: @escaping () -> Void
+        navigationModel: CatKeyboardLockSettingsNavigationModel = .shared,
+        initialTab: CatKeyboardLockInitialSettingsTab = .lock
     ) {
         self.config = config
         self.lockSettings = lockSettings
         self.inputLockController = inputLockController
         self.proStatusManager = proStatusManager
-        self.openPaywall = openPaywall
+        if initialTab != .lock {
+            navigationModel.selectedTab = initialTab.settingsTab
+        }
         _navigation = StateObject(
-            wrappedValue: KikiSettingsNavigationModel(selectedTab: initialTab.settingsTab)
+            wrappedValue: navigationModel
         )
     }
 
@@ -96,6 +109,13 @@ struct CatKeyboardLockSettingsView: View {
                 aboutPane
             }
         }
+        .sheet(isPresented: $navigation.isPaywallSheetPresented) {
+            CatKeyboardLockPaywallSheetView(
+                config: config,
+                proStatusManager: proStatusManager,
+                context: .settings
+            )
+        }
     }
 
     private var lockPane: some View {
@@ -103,10 +123,9 @@ struct CatKeyboardLockSettingsView: View {
             Section {
                 KikiSettingsToggleRow("Keyboard", isOn: $lockSettings.lockKeyboard, systemImage: "keyboard")
                 KikiSettingsToggleRow("Clicks", isOn: $lockSettings.lockMouseClicks)
-                KikiSettingsToggleRow("Movement", isOn: $lockSettings.lockPointerMovement)
             } footer: {
                 KikiSettingsHelperText(
-                    "Keyboard is the core lock. Clicks and movement are optional extensions; movement includes dragging and scrolling."
+                    "Keyboard is the core lock. Clicks are an optional extension."
                 )
             }
 
@@ -175,17 +194,12 @@ struct CatKeyboardLockSettingsView: View {
         KikiSettingsPane {
             Section {
                 LaunchAtLogin.Toggle("Launch at Login")
-                KikiSettingsStatusRow(
+                KikiAuthorizationStatusRow(
                     title: "Accessibility",
-                    value: inputLockController.permissionStatus.accessibilityText,
-                    valueColor: inputLockController.permissionStatus.accessibilityTrusted ? .secondary : .orange
+                    isAuthorized: inputLockController.permissionStatus.accessibilityTrusted,
+                    unauthorizedValue: inputLockController.permissionStatus.accessibilityText,
+                    action: inputLockController.requestPermissions
                 )
-
-                if !inputLockController.permissionStatus.accessibilityTrusted {
-                    Button("Open Accessibility Settings") {
-                        inputLockController.requestPermissions()
-                    }
-                }
             } footer: {
                 KikiSettingsHelperText("Accessibility is required to block input while locked.")
             }
@@ -239,7 +253,7 @@ struct CatKeyboardLockSettingsView: View {
                     title: "Status",
                     value: proStatusManager.status.displayName,
                     systemImage: "checkmark.seal",
-                    valueColor: proStatusManager.status.isActive ? .secondary : .orange,
+                    valueColor: proStatusManager.status.isActive ? Color(red: 0.58, green: 0.20, blue: 0.62) : .orange,
                     trailingSystemImage: aboutStatusTrailingSystemImage,
                     action: aboutStatusAction
                 )
@@ -278,11 +292,13 @@ struct CatKeyboardLockSettingsView: View {
     }
 
     private var aboutStatusTrailingSystemImage: String? {
-        proStatusManager.status.isPro ? nil : "chevron.right"
+        "chevron.right"
     }
 
     private var aboutStatusAction: (() -> Void)? {
-        proStatusManager.status.isPro ? nil : openPaywall
+        {
+            navigation.isPaywallSheetPresented = true
+        }
     }
 
 }

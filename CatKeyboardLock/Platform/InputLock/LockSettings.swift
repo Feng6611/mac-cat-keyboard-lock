@@ -17,9 +17,6 @@ final class LockSettings: ObservableObject {
     @Published var lockMouseClicks: Bool {
         didSet { defaults.set(lockMouseClicks, forKey: Keys.lockMouseClicks) }
     }
-    @Published var lockPointerMovement: Bool {
-        didSet { defaults.set(lockPointerMovement, forKey: Keys.lockPointerMovement) }
-    }
     @Published var lockDurationMinutes: Int {
         didSet { defaults.set(lockDurationMinutes, forKey: Keys.lockDurationMinutes) }
     }
@@ -39,7 +36,6 @@ final class LockSettings: ObservableObject {
         self.defaults = defaults
         self.lockKeyboard = defaults.object(forKey: Keys.lockKeyboard) as? Bool ?? true
         self.lockMouseClicks = defaults.object(forKey: Keys.lockMouseClicks) as? Bool ?? false
-        self.lockPointerMovement = defaults.object(forKey: Keys.lockPointerMovement) as? Bool ?? false
         self.lockDurationMinutes = Self.validLockDurationMinutes(
             defaults.object(forKey: Keys.lockDurationMinutes) as? Int
         )
@@ -55,13 +51,12 @@ final class LockSettings: ObservableObject {
     var policy: InputLockPolicy {
         InputLockPolicy(
             lockKeyboard: lockKeyboard,
-            lockMouseClicks: lockMouseClicks,
-            lockPointerMovement: lockPointerMovement
+            lockMouseClicks: lockMouseClicks
         )
     }
 
     var hasPointerLock: Bool {
-        lockMouseClicks || lockPointerMovement
+        lockMouseClicks
     }
 
     var lockDurationInterval: TimeInterval {
@@ -104,7 +99,6 @@ final class LockSettings: ObservableObject {
     private enum Keys {
         static let lockKeyboard = "LockSettings.lockKeyboard"
         static let lockMouseClicks = "LockSettings.lockMouseClicks"
-        static let lockPointerMovement = "LockSettings.lockPointerMovement"
         static let lockDurationMinutes = "LockSettings.lockDurationMinutes"
         static let overlayEffectLevel = "LockSettings.overlayEffectLevel"
         static let triggerCornerEnabled = "LockSettings.triggerCornerEnabled"
@@ -115,7 +109,6 @@ final class LockSettings: ObservableObject {
 struct InputLockPolicy: Equatable {
     let lockKeyboard: Bool
     let lockMouseClicks: Bool
-    let lockPointerMovement: Bool
 
     var eventTypes: [CGEventType] {
         var types = suppressedEventTypes
@@ -138,16 +131,6 @@ struct InputLockPolicy: Equatable {
                 .rightMouseUp,
                 .otherMouseDown,
                 .otherMouseUp
-            ])
-        }
-
-        if lockPointerMovement {
-            types.appendUnique(contentsOf: [
-                .mouseMoved,
-                .leftMouseDragged,
-                .rightMouseDragged,
-                .otherMouseDragged,
-                .scrollWheel
             ])
         }
 

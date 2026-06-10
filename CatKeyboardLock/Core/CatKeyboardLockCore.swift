@@ -52,22 +52,19 @@ struct CatKeyboardLockCoreInput: Codable, Equatable {
     var accessibilityTrusted: Bool
     var lockKeyboard: Bool
     var lockMouseClicks: Bool
-    var lockPointerMovement: Bool
 
     init(
         access: CatKeyboardLockCoreAccess,
         lockState: CatKeyboardLockCoreLockState = .unlocked,
         accessibilityTrusted: Bool,
         lockKeyboard: Bool,
-        lockMouseClicks: Bool,
-        lockPointerMovement: Bool
+        lockMouseClicks: Bool
     ) {
         self.access = access
         self.lockState = lockState
         self.accessibilityTrusted = accessibilityTrusted
         self.lockKeyboard = lockKeyboard
         self.lockMouseClicks = lockMouseClicks
-        self.lockPointerMovement = lockPointerMovement
     }
 }
 
@@ -159,10 +156,6 @@ enum CatKeyboardLockCore {
             summary.append("clicks")
         }
 
-        if input.lockPointerMovement {
-            summary.append("movement")
-        }
-
         return summary
     }
 
@@ -185,10 +178,10 @@ enum CatKeyboardLockCore {
     }
 
     private static func hasPolicy(_ input: CatKeyboardLockCoreInput) -> Bool {
-        input.lockKeyboard || input.lockMouseClicks || input.lockPointerMovement
+        input.lockKeyboard || input.lockMouseClicks
     }
 
     private static func hasPointerLock(_ input: CatKeyboardLockCoreInput) -> Bool {
-        input.lockMouseClicks || input.lockPointerMovement
+        input.lockMouseClicks
     }
 }

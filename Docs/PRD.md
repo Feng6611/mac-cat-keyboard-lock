@@ -19,9 +19,7 @@ keyboard input while keeping the machine awake and visible.
 
 - Menu bar-only app with manual `Lock Keyboard` and `Unlock`.
 - Default policy locks keyboard events only.
-- Settings exposes three parallel input types: keyboard, clicks, and movement.
-  Movement includes pointer movement, dragging, and scrolling as represented by
-  Core Graphics pointer events.
+- Settings exposes two input types: keyboard and clicks.
 - Settings can tune lock feedback with five levels. The default is level 4.
 - Settings can enable an optional trigger corner when access is active. When
   enabled, resting the pointer in the selected screen corner briefly toggles the
@@ -30,11 +28,15 @@ keyboard input while keeping the machine awake and visible.
 - Lock duration is selectable: 5, 10, 30, or 60 minutes. The default is
   10 minutes.
 - First launch shows a lightweight onboarding window covering the lock model,
-  Accessibility setup, recovery, and optional trial start. Starting the trial
-  from onboarding or the paywall begins a one-time 2-day Pro trial.
+  Accessibility setup, recovery, and optional trial start. The final onboarding
+  step presents the same paywall sheet used by Settings About. Starting the
+  trial from onboarding or the paywall begins a one-time 2-day Pro trial.
 - Trial and Pro unlock the full input-lock feature set. When the trial has not
   started or has expired, new lock attempts open the paywall instead of starting
   a lock.
+- Settings exposes Pro status in About. Clicking the About status row opens the
+  app-owned paywall sheet for upgrade, restore, and active Pro status. Purchase
+  controls are not duplicated in other Settings tabs.
 - Pro is sold as two one-time purchases with identical entitlements: Lifetime
   at `$5.99` and Supporter Lifetime at `$10.99`. The Supporter option is
   recommended and selected by default.
@@ -71,9 +73,8 @@ keyboard input while keeping the machine awake and visible.
 - The menu bar item uses one stable keyboard symbol. Locked and unlocked are
   represented as active/inactive and tinted/untinted states of that symbol, not
   unrelated icons.
-- Pointer event suppression follows the Clicks and Movement settings. Enabling
-  either may make menu bar unlock unavailable, so the fallback combo and lock
-  duration release remain mandatory.
+- Click suppression may make menu bar unlock unavailable, so the fallback combo
+  and lock duration release remain mandatory.
 - The unlock combo does not depend on Delete and should work while the keyboard
   filter is active.
 - If event tap creation fails, the app shows a permission or failure state
@@ -87,8 +88,7 @@ keyboard input while keeping the machine awake and visible.
 - Input is intercepted only during an active lock session.
 - Trigger corner monitoring reads the current pointer position only to decide
   whether to start locking; it does not persist pointer coordinates.
-- The app does not persist key codes, typed text, click locations, or scroll
-  data.
+- The app does not persist key codes, typed text, or click locations.
 - No input data leaves the device.
 
 ## Success Criteria

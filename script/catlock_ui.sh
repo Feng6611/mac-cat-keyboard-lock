@@ -116,7 +116,7 @@ run_single_scene() {
         --ui-smoke-settings about
       ;;
     paywall)
-      run_scene "$scene" "Upgrade" "$SCREENSHOT_DIR/paywall.png" \
+      run_scene "$scene" "About" "$SCREENSHOT_DIR/paywall.png" \
         -CatKeyboardLock.Pro.hasCompletedOnboarding YES \
         --ui-smoke-paywall
       ;;
@@ -141,7 +141,7 @@ run_smoke() {
   run_scene settings-about "About" "$SCREENSHOT_DIR/settings-about.png" \
     -CatKeyboardLock.Pro.hasCompletedOnboarding YES \
     --ui-smoke-settings about
-  run_scene paywall "Upgrade" "$SCREENSHOT_DIR/paywall.png" \
+  run_scene paywall "About" "$SCREENSHOT_DIR/paywall.png" \
     -CatKeyboardLock.Pro.hasCompletedOnboarding YES \
     --ui-smoke-paywall
 }

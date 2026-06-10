@@ -3,8 +3,7 @@
 `cat keyboard lock` is a small macOS menu bar app built from the
 `Kiki_menubar_starter` structure. AppKit owns the menu bar shell and platform
 event tap. SwiftUI owns settings, onboarding, and paywall UI. Kiki packages own
-reusable window, settings, menu, paywall, overlay, and trigger-corner
-infrastructure.
+reusable window, settings, menu, overlay, and trigger-corner infrastructure.
 
 ## Current Review
 
@@ -34,12 +33,15 @@ RevenueCat state, defaults, Kiki adapters, or platform permissions.
 
 - SwiftUI `App` entry point.
 - `NSApplicationDelegate` and `.accessory` activation policy.
-- Long-lived menu bar, settings, paywall, and input-lock controllers.
+- Long-lived menu bar, settings, onboarding, and input-lock controllers.
 - App-owned Pro status, local trial persistence, onboarding presentation, and
   wiring between user actions, access state, lock state, and feature views.
 - Settings scene presentation from an accessory app. Opening Settings uses
   `KikiSettingsOpener.openForMenuBarApp()` and must keep accessory mode so it
   does not create a temporary Dock icon.
+- App-local settings navigation owns the selected tab and paywall sheet flag.
+  `openPaywall()` always opens Settings, selects About, and presents the
+  app-owned paywall sheet.
 
 ### Features
 
@@ -47,7 +49,9 @@ RevenueCat state, defaults, Kiki adapters, or platform permissions.
 
 - Menu item declaration in `CatKeyboardLockMenuModel`.
 - Settings `Lock`, `System`, and `About` panes.
-- Lightweight onboarding and RevenueCat-backed paywall presentation.
+- Lightweight onboarding and RevenueCat-backed paywall presentation. The Pro
+  paywall is app-local business UI presented as a sheet from About status and
+  from the onboarding trial step.
 - Accessibility setup copy and routing into the app's permission request flow.
 
 Feature code may import SwiftUI and Kiki. It should not own `CGEventTap`
@@ -107,7 +111,7 @@ Kiki remains reusable infrastructure:
 
 - `KikiMenuBar`: `NSStatusItem` and native menu item mapping.
 - `KikiSettings`: Settings window shell and reusable rows.
-- `KikiPaywall`: reusable paywall display primitives.
+- `KikiPaywall`: reusable low-level paywall display primitives only.
 - `KikiWindow`: standalone window presentation.
 - `KikiDesign`: shared visual primitives.
 - `KikiOverlay`: non-interactive screen-edge overlay and Kiki material toast
@@ -120,10 +124,11 @@ Kiki remains reusable infrastructure:
 Do not move cat keyboard lock input policy, unlock reasons, event tap behavior,
 or Pro gating into Kiki.
 
-Commerce and trial policy also stay in this app. `Kiki_mackit` provides reusable
-app shell, presentation, and lightweight platform primitives; product IDs,
-RevenueCat configuration, local trial state, restore behavior, and gating
-decisions remain app-owned.
+Commerce, paywall presentation, and trial policy stay in this app.
+`Kiki_mackit` provides reusable app shell, settings rows, presentation, and
+lightweight platform primitives; product IDs, RevenueCat configuration, local
+trial state, restore behavior, paywall layout, and gating decisions remain
+app-owned. Kiki never calls RevenueCat or decides entitlement state.
 
 ## Testing-First Shape
 
@@ -137,9 +142,10 @@ The architecture exposes three test surfaces:
 
 UI smoke launch arguments only choose the first scene. They must still wake the
 same app-owned actions used by real menu items and buttons: `openSettings()`,
-`openPaywall()`, onboarding `show()`, and the normal lock/unlock controller
-methods. Do not add test-only Settings windows, duplicate Kiki panes, or
-parallel paywall/onboarding surfaces for screenshots.
+`openPaywall()` selecting About and presenting the sheet, onboarding `show()`,
+and the normal lock/unlock controller methods. Do not add test-only Settings
+windows, duplicate Kiki panes, standalone upgrade windows, or parallel
+paywall/onboarding surfaces for screenshots.
 
 This is why `Core/` is present. If a rule can be expressed as plain input to
 plain output, it belongs there and should be reachable from `script/catlock_core.sh`.
@@ -168,8 +174,8 @@ Accessibility, lock real input, make purchases, or restore purchases.
   for locked/unlocked mode feedback.
 - Pro gating blocks only new lock attempts. Existing locks keep their normal
   recovery paths even if a trial expires while locked.
-- Pointer blocking is opt-in and can interfere with menu bar interaction; the
-  fallback combo and 10-minute timeout are always available.
+- Click suppression can interfere with menu bar interaction; the fallback combo
+  and selected timeout are always available.
 - Permission failures are surfaced as state, not hidden behind a lock-looking UI.
 
 ## Release Readiness

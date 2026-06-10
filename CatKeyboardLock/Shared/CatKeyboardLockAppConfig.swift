@@ -47,7 +47,7 @@ struct CatKeyboardLockAppConfig: Equatable {
             )
         ],
         features: [
-            "Full keyboard, click, and movement lock",
+            "Full keyboard and click lock",
             "Trigger corner and lock feedback controls",
             "Lock duration safety release"
         ],

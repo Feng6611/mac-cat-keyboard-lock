@@ -39,8 +39,7 @@ struct CatLockCoreCLI {
             ),
             accessibilityTrusted: try boolValue(options["accessibility"] ?? "allowed", name: "accessibility"),
             lockKeyboard: try boolValue(options["keyboard"] ?? "on", name: "keyboard"),
-            lockMouseClicks: try boolValue(options["clicks"] ?? "off", name: "clicks"),
-            lockPointerMovement: try boolValue(options["movement"] ?? "off", name: "movement")
+            lockMouseClicks: try boolValue(options["clicks"] ?? "off", name: "clicks")
         )
 
         let evaluation = CatKeyboardLockCore.evaluate(input)
@@ -59,8 +58,7 @@ struct CatLockCoreCLI {
                     access: .trial,
                     accessibilityTrusted: true,
                     lockKeyboard: true,
-                    lockMouseClicks: false,
-                    lockPointerMovement: false
+                    lockMouseClicks: false
                 ),
                 expectedMenuLockTitle: "Lock Keyboard",
                 expectedAction: .lock,
@@ -72,21 +70,19 @@ struct CatLockCoreCLI {
                     access: .trial,
                     accessibilityTrusted: false,
                     lockKeyboard: true,
-                    lockMouseClicks: false,
-                    lockPointerMovement: false
+                    lockMouseClicks: false
                 ),
                 expectedMenuLockTitle: "Lock Keyboard",
                 expectedAction: .openPermission,
                 expectedWarnings: ["Accessibility is required before input can be locked."]
             ),
             MatrixCase(
-                name: "pro-pointer-policy",
+                name: "pro-click-policy",
                 input: CatKeyboardLockCoreInput(
                     access: .pro,
                     accessibilityTrusted: true,
                     lockKeyboard: true,
-                    lockMouseClicks: true,
-                    lockPointerMovement: true
+                    lockMouseClicks: true
                 ),
                 expectedMenuLockTitle: "Lock Input",
                 expectedAction: .lock,
@@ -98,8 +94,7 @@ struct CatLockCoreCLI {
                     access: .expired,
                     accessibilityTrusted: true,
                     lockKeyboard: true,
-                    lockMouseClicks: false,
-                    lockPointerMovement: false
+                    lockMouseClicks: false
                 ),
                 expectedMenuLockTitle: "Upgrade to Lock...",
                 expectedAction: .openPaywall,
@@ -111,8 +106,7 @@ struct CatLockCoreCLI {
                     access: .notStarted,
                     accessibilityTrusted: true,
                     lockKeyboard: true,
-                    lockMouseClicks: false,
-                    lockPointerMovement: false
+                    lockMouseClicks: false
                 ),
                 expectedMenuLockTitle: "Start Trial / Upgrade...",
                 expectedAction: .openPaywall,
@@ -125,8 +119,7 @@ struct CatLockCoreCLI {
                     lockState: .locked,
                     accessibilityTrusted: false,
                     lockKeyboard: false,
-                    lockMouseClicks: false,
-                    lockPointerMovement: false
+                    lockMouseClicks: false
                 ),
                 expectedMenuLockTitle: "Unlock",
                 expectedAction: .unlock,
@@ -141,8 +134,7 @@ struct CatLockCoreCLI {
                     access: .trial,
                     accessibilityTrusted: true,
                     lockKeyboard: false,
-                    lockMouseClicks: false,
-                    lockPointerMovement: false
+                    lockMouseClicks: false
                 ),
                 expectedMenuLockTitle: "Lock Keyboard",
                 expectedAction: .chooseInput,
@@ -228,7 +220,6 @@ struct CatLockCoreCLI {
               --accessibility allowed|denied             default: allowed
               --keyboard on|off                          default: on
               --clicks on|off                            default: off
-              --movement on|off                          default: off
 
             example:
               script/catlock_core.sh evaluate --access trial --accessibility denied --keyboard on

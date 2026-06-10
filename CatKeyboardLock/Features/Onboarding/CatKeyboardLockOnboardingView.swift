@@ -5,6 +5,7 @@ import SwiftUI
 
 @MainActor
 final class CatKeyboardLockOnboardingWindowController {
+    private let config: CatKeyboardLockAppConfig
     private let proStatusManager: CatKeyboardLockProStatusManager
     private let inputLockController: InputLockController
     private let onFinish: () -> Void
@@ -13,8 +14,8 @@ final class CatKeyboardLockOnboardingWindowController {
     private lazy var windowController = KikiSingleWindowController(
         configuration: .utility(
             title: "Welcome",
-            size: CGSize(width: 560, height: 560),
-            minimumSize: CGSize(width: 520, height: 520),
+            size: CGSize(width: 620, height: 660),
+            minimumSize: CGSize(width: 560, height: 560),
             frameAutosaveName: "CatKeyboardLock.OnboardingWindow"
         ),
         onClose: { [weak self] in
@@ -22,6 +23,7 @@ final class CatKeyboardLockOnboardingWindowController {
         }
     ) { [weak self, proStatusManager] in
         CatKeyboardLockOnboardingView(
+            config: self?.config ?? .default,
             proStatusManager: proStatusManager,
             inputLockController: self?.inputLockController,
             onFinish: {
@@ -34,10 +36,12 @@ final class CatKeyboardLockOnboardingWindowController {
     }
 
     init(
+        config: CatKeyboardLockAppConfig,
         proStatusManager: CatKeyboardLockProStatusManager,
         inputLockController: InputLockController,
         onFinish: @escaping () -> Void
     ) {
+        self.config = config
         self.proStatusManager = proStatusManager
         self.inputLockController = inputLockController
         self.onFinish = onFinish
@@ -82,6 +86,7 @@ final class CatKeyboardLockOnboardingWindowController {
 }
 
 struct CatKeyboardLockOnboardingView: View {
+    let config: CatKeyboardLockAppConfig
     @ObservedObject var proStatusManager: CatKeyboardLockProStatusManager
     @ObservedObject var inputLockController: InputLockController
 
@@ -89,16 +94,18 @@ struct CatKeyboardLockOnboardingView: View {
     let onClose: () -> Void
 
     @State private var pageIndex = 0
-    @State private var isStartingTrial = false
+    @State private var isPaywallSheetPresented = false
 
     private let pages = CatKeyboardLockOnboardingPage.allCases
 
     init(
+        config: CatKeyboardLockAppConfig,
         proStatusManager: CatKeyboardLockProStatusManager,
         inputLockController: InputLockController?,
         onFinish: @escaping () -> Void,
         onClose: @escaping () -> Void
     ) {
+        self.config = config
         self.proStatusManager = proStatusManager
         self.inputLockController = inputLockController ?? InputLockController(settings: LockSettings())
         self.onFinish = onFinish
@@ -122,20 +129,33 @@ struct CatKeyboardLockOnboardingView: View {
                 .padding(.horizontal, 34)
                 .padding(.bottom, 26)
         }
-        .frame(width: 560, height: 560)
+        .frame(width: 620, height: 660)
         .background(Color(nsColor: .windowBackgroundColor))
         .onAppear {
             inputLockController.refreshPermissions()
+            presentPaywallIfNeeded()
         }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             inputLockController.refreshPermissions()
         }
+        .onChange(of: pageIndex) { _ in
+            presentPaywallIfNeeded()
+        }
+        .sheet(isPresented: $isPaywallSheetPresented) {
+            CatKeyboardLockPaywallSheetView(
+                config: config,
+                proStatusManager: proStatusManager,
+                context: .onboarding,
+                onFinish: onFinish
+            )
+        }
     }
 
+    @ViewBuilder
     private var pageContent: some View {
         let page = pages[pageIndex]
 
-        return VStack(spacing: 18) {
+        VStack(spacing: 18) {
             Image(systemName: page.systemImage)
                 .font(.system(size: 52, weight: .semibold))
                 .foregroundStyle(.orange)
@@ -241,27 +261,18 @@ struct CatKeyboardLockOnboardingView: View {
                 handlePrimaryAction()
             } label: {
                 HStack(spacing: 8) {
-                    if isStartingTrial {
-                        ProgressView()
-                            .controlSize(.small)
-                    }
                     Text(primaryButtonTitle)
                         .fontWeight(.semibold)
                 }
-                .frame(width: pageIndex == pages.count - 1 ? 190 : 118, height: 32)
+                .frame(width: pageIndex == pages.count - 1 ? 132 : 118, height: 32)
             }
             .buttonStyle(.borderedProminent)
             .tint(.orange)
-            .disabled(isStartingTrial)
         }
     }
 
     private var primaryButtonTitle: String {
-        if pageIndex == pages.count - 1 {
-            return "Start 2-Day Pro Trial"
-        }
-
-        return "Continue"
+        pageIndex == pages.count - 1 ? "Choose Plan" : "Continue"
     }
 
     private func handlePrimaryAction() {
@@ -270,16 +281,21 @@ struct CatKeyboardLockOnboardingView: View {
             return
         }
 
-        Task { @MainActor in
-            isStartingTrial = true
-            await proStatusManager.startTrial()
-            isStartingTrial = false
-            onFinish()
+        isPaywallSheetPresented = true
+    }
+
+    private func presentPaywallIfNeeded() {
+        guard pages[pageIndex] == .trial else {
+            return
+        }
+
+        DispatchQueue.main.async {
+            isPaywallSheetPresented = true
         }
     }
 }
 
-private enum CatKeyboardLockOnboardingPage: CaseIterable {
+enum CatKeyboardLockOnboardingPage: String, CaseIterable {
     case protect
     case permission
     case recover
@@ -314,7 +330,7 @@ private enum CatKeyboardLockOnboardingPage: CaseIterable {
     var subtitle: String {
         switch self {
         case .protect:
-            return "Cat Keyboard Lock keeps accidental typing, clicks, movement, and scrolls away from the current Mac session."
+            return "Cat Keyboard Lock keeps accidental typing and clicks away from the current Mac session."
         case .permission:
             return "macOS requires Accessibility before an app can block input. You can finish setup now or continue and grant it later."
         case .recover:
@@ -328,7 +344,7 @@ private enum CatKeyboardLockOnboardingPage: CaseIterable {
         switch self {
         case .protect:
             return [
-                "Keyboard, click, and pointer movement locks",
+                "Keyboard and click locks",
                 "Manual menu bar control"
             ]
         case .permission:

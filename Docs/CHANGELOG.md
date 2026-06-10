@@ -22,6 +22,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
   RevenueCatCommerceKit-backed purchase and restore handling.
 - Added two one-time Pro plan surfaces: Lifetime at `$5.99` and recommended
   Supporter Lifetime at `$10.99`.
+- Added an app-owned paywall sheet opened from Settings About status and
+  onboarding.
 - Added a Debug-only test entry for forcing paid or unpaid Pro access while
   testing local builds.
 - Set the trigger corner hot zone to 40pt for more reliable edge activation.
@@ -47,12 +49,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
   status item active state plus a locked-state orange tint.
 - Removed the Account tab and aligned form controls with
   `mac-command-reopen`'s native KikiSettingsPane pattern.
-- Simplified input settings to three parallel types: Keyboard, Clicks, and
-  Movement.
+- Simplified input settings to Keyboard and Clicks, removing movement/drag/scroll
+  suppression from the product surface and event filter.
 - Renamed the shortcut setting to `Lock / unlock shortcut` and showed the same
   shortcut on both lock and unlock menu states.
 - Split Settings into `Lock`, `System`, and `About` tabs. Settings now opens on
   `Lock`, with lock feedback grouped under `Shortcut & Safety`.
+- Replaced the standalone orange Upgrade page and Settings Pro tab with a
+  Command Reopen-style app-local paywall sheet.
+- Updated onboarding's final step to present the same paywall sheet instead of
+  embedding a separate card or hardcoded trial CTA.
 - Replaced the duration stepper with fixed Lock duration choices: 5, 10, 30,
   and 60 minutes.
 - Replaced the starter mock entitlement store with real Trial/Pro gating.
