@@ -1,13 +1,14 @@
 import Combine
 import Foundation
+import KikiCommerce
 import RevenueCatCommerceKit
 
 @MainActor
 final class CatKeyboardLockProStatusManager: ObservableObject {
     enum Constants {
-        static let trialDuration: TimeInterval = 2 * 24 * 60 * 60
-        static let transactionRefreshAttempts = 3
-        static let transactionRefreshDelayNanoseconds: UInt64 = 750_000_000
+        static let trialDuration = CatKeyboardLockRevenueCatConfiguration.trialDuration
+        static let transactionRefreshAttempts = KikiProAccessManager.Constants.transactionRefreshAttempts
+        static let transactionRefreshDelayNanoseconds = KikiProAccessManager.Constants.transactionRefreshDelayNanoseconds
     }
 
     @Published private(set) var status: CatKeyboardLockProStatus
@@ -21,35 +22,24 @@ final class CatKeyboardLockProStatusManager: ObservableObject {
     @Published private(set) var debugProAccessOverride: Bool?
 #endif
 
-    private let defaults: UserDefaults
-    private let commerceClient: any CommerceClient
-    private let now: () -> Date
+    let kikiProAccessManager: KikiProAccessManager
 
-    private var entitlementSnapshot: CommerceEntitlement?
-    private var currentOffering: CommerceOffering?
-    private var hasConfigured = false
-    private var expirationTask: Task<Void, Never>?
+    private var cancellables: Set<AnyCancellable> = []
 
     var snapshot: CatKeyboardLockEntitlementSnapshot {
         CatKeyboardLockEntitlementSnapshot(status: status)
     }
 
     var hasCompletedOnboarding: Bool {
-        defaults.bool(forKey: CatKeyboardLockProDefaults.Keys.hasCompletedOnboarding)
+        kikiProAccessManager.hasCompletedOnboarding
     }
 
     var shouldShowOnboarding: Bool {
-#if DEBUG
-        if debugProAccessOverride != nil {
-            return false
-        }
-#endif
-
-        return !hasCompletedOnboarding && !status.isPro
+        kikiProAccessManager.shouldShowOnboarding
     }
 
     var currentEntitlementSnapshot: CommerceEntitlement? {
-        entitlementSnapshot
+        kikiProAccessManager.currentEntitlementSnapshot
     }
 
     init(
@@ -57,114 +47,59 @@ final class CatKeyboardLockProStatusManager: ObservableObject {
         commerceClient: (any CommerceClient)? = nil,
         now: @escaping () -> Date = Date.init
     ) {
-        let client = commerceClient ?? RevenueCatCommerceClient(
-            configuration: CatKeyboardLockRevenueCatConfiguration.commerceConfiguration
+        let manager = KikiProAccessManager(
+            configuration: CatKeyboardLockRevenueCatConfiguration.proAccessConfiguration,
+            defaults: defaults,
+            commerceClient: commerceClient,
+            now: now
         )
-        let cachedSnapshot = client.cachedEntitlement
 
-        self.defaults = defaults
-        self.commerceClient = client
-        self.now = now
-        self.entitlementSnapshot = cachedSnapshot
-        self.currentOffering = nil
-        self.availablePlans = CatKeyboardLockProPlanProduct.fallbackPlans
-        self.lastError = nil
+        self.kikiProAccessManager = manager
+        self.status = CatKeyboardLockProStatus(kikiStatus: manager.status)
+        self.availablePlans = manager.availablePlans.compactMap(CatKeyboardLockProPlanProduct.init(kikiProduct:))
+        self.lastError = manager.lastError
         self.purchaseInProgressPlan = nil
-        self.paywallErrorMessage = nil
-        self.paywallSuccessMessage = nil
+        self.isRestoringPurchases = manager.isRestoringPurchases
+        self.paywallErrorMessage = manager.paywallErrorMessage
+        self.paywallSuccessMessage = manager.paywallSuccessMessage
 #if DEBUG
-        self.debugProAccessOverride = Self.readDebugProAccessOverride(defaults: defaults)
+        self.debugProAccessOverride = manager.debugProAccessOverride
 #endif
-        self.status = Self.computeStatus(entitlementSnapshot: cachedSnapshot, defaults: defaults, now: now)
-        scheduleExpirationIfNeeded()
-    }
 
-    deinit {
-        expirationTask?.cancel()
+        bindManager()
     }
 
     func configureIfNeeded() {
-        guard !hasConfigured else {
-            return
-        }
-
-        commerceClient.entitlementDidChange = { [weak self] snapshot in
-            self?.entitlementSnapshot = snapshot
-            self?.applyStatus(self?.computeStatus() ?? .expired)
-        }
-        commerceClient.configureIfNeeded()
-        entitlementSnapshot = commerceClient.cachedEntitlement
-        hasConfigured = true
-        applyStatus(computeStatus())
+        kikiProAccessManager.configureIfNeeded()
     }
 
     func refresh() async {
-        configureIfNeeded()
-
-        do {
-            entitlementSnapshot = try await commerceClient.refreshEntitlement()
-            lastError = nil
-        } catch {
-            lastError = CommercePurchaseError(error: error)
-        }
-
-        applyStatus(computeStatus())
+        await kikiProAccessManager.refresh()
     }
 
     func loadOfferings() async {
-        configureIfNeeded()
-
-        if let currentOffering {
-            availablePlans = Self.resolveAvailablePlans(offering: currentOffering, offeringsError: nil)
-            return
-        }
-
-        var offeringsError: Error?
-        do {
-            currentOffering = try await commerceClient.loadOffering()
-        } catch {
-            currentOffering = nil
-            offeringsError = error
-        }
-
-        availablePlans = Self.resolveAvailablePlans(offering: currentOffering, offeringsError: offeringsError)
+        await kikiProAccessManager.loadOfferings()
     }
 
     func startTrial() async {
-        clearPaywallMessages()
-        guard status.canStartTrial else {
-            return
-        }
-
-        let resolvedStartDate = now()
-        defaults.set(resolvedStartDate, forKey: CatKeyboardLockProDefaults.Keys.trialStartedAt)
-        defaults.set(true, forKey: CatKeyboardLockProDefaults.Keys.hasCompletedOnboarding)
-        applyStatus(computeStatus())
+        await kikiProAccessManager.startTrial()
     }
 
     func completeOnboardingWithoutTrial() {
-        defaults.set(true, forKey: CatKeyboardLockProDefaults.Keys.hasCompletedOnboarding)
+        kikiProAccessManager.completeOnboardingWithoutTrial()
     }
 
 #if DEBUG
     var debugProAccessToggleIsOn: Bool {
-        debugProAccessOverride ?? status.isPro
+        kikiProAccessManager.debugProAccessToggleIsOn
     }
 
     var debugProAccessOverrideDisplayName: String {
-        guard let debugProAccessOverride else {
-            return "Off"
-        }
-
-        return debugProAccessOverride ? "Paid" : "Unpaid"
+        kikiProAccessManager.debugProAccessOverrideDisplayName
     }
 
     func setDebugProAccessOverride(_ isPro: Bool) {
-        defaults.set(isPro, forKey: CatKeyboardLockProDefaults.Keys.debugProAccessOverride)
-        defaults.set(true, forKey: CatKeyboardLockProDefaults.Keys.hasCompletedOnboarding)
-        debugProAccessOverride = isPro
-        clearPaywallMessages()
-        applyStatus(computeStatus())
+        kikiProAccessManager.setDebugProAccessOverride(isPro)
     }
 
     func toggleDebugProAccessOverride() {
@@ -172,79 +107,16 @@ final class CatKeyboardLockProStatusManager: ObservableObject {
     }
 
     func clearDebugProAccessOverride() {
-        defaults.removeObject(forKey: CatKeyboardLockProDefaults.Keys.debugProAccessOverride)
-        debugProAccessOverride = nil
-        clearPaywallMessages()
-        applyStatus(computeStatus())
+        kikiProAccessManager.clearDebugProAccessOverride()
     }
 #endif
 
     func purchase(_ plan: CatKeyboardLockPurchasePlan) async throws {
-        configureIfNeeded()
-        clearPaywallMessages()
-        purchaseInProgressPlan = plan
-        defer { purchaseInProgressPlan = nil }
-
-        do {
-            let snapshot = try await commerceClient.purchase(plan.commercePlan)
-            lastError = nil
-            entitlementSnapshot = snapshot
-            applyStatus(computeStatus())
-
-            if !status.isPro {
-                let didUnlock = await refreshEntitlementStateAfterTransaction()
-                if !didUnlock {
-                    throw CommercePurchaseError.activationPending
-                }
-            }
-
-            if status.isPro {
-                defaults.set(true, forKey: CatKeyboardLockProDefaults.Keys.hasCompletedOnboarding)
-                paywallSuccessMessage = "Purchase successful. Pro unlocked."
-            }
-        } catch {
-            let purchaseError = CommercePurchaseError(error: error)
-            lastError = purchaseError
-            paywallErrorMessage = purchaseError == .purchaseCancelled ? nil : purchaseError.errorDescription
-            paywallSuccessMessage = nil
-            throw purchaseError
-        }
+        try await kikiProAccessManager.purchase(planID: plan.id)
     }
 
     func restorePurchases() async throws {
-        configureIfNeeded()
-        clearPaywallMessages()
-        isRestoringPurchases = true
-        defer { isRestoringPurchases = false }
-
-        do {
-            let snapshot = try await commerceClient.restorePurchases()
-            lastError = nil
-            entitlementSnapshot = snapshot
-            applyStatus(computeStatus())
-
-            if !status.isPro {
-                if snapshot != nil {
-                    let didUnlock = await refreshEntitlementStateAfterTransaction()
-                    if !didUnlock {
-                        throw CommercePurchaseError.activationPending
-                    }
-                } else {
-                    paywallErrorMessage = "No active purchase found on this account."
-                }
-            }
-
-            if status.isPro {
-                defaults.set(true, forKey: CatKeyboardLockProDefaults.Keys.hasCompletedOnboarding)
-                paywallSuccessMessage = "Purchase restored."
-            }
-        } catch {
-            let purchaseError = CommercePurchaseError(error: error)
-            lastError = purchaseError
-            paywallErrorMessage = purchaseError == .purchaseCancelled ? nil : purchaseError.errorDescription
-            paywallSuccessMessage = nil
-            throw purchaseError
-        }
+        try await kikiProAccessManager.restorePurchases()
     }
 
     func planProduct(for plan: CatKeyboardLockPurchasePlan) -> CatKeyboardLockProPlanProduct {
@@ -255,155 +127,77 @@ final class CatKeyboardLockProStatusManager: ObservableObject {
         packageMetadata: [CatKeyboardLockPurchasePlan: CatKeyboardLockProPlanPackageMetadata]?,
         offeringsAttempted: Bool = false
     ) -> [CatKeyboardLockProPlanProduct] {
-        CatKeyboardLockPurchasePlan.allCases.map { plan in
-            let fallback = CatKeyboardLockProPlanProduct.fallback(
-                for: plan,
-                isAvailable: packageMetadata == nil && !offeringsAttempted
-            )
-
-            guard let metadata = packageMetadata?[plan] else {
-                return fallback
-            }
-
-            return CatKeyboardLockProPlanProduct(
-                plan: plan,
-                title: fallback.title,
-                displayPrice: metadata.displayPrice,
-                billingDetail: metadata.billingDetail,
-                badge: fallback.badge,
-                isAvailable: metadata.isAvailable
+        let metadata = packageMetadata?.reduce(into: [String: KikiProPlanPackageMetadata]()) { result, item in
+            result[item.key.id] = KikiProPlanPackageMetadata(
+                displayPrice: item.value.displayPrice,
+                billingDetail: item.value.billingDetail,
+                isAvailable: item.value.isAvailable
             )
         }
+
+        return KikiProAccessManager
+            .makeAvailablePlans(
+                plans: CatKeyboardLockPurchasePlan.allCases.map(\.kikiProPlan),
+                packageMetadata: metadata,
+                offeringsAttempted: offeringsAttempted
+            )
+            .compactMap(CatKeyboardLockProPlanProduct.init(kikiProduct:))
     }
 
-    private func clearPaywallMessages() {
-        paywallErrorMessage = nil
-        paywallSuccessMessage = nil
-    }
-
-    private func refreshEntitlementStateAfterTransaction() async -> Bool {
-        for attempt in 1...Constants.transactionRefreshAttempts {
-            do {
-                entitlementSnapshot = try await commerceClient.refreshEntitlement()
-                applyStatus(computeStatus())
-
-                if status.isPro {
-                    return true
-                }
-            } catch {
-                lastError = CommercePurchaseError(error: error)
+    private func bindManager() {
+        kikiProAccessManager.$status
+            .map(CatKeyboardLockProStatus.init(kikiStatus:))
+            .sink { [weak self] status in
+                self?.status = status
             }
+            .store(in: &cancellables)
 
-            if attempt < Constants.transactionRefreshAttempts {
-                try? await Task.sleep(nanoseconds: Constants.transactionRefreshDelayNanoseconds)
+        kikiProAccessManager.$availablePlans
+            .map { $0.compactMap(CatKeyboardLockProPlanProduct.init(kikiProduct:)) }
+            .sink { [weak self] availablePlans in
+                self?.availablePlans = availablePlans
             }
-        }
+            .store(in: &cancellables)
 
-        return false
-    }
-
-    private func computeStatus() -> CatKeyboardLockProStatus {
-        Self.computeStatus(entitlementSnapshot: entitlementSnapshot, defaults: defaults, now: now)
-    }
-
-    private func applyStatus(_ newStatus: CatKeyboardLockProStatus) {
-        status = newStatus
-        scheduleExpirationIfNeeded()
-    }
-
-    private func scheduleExpirationIfNeeded() {
-        expirationTask?.cancel()
-        expirationTask = nil
-
-        guard case .trial(_, let expiresAt) = status else {
-            return
-        }
-
-        let delay = max(0, expiresAt.timeIntervalSince(now()))
-        let nanoseconds = UInt64(delay * 1_000_000_000)
-        expirationTask = Task { @MainActor [weak self] in
-            try? await Task.sleep(nanoseconds: nanoseconds)
-            guard !Task.isCancelled, let self else {
-                return
+        kikiProAccessManager.$lastError
+            .sink { [weak self] lastError in
+                self?.lastError = lastError
             }
-            self.applyStatus(self.computeStatus())
-        }
-    }
+            .store(in: &cancellables)
 
-    private static func computeStatus(
-        entitlementSnapshot: CommerceEntitlement?,
-        defaults: UserDefaults,
-        now: () -> Date
-    ) -> CatKeyboardLockProStatus {
-#if DEBUG
-        if let debugProAccessOverride = readDebugProAccessOverride(defaults: defaults) {
-            return debugProAccessOverride
-                ? .pro(plan: .supporterLifetime, originalPurchaseDate: nil)
-                : .expired
-        }
-#endif
+        kikiProAccessManager.$purchaseInProgressPlanID
+            .map { planID in
+                planID.flatMap(CatKeyboardLockPurchasePlan.init(rawValue:))
+            }
+            .sink { [weak self] purchaseInProgressPlan in
+                self?.purchaseInProgressPlan = purchaseInProgressPlan
+            }
+            .store(in: &cancellables)
 
-        if let entitlementSnapshot,
-           let plan = CatKeyboardLockPurchasePlan(commercePlan: entitlementSnapshot.plan) {
-            return .pro(plan: plan, originalPurchaseDate: entitlementSnapshot.originalPurchaseDate)
-        }
+        kikiProAccessManager.$isRestoringPurchases
+            .sink { [weak self] isRestoringPurchases in
+                self?.isRestoringPurchases = isRestoringPurchases
+            }
+            .store(in: &cancellables)
 
-        guard let trialStartedAt = defaults.object(forKey: CatKeyboardLockProDefaults.Keys.trialStartedAt) as? Date else {
-            return .notStarted
-        }
+        kikiProAccessManager.$paywallErrorMessage
+            .sink { [weak self] paywallErrorMessage in
+                self?.paywallErrorMessage = paywallErrorMessage
+            }
+            .store(in: &cancellables)
 
-        let expiresAt = trialStartedAt.addingTimeInterval(Constants.trialDuration)
-        let remaining = expiresAt.timeIntervalSince(now())
-
-        if remaining > 0 {
-            let daysRemaining = max(1, Int(ceil(remaining / 86_400)))
-            return .trial(daysRemaining: daysRemaining, expiresAt: expiresAt)
-        }
-
-        return .expired
-    }
+        kikiProAccessManager.$paywallSuccessMessage
+            .sink { [weak self] paywallSuccessMessage in
+                self?.paywallSuccessMessage = paywallSuccessMessage
+            }
+            .store(in: &cancellables)
 
 #if DEBUG
-    private static func readDebugProAccessOverride(defaults: UserDefaults) -> Bool? {
-        guard defaults.object(forKey: CatKeyboardLockProDefaults.Keys.debugProAccessOverride) != nil else {
-            return nil
-        }
-
-        return defaults.bool(forKey: CatKeyboardLockProDefaults.Keys.debugProAccessOverride)
-    }
-#endif
-
-    private static func packageMetadata(from offering: CommerceOffering?) -> [CatKeyboardLockPurchasePlan: CatKeyboardLockProPlanPackageMetadata]? {
-        guard let offering, !offering.isEmpty else {
-            return nil
-        }
-
-        return Dictionary(uniqueKeysWithValues: offering.products.compactMap { product in
-            guard let plan = CatKeyboardLockPurchasePlan(commercePlan: product.plan) else {
-                return nil
+        kikiProAccessManager.$debugProAccessOverride
+            .sink { [weak self] debugProAccessOverride in
+                self?.debugProAccessOverride = debugProAccessOverride
             }
-
-            return (
-                plan,
-                CatKeyboardLockProPlanPackageMetadata(
-                    displayPrice: product.displayPrice,
-                    billingDetail: plan.billingDetail,
-                    isAvailable: product.isAvailable
-                )
-            )
-        })
-    }
-
-    private static func resolveAvailablePlans(
-        offering: CommerceOffering?,
-        offeringsError: Error?
-    ) -> [CatKeyboardLockProPlanProduct] {
-        let purchaseError = offeringsError.map(CommercePurchaseError.init(error:))
-        let shouldKeepFallbackAvailable = purchaseError == .network
-
-        return makeAvailablePlans(
-            packageMetadata: packageMetadata(from: offering),
-            offeringsAttempted: !shouldKeepFallbackAvailable
-        )
+            .store(in: &cancellables)
+#endif
     }
 }

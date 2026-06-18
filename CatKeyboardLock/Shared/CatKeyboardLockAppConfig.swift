@@ -6,6 +6,7 @@ struct CatKeyboardLockAppConfig: Equatable {
     let bundleID: String
     let officialURL: String
     let officialDisplayName: String
+    let termsURL: String
     let supportURL: String
     let privacyURL: String
     let repositoryURL: String
@@ -22,6 +23,7 @@ struct CatKeyboardLockAppConfig: Equatable {
         bundleID: "dev.kkuk.catkeyboardlock",
         officialURL: "https://github.com/Feng6611/mac-cat-keyboard-lock#readme",
         officialDisplayName: "GitHub README",
+        termsURL: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/",
         supportURL: "https://github.com/Feng6611/mac-cat-keyboard-lock/issues",
         privacyURL: "https://github.com/Feng6611/mac-cat-keyboard-lock/blob/main/PRIVACY.md",
         repositoryURL: "https://github.com/Feng6611/mac-cat-keyboard-lock",

@@ -46,6 +46,8 @@
 		A00100000000000000000029 /* KikiAuthorization in Frameworks */ = {isa = PBXBuildFile; productRef = A00B00000000000000000009 /* KikiAuthorization */; };
 		A0010000000000000000002A /* KikiAuthorization in Frameworks */ = {isa = PBXBuildFile; productRef = A00B00000000000000000009 /* KikiAuthorization */; };
 		A0010000000000000000002B /* CatKeyboardLockCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0020000000000000000001D /* CatKeyboardLockCore.swift */; };
+		A0010000000000000000002C /* KikiCommerce in Frameworks */ = {isa = PBXBuildFile; productRef = A00B0000000000000000000A /* KikiCommerce */; };
+		A0010000000000000000002D /* KikiCommerce in Frameworks */ = {isa = PBXBuildFile; productRef = A00B0000000000000000000A /* KikiCommerce */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -100,6 +102,7 @@
 					A0010000000000000000001E /* KikiOverlay in Frameworks */,
 					A00100000000000000000027 /* KikiTriggerCorner in Frameworks */,
 					A00100000000000000000029 /* KikiAuthorization in Frameworks */,
+					A0010000000000000000002C /* KikiCommerce in Frameworks */,
 				);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -116,6 +119,7 @@
 				A00100000000000000000028 /* KikiTriggerCorner in Frameworks */,
 				A00100000000000000000026 /* RevenueCatCommerceKit in Frameworks */,
 				A0010000000000000000002A /* KikiAuthorization in Frameworks */,
+				A0010000000000000000002D /* KikiCommerce in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -299,6 +303,7 @@
 					A00B00000000000000000007 /* KikiOverlay */,
 					A00B00000000000000000008 /* KikiTriggerCorner */,
 					A00B00000000000000000009 /* KikiAuthorization */,
+					A00B0000000000000000000A /* KikiCommerce */,
 				);
 			productName = CatKeyboardLock;
 			productReference = A00200000000000000000008 /* CatKeyboardLock.app */;
@@ -328,6 +333,7 @@
 				A00B00000000000000000008 /* KikiTriggerCorner */,
 				A00B00000000000000000004 /* RevenueCatCommerceKit */,
 				A00B00000000000000000009 /* KikiAuthorization */,
+				A00B0000000000000000000A /* KikiCommerce */,
 			);
 			productName = CatKeyboardLockTests;
 			productReference = A00200000000000000000009 /* CatKeyboardLockTests.xctest */;
@@ -746,6 +752,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = A00D00000000000000000001 /* XCLocalSwiftPackageReference "../Kiki_mackit" */;
 			productName = KikiAuthorization;
+		};
+		A00B0000000000000000000A /* KikiCommerce */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A00D00000000000000000001 /* XCLocalSwiftPackageReference "../Kiki_mackit" */;
+			productName = KikiCommerce;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

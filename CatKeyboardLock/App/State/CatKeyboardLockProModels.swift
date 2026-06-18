@@ -1,4 +1,5 @@
 import Foundation
+import KikiCommerce
 import RevenueCatCommerceKit
 
 enum CatKeyboardLockPurchasePlan: String, CaseIterable, Equatable, Hashable, Identifiable {
@@ -57,6 +58,18 @@ enum CatKeyboardLockPurchasePlan: String, CaseIterable, Equatable, Hashable, Ide
             self = .supporterLifetime
         }
     }
+
+    var kikiProPlan: KikiProPlan {
+        KikiProPlan(
+            id: id,
+            commercePlan: commercePlan,
+            title: title,
+            fallbackDisplayPrice: fallbackDisplayPrice,
+            billingDetail: billingDetail,
+            subtitle: "All Cat Keyboard Lock Pro features",
+            badge: badge
+        )
+    }
 }
 
 enum CatKeyboardLockProStatus: Equatable {
@@ -107,6 +120,24 @@ enum CatKeyboardLockProStatus: Equatable {
             return "Pro"
         }
     }
+
+    init(kikiStatus: KikiProAccessStatus) {
+        switch kikiStatus {
+        case .notStarted:
+            self = .notStarted
+        case .trial(let daysRemaining, let expiresAt):
+            self = .trial(daysRemaining: daysRemaining, expiresAt: expiresAt)
+        case .expired:
+            self = .expired
+        case .pro(let plan, let entitlement):
+            self = .pro(
+                plan: CatKeyboardLockPurchasePlan(rawValue: plan.id)
+                    ?? CatKeyboardLockPurchasePlan(commercePlan: plan.commercePlan)
+                    ?? .supporterLifetime,
+                originalPurchaseDate: entitlement.originalPurchaseDate
+            )
+        }
+    }
 }
 
 struct CatKeyboardLockProPlanPackageMetadata: Equatable {
@@ -125,6 +156,22 @@ struct CatKeyboardLockProPlanProduct: Equatable, Identifiable {
 
     var id: CatKeyboardLockPurchasePlan { plan }
 
+    init(
+        plan: CatKeyboardLockPurchasePlan,
+        title: String,
+        displayPrice: String,
+        billingDetail: String,
+        badge: String?,
+        isAvailable: Bool
+    ) {
+        self.plan = plan
+        self.title = title
+        self.displayPrice = displayPrice
+        self.billingDetail = billingDetail
+        self.badge = badge
+        self.isAvailable = isAvailable
+    }
+
     static func fallback(for plan: CatKeyboardLockPurchasePlan, isAvailable: Bool = true) -> Self {
         Self(
             plan: plan,
@@ -139,14 +186,28 @@ struct CatKeyboardLockProPlanProduct: Equatable, Identifiable {
     static let fallbackPlans: [Self] = CatKeyboardLockPurchasePlan.allCases.map {
         .fallback(for: $0)
     }
+
+    init?(kikiProduct: KikiProPlanProduct) {
+        guard let plan = CatKeyboardLockPurchasePlan(rawValue: kikiProduct.id)
+            ?? CatKeyboardLockPurchasePlan(commercePlan: kikiProduct.plan.commercePlan) else {
+            return nil
+        }
+
+        self.init(
+            plan: plan,
+            title: kikiProduct.title,
+            displayPrice: kikiProduct.displayPrice,
+            billingDetail: kikiProduct.billingDetail,
+            badge: kikiProduct.badge,
+            isAvailable: kikiProduct.isAvailable
+        )
+    }
 }
 
 enum CatKeyboardLockProDefaults {
     enum Keys {
         static let trialStartedAt = "CatKeyboardLock.Pro.trialStartedAt"
         static let hasCompletedOnboarding = "CatKeyboardLock.Pro.hasCompletedOnboarding"
-#if DEBUG
         static let debugProAccessOverride = "CatKeyboardLock.Pro.debugProAccessOverride"
-#endif
     }
 }

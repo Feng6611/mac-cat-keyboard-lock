@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Cat Keyboard Lock App Icon</title>
+  <desc id="desc">A rounded macOS app icon with a dark cat, keyboard keys, and a lock for Cat Keyboard Lock.</desc>
+  <defs>
+    <linearGradient id="bg" x1="160" y1="80" x2="864" y2="944" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFE0A3"/>
+      <stop offset="0.46" stop-color="#FFB464"/>
+      <stop offset="1" stop-color="#F0675A"/>
+    </linearGradient>
+    <linearGradient id="cat" x1="282" y1="213" x2="742" y2="848" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#46515D"/>
+      <stop offset="1" stop-color="#222932"/>
+    </linearGradient>
+    <linearGradient id="keyboard" x1="240" y1="654" x2="784" y2="826" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#313B46"/>
+      <stop offset="1" stop-color="#171C23"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="28" stdDeviation="26" flood-color="#6E2A2A" flood-opacity="0.32"/>
+    </filter>
+    <clipPath id="squircle">
+      <path d="M512 64c135.8 0 225.1 0 292.4 31.4A268.2 268.2 0 0 1 928.6 219.6C960 286.9 960 376.2 960 512s0 225.1-31.4 292.4a268.2 268.2 0 0 1-124.2 124.2C737.1 960 647.8 960 512 960s-225.1 0-292.4-31.4A268.2 268.2 0 0 1 95.4 804.4C64 737.1 64 647.8 64 512s0-225.1 31.4-292.4A268.2 268.2 0 0 1 219.6 95.4C286.9 64 376.2 64 512 64Z"/>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#squircle)">
+    <path d="M0 0h1024v1024H0z" fill="url(#bg)"/>
+    <path d="M140 198c86-72 202-109 348-109 226 0 379 94 458 283 44 105 42 259-5 364-95 35-238 58-429 58-202 0-349-25-438-67-37-102-30-247 16-350 14-31 31-61 50-89Z" fill="#FFFFFF" opacity="0.15"/>
+    <path d="M80 766c119 78 262 117 429 117 169 0 312-39 429-117v258H80Z" fill="#2B2027" opacity="0.16"/>
+  </g>
+
+  <g filter="url(#shadow)">
+    <path d="M332 343V219c0-45 52-70 87-42l110 88 108-88c35-28 89-3 89 42v130c82 55 136 148 136 254v70c0 118-96 214-214 214H376c-118 0-214-96-214-214v-70c0-112 64-209 157-261 4-2 8-4 13-6Z" fill="url(#cat)"/>
+    <path d="M382 233v128l105-84-85-68c-8-6-20-1-20 9Z" fill="#FF9AA3"/>
+    <path d="M642 233v128l-105-84 85-68c8-6 20-1 20 9Z" fill="#FF9AA3"/>
+    <path d="M389 559c-78 12-137 74-137 150v32c0 62 50 112 112 112h296c62 0 112-50 112-112v-32c0-76-59-138-137-150-40 31-83 46-123 46s-83-15-123-46Z" fill="#2A333D"/>
+    <circle cx="414" cy="449" r="38" fill="#FFFFFF"/>
+    <circle cx="610" cy="449" r="38" fill="#FFFFFF"/>
+    <circle cx="428" cy="456" r="16" fill="#171C23"/>
+    <circle cx="596" cy="456" r="16" fill="#171C23"/>
+    <path d="M496 511c8-8 24-8 32 0l21 22c10 10 3 28-11 28h-52c-14 0-21-18-11-28Z" fill="#FFB25E"/>
+    <path d="M456 603c33 30 79 30 112 0" fill="none" stroke="#151A20" stroke-width="18" stroke-linecap="round"/>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="214" y="664" width="596" height="210" rx="54" fill="url(#keyboard)"/>
+    <rect x="263" y="714" width="70" height="48" rx="15" fill="#F7EEE4" opacity="0.92"/>
+    <rect x="357" y="714" width="70" height="48" rx="15" fill="#F7EEE4" opacity="0.92"/>
+    <rect x="451" y="714" width="70" height="48" rx="15" fill="#F7EEE4" opacity="0.92"/>
+    <rect x="545" y="714" width="70" height="48" rx="15" fill="#F7EEE4" opacity="0.92"/>
+    <rect x="639" y="714" width="70" height="48" rx="15" fill="#F7EEE4" opacity="0.92"/>
+    <rect x="313" y="790" width="224" height="48" rx="15" fill="#F7EEE4" opacity="0.92"/>
+    <rect x="561" y="790" width="150" height="48" rx="15" fill="#F7EEE4" opacity="0.92"/>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="599" y="593" width="184" height="170" rx="38" fill="#F7EEE4"/>
+    <path d="M642 600v-40c0-61 42-103 99-103s99 42 99 103v40h-54v-40c0-31-18-52-45-52s-45 21-45 52v40Z" fill="#F7EEE4"/>
+    <circle cx="691" cy="669" r="23" fill="#2A333D"/>
+    <path d="M691 688v36" stroke="#2A333D" stroke-width="24" stroke-linecap="round"/>
+  </g>
+
+  <path d="M189 827c97 69 205 103 323 103 117 0 225-34 323-103" fill="none" stroke="#FFFFFF" stroke-opacity="0.28" stroke-width="20" stroke-linecap="round"/>
+</svg>
