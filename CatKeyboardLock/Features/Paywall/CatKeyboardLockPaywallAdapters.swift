@@ -12,17 +12,3 @@ extension CatKeyboardLockPlanConfig {
         )
     }
 }
-
-extension CatKeyboardLockProPlanProduct {
-    var kikiPaywallPlan: KikiPaywallPlan {
-        KikiPaywallPlan(
-            id: plan.id,
-            title: title,
-            displayPrice: displayPrice,
-            originalPrice: nil,
-            billingDetail: billingDetail,
-            badge: badge,
-            isAvailable: isAvailable
-        )
-    }
-}

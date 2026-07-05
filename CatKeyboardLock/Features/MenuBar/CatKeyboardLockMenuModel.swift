@@ -1,4 +1,5 @@
 import AppKit
+import KikiCommerceCore
 import KikiMenuBar
 
 @MainActor
@@ -137,7 +138,7 @@ enum CatKeyboardLockMenuModel {
 }
 
 private extension CatKeyboardLockCoreAccess {
-    init(status: CatKeyboardLockProStatus) {
+    init(status: KikiProAccessStatus) {
         switch status {
         case .notStarted:
             self = .notStarted

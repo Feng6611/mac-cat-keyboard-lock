@@ -183,7 +183,7 @@ final class CatKeyboardLockTests: XCTestCase {
             config: .default,
             lockState: .unlocked,
             lockSettings: LockSettings(defaults: isolatedDefaults()),
-            entitlement: CatKeyboardLockEntitlementSnapshot(status: .pro(plan: .supporterLifetime, originalPurchaseDate: nil)),
+            entitlement: CatKeyboardLockEntitlementSnapshot(isPro: true, isTrialActive: false),
             actions: CatKeyboardLockMenuActions(
                 lock: {},
                 unlock: {},
@@ -691,7 +691,8 @@ final class CatKeyboardLockTests: XCTestCase {
     func testProStatusDoesNotStartTrialOnInitialization() {
         let defaults = isolatedDefaults()
         let now = Date(timeIntervalSince1970: 1_700_000_000)
-        let manager = CatKeyboardLockProStatusManager(
+        let manager = KikiProAccessManager(
+            configuration: CatKeyboardLockRevenueCatConfiguration.proAccessConfiguration,
             defaults: defaults,
             commerceClient: MockCommerceClient(),
             now: { now }
@@ -704,7 +705,8 @@ final class CatKeyboardLockTests: XCTestCase {
     func testStartTrialWritesDateAndRoundsDays() async {
         let defaults = isolatedDefaults()
         let now = Date(timeIntervalSince1970: 1_700_000_000)
-        let manager = CatKeyboardLockProStatusManager(
+        let manager = KikiProAccessManager(
+            configuration: CatKeyboardLockRevenueCatConfiguration.proAccessConfiguration,
             defaults: defaults,
             commerceClient: MockCommerceClient(),
             now: { now }
@@ -712,7 +714,7 @@ final class CatKeyboardLockTests: XCTestCase {
 
         await manager.startTrial()
 
-        let expectedExpiresAt = now.addingTimeInterval(CatKeyboardLockProStatusManager.Constants.trialDuration)
+        let expectedExpiresAt = now.addingTimeInterval(CatKeyboardLockRevenueCatConfiguration.trialDuration)
         XCTAssertEqual(defaults.object(forKey: CatKeyboardLockProDefaults.Keys.trialStartedAt) as? Date, now)
         XCTAssertEqual(manager.status, .trial(daysRemaining: 2, expiresAt: expectedExpiresAt))
     }
@@ -720,9 +722,10 @@ final class CatKeyboardLockTests: XCTestCase {
     func testExpiredTrialCannotRestart() async {
         let defaults = isolatedDefaults()
         let now = Date(timeIntervalSince1970: 1_700_000_000)
-        let originalStart = now.addingTimeInterval(-CatKeyboardLockProStatusManager.Constants.trialDuration)
+        let originalStart = now.addingTimeInterval(-CatKeyboardLockRevenueCatConfiguration.trialDuration)
         defaults.set(originalStart, forKey: CatKeyboardLockProDefaults.Keys.trialStartedAt)
-        let manager = CatKeyboardLockProStatusManager(
+        let manager = KikiProAccessManager(
+            configuration: CatKeyboardLockRevenueCatConfiguration.proAccessConfiguration,
             defaults: defaults,
             commerceClient: MockCommerceClient(),
             now: { now }
@@ -739,11 +742,12 @@ final class CatKeyboardLockTests: XCTestCase {
         let defaults = isolatedDefaults()
         let now = Date(timeIntervalSince1970: 1_700_000_000)
         defaults.set(now, forKey: CatKeyboardLockProDefaults.Keys.trialStartedAt)
-        let expectedTrial = CatKeyboardLockProStatus.trial(
+        let expectedTrial = KikiProAccessStatus.trial(
             daysRemaining: 2,
-            expiresAt: now.addingTimeInterval(CatKeyboardLockProStatusManager.Constants.trialDuration)
+            expiresAt: now.addingTimeInterval(CatKeyboardLockRevenueCatConfiguration.trialDuration)
         )
-        let manager = CatKeyboardLockProStatusManager(
+        let manager = KikiProAccessManager(
+            configuration: CatKeyboardLockRevenueCatConfiguration.proAccessConfiguration,
             defaults: defaults,
             commerceClient: MockCommerceClient(),
             now: { now }
@@ -754,9 +758,20 @@ final class CatKeyboardLockTests: XCTestCase {
 
         manager.setDebugProAccessOverride(true)
 
+        let debugEntitlement = CommerceEntitlement(
+            plan: CatKeyboardLockPurchasePlan.supporterLifetime.commercePlan,
+            productIdentifier: "debug.\(CatKeyboardLockPurchasePlan.supporterLifetime.id)",
+            entitlementIdentifier: "debug.pro",
+            expirationDate: nil,
+            willRenew: false,
+            originalPurchaseDate: nil
+        )
         XCTAssertEqual(manager.debugProAccessOverride, true)
         XCTAssertEqual(manager.debugProAccessOverrideDisplayName, "Paid")
-        XCTAssertEqual(manager.status, .pro(plan: .supporterLifetime, originalPurchaseDate: nil))
+        XCTAssertEqual(
+            manager.status,
+            .pro(plan: CatKeyboardLockPurchasePlan.supporterLifetime.kikiProPlan, entitlement: debugEntitlement)
+        )
 
         manager.setDebugProAccessOverride(false)
 
@@ -777,60 +792,76 @@ final class CatKeyboardLockTests: XCTestCase {
         let now = Date(timeIntervalSince1970: 1_700_000_000)
 
         let lifetimeClient = MockCommerceClient()
-        lifetimeClient.purchaseEntitlement = .init(
+        let lifetimeEntitlement = CommerceEntitlement(
             plan: .yearly,
             productIdentifier: CatKeyboardLockRevenueCatConfiguration.lifetimeProductIdentifier,
             entitlementIdentifier: CatKeyboardLockRevenueCatConfiguration.entitlementIdentifier,
             expirationDate: nil,
             originalPurchaseDate: now
         )
-        let lifetimeManager = CatKeyboardLockProStatusManager(
+        lifetimeClient.purchaseEntitlement = lifetimeEntitlement
+        let lifetimeManager = KikiProAccessManager(
+            configuration: CatKeyboardLockRevenueCatConfiguration.proAccessConfiguration,
             defaults: isolatedDefaults(),
             commerceClient: lifetimeClient,
             now: { now }
         )
-        try await lifetimeManager.purchase(.lifetime)
-        XCTAssertEqual(lifetimeManager.status, .pro(plan: .lifetime, originalPurchaseDate: now))
+        try await lifetimeManager.purchase(planID: CatKeyboardLockPurchasePlan.lifetime.id)
+        XCTAssertEqual(
+            lifetimeManager.status,
+            .pro(plan: CatKeyboardLockPurchasePlan.lifetime.kikiProPlan, entitlement: lifetimeEntitlement)
+        )
 
         let supporterClient = MockCommerceClient()
-        supporterClient.purchaseEntitlement = .init(
+        let supporterEntitlement = CommerceEntitlement(
             plan: .lifetime,
             productIdentifier: CatKeyboardLockRevenueCatConfiguration.supporterProductIdentifier,
             entitlementIdentifier: CatKeyboardLockRevenueCatConfiguration.entitlementIdentifier,
             expirationDate: nil,
             originalPurchaseDate: now
         )
-        let supporterManager = CatKeyboardLockProStatusManager(
+        supporterClient.purchaseEntitlement = supporterEntitlement
+        let supporterManager = KikiProAccessManager(
+            configuration: CatKeyboardLockRevenueCatConfiguration.proAccessConfiguration,
             defaults: isolatedDefaults(),
             commerceClient: supporterClient,
             now: { now }
         )
-        try await supporterManager.purchase(.supporterLifetime)
-        XCTAssertEqual(supporterManager.status, .pro(plan: .supporterLifetime, originalPurchaseDate: now))
+        try await supporterManager.purchase(planID: CatKeyboardLockPurchasePlan.supporterLifetime.id)
+        XCTAssertEqual(
+            supporterManager.status,
+            .pro(plan: CatKeyboardLockPurchasePlan.supporterLifetime.kikiProPlan, entitlement: supporterEntitlement)
+        )
     }
 
     func testRestoreSuccessAndNoPurchaseFeedback() async throws {
         let now = Date(timeIntervalSince1970: 1_700_000_000)
         let restoreClient = MockCommerceClient()
-        restoreClient.restoreEntitlement = .init(
+        let restoreEntitlement = CommerceEntitlement(
             plan: .lifetime,
             productIdentifier: CatKeyboardLockRevenueCatConfiguration.supporterProductIdentifier,
             entitlementIdentifier: CatKeyboardLockRevenueCatConfiguration.entitlementIdentifier,
             expirationDate: nil,
             originalPurchaseDate: now
         )
-        let restoreManager = CatKeyboardLockProStatusManager(
+        restoreClient.restoreEntitlement = restoreEntitlement
+        let restoreManager = KikiProAccessManager(
+            configuration: CatKeyboardLockRevenueCatConfiguration.proAccessConfiguration,
             defaults: isolatedDefaults(),
             commerceClient: restoreClient,
             now: { now }
         )
 
         try await restoreManager.restorePurchases()
-        XCTAssertEqual(restoreManager.status, .pro(plan: .supporterLifetime, originalPurchaseDate: now))
+        XCTAssertEqual(
+            restoreManager.status,
+            .pro(plan: CatKeyboardLockPurchasePlan.supporterLifetime.kikiProPlan, entitlement: restoreEntitlement)
+        )
         XCTAssertEqual(restoreManager.paywallSuccessMessage, "Purchase restored.")
 
         let emptyClient = MockCommerceClient()
-        let emptyManager = CatKeyboardLockProStatusManager(
+        let emptyManager = KikiProAccessManager(
+            configuration: CatKeyboardLockRevenueCatConfiguration.proAccessConfiguration,
             defaults: isolatedDefaults(),
             commerceClient: emptyClient,
             now: { now }

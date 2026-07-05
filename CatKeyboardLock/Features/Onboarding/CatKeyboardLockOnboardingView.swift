@@ -1,12 +1,13 @@
 import AppKit
 import KikiAuthorization
+import KikiCommerceCore
 import KikiWindow
 import SwiftUI
 
 @MainActor
 final class CatKeyboardLockOnboardingWindowController {
     private let config: CatKeyboardLockAppConfig
-    private let proStatusManager: CatKeyboardLockProStatusManager
+    private let accessManager: KikiProAccessManager
     private let onboardingState: CatKeyboardLockOnboardingState
     private let inputLockController: InputLockController
     private let onFinish: () -> Void
@@ -22,10 +23,10 @@ final class CatKeyboardLockOnboardingWindowController {
         onClose: { [weak self] in
             self?.handleWindowClose()
         }
-    ) { [weak self, proStatusManager] in
+    ) { [weak self, accessManager] in
         CatKeyboardLockOnboardingView(
             config: self?.config ?? .default,
-            proStatusManager: proStatusManager,
+            accessManager: accessManager,
             inputLockController: self?.inputLockController,
             onFinish: {
                 self?.finish()
@@ -38,13 +39,13 @@ final class CatKeyboardLockOnboardingWindowController {
 
     init(
         config: CatKeyboardLockAppConfig,
-        proStatusManager: CatKeyboardLockProStatusManager,
+        accessManager: KikiProAccessManager,
         onboardingState: CatKeyboardLockOnboardingState,
         inputLockController: InputLockController,
         onFinish: @escaping () -> Void
     ) {
         self.config = config
-        self.proStatusManager = proStatusManager
+        self.accessManager = accessManager
         self.onboardingState = onboardingState
         self.inputLockController = inputLockController
         self.onFinish = onFinish
@@ -91,7 +92,7 @@ final class CatKeyboardLockOnboardingWindowController {
 
 struct CatKeyboardLockOnboardingView: View {
     let config: CatKeyboardLockAppConfig
-    @ObservedObject var proStatusManager: CatKeyboardLockProStatusManager
+    @ObservedObject var accessManager: KikiProAccessManager
     @ObservedObject var inputLockController: InputLockController
 
     let onFinish: () -> Void
@@ -104,13 +105,13 @@ struct CatKeyboardLockOnboardingView: View {
 
     init(
         config: CatKeyboardLockAppConfig,
-        proStatusManager: CatKeyboardLockProStatusManager,
+        accessManager: KikiProAccessManager,
         inputLockController: InputLockController?,
         onFinish: @escaping () -> Void,
         onClose: @escaping () -> Void
     ) {
         self.config = config
-        self.proStatusManager = proStatusManager
+        self.accessManager = accessManager
         self.inputLockController = inputLockController ?? InputLockController(settings: LockSettings())
         self.onFinish = onFinish
         self.onClose = onClose
@@ -148,7 +149,7 @@ struct CatKeyboardLockOnboardingView: View {
         .sheet(isPresented: $isPaywallSheetPresented) {
             CatKeyboardLockPaywallSheetView(
                 config: config,
-                proStatusManager: proStatusManager,
+                accessManager: accessManager,
                 context: .onboarding,
                 onFinish: onFinish
             )

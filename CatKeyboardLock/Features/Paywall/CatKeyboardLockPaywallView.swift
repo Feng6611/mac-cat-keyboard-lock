@@ -23,25 +23,25 @@ enum CatKeyboardLockPaywallContext {
 
 struct CatKeyboardLockPaywallSheetView: View {
     let config: CatKeyboardLockAppConfig
-    @ObservedObject var proStatusManager: CatKeyboardLockProStatusManager
+    @ObservedObject var accessManager: KikiProAccessManager
     let context: CatKeyboardLockPaywallContext
     let onFinish: (() -> Void)?
 
     init(
         config: CatKeyboardLockAppConfig,
-        proStatusManager: CatKeyboardLockProStatusManager,
+        accessManager: KikiProAccessManager,
         context: CatKeyboardLockPaywallContext,
         onFinish: (() -> Void)? = nil
     ) {
         self.config = config
-        self.proStatusManager = proStatusManager
+        self.accessManager = accessManager
         self.context = context
         self.onFinish = onFinish
     }
 
     var body: some View {
         KikiProPaywallSheet(
-            manager: proStatusManager.kikiProAccessManager,
+            manager: accessManager,
             context: context.kikiContext,
             copy: paywallCopy,
             tint: CatKeyboardLockPaywallColors.brandAccent,

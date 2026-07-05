@@ -37,7 +37,6 @@
 		A00100000000000000000020 /* CatKeyboardLockOverlayPresentations.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000017 /* CatKeyboardLockOverlayPresentations.swift */; };
 		A00100000000000000000022 /* CatKeyboardLockProModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000019 /* CatKeyboardLockProModels.swift */; };
 		A00100000000000000000023 /* CatKeyboardLockRevenueCatConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0020000000000000000001A /* CatKeyboardLockRevenueCatConfiguration.swift */; };
-		A00100000000000000000024 /* CatKeyboardLockProStatusManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0020000000000000000001B /* CatKeyboardLockProStatusManager.swift */; };
 		A00100000000000000000025 /* CatKeyboardLockOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0020000000000000000001C /* CatKeyboardLockOnboardingView.swift */; };		A00100000000000000000027 /* KikiTriggerCorner in Frameworks */ = {isa = PBXBuildFile; productRef = A00B00000000000000000008 /* KikiTriggerCorner */; };
 		A00100000000000000000028 /* KikiTriggerCorner in Frameworks */ = {isa = PBXBuildFile; productRef = A00B00000000000000000008 /* KikiTriggerCorner */; };
 		A00100000000000000000029 /* KikiAuthorization in Frameworks */ = {isa = PBXBuildFile; productRef = A00B00000000000000000009 /* KikiAuthorization */; };
@@ -84,7 +83,6 @@
 		A00200000000000000000017 /* CatKeyboardLockOverlayPresentations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shared/CatKeyboardLockOverlayPresentations.swift; sourceTree = "<group>"; };
 		A00200000000000000000019 /* CatKeyboardLockProModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/State/CatKeyboardLockProModels.swift; sourceTree = "<group>"; };
 		A0020000000000000000001A /* CatKeyboardLockRevenueCatConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/State/CatKeyboardLockRevenueCatConfiguration.swift; sourceTree = "<group>"; };
-		A0020000000000000000001B /* CatKeyboardLockProStatusManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/State/CatKeyboardLockProStatusManager.swift; sourceTree = "<group>"; };
 		A0020000000000000000001C /* CatKeyboardLockOnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Onboarding/CatKeyboardLockOnboardingView.swift; sourceTree = "<group>"; };
 		A0020000000000000000001D /* CatKeyboardLockCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Core/CatKeyboardLockCore.swift; sourceTree = "<group>"; };
 		A0020000000000000000001E /* CatKeyboardLockOnboardingState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/State/CatKeyboardLockOnboardingState.swift; sourceTree = "<group>"; };
@@ -175,7 +173,6 @@
 				A0020000000000000000000D /* CatKeyboardLockEntitlementSnapshot.swift */,
 				A00200000000000000000019 /* CatKeyboardLockProModels.swift */,
 				A0020000000000000000001A /* CatKeyboardLockRevenueCatConfiguration.swift */,
-				A0020000000000000000001B /* CatKeyboardLockProStatusManager.swift */,
 				A0020000000000000000001E /* CatKeyboardLockOnboardingState.swift */,
 			);
 			name = State;
@@ -425,7 +422,6 @@
 				A00100000000000000000020 /* CatKeyboardLockOverlayPresentations.swift in Sources */,
 				A00100000000000000000022 /* CatKeyboardLockProModels.swift in Sources */,
 				A00100000000000000000023 /* CatKeyboardLockRevenueCatConfiguration.swift in Sources */,
-				A00100000000000000000024 /* CatKeyboardLockProStatusManager.swift in Sources */,
 				A00100000000000000000025 /* CatKeyboardLockOnboardingView.swift in Sources */,
 				A0010000000000000000002B /* CatKeyboardLockCore.swift in Sources */,
 				A00100000000000000000032 /* CatKeyboardLockOnboardingState.swift in Sources */,

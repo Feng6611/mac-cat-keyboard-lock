@@ -1,5 +1,6 @@
 import AppKit
 import Combine
+import KikiCommerceCore
 import KikiMenuBar
 import KikiOverlay
 import KikiSettings
@@ -16,7 +17,7 @@ struct CatKeyboardLockApp: App {
                 config: appDelegate.config,
                 lockSettings: appDelegate.lockSettings,
                 inputLockController: appDelegate.inputLockController,
-                proStatusManager: appDelegate.proStatusManager,
+                accessManager: appDelegate.accessManager,
                 navigationModel: appDelegate.settingsNavigation,
                 initialTab: appDelegate.launchOptions.settingsTab ?? .lock
             )
@@ -29,7 +30,10 @@ final class CatKeyboardLockAppDelegate: NSObject, NSApplicationDelegate {
     let config = CatKeyboardLockAppConfig.default
     let lockSettings = LockSettings()
     lazy var inputLockController = InputLockController(settings: lockSettings)
-    let proStatusManager = CatKeyboardLockProStatusManager()
+    let accessManager = KikiProAccessManager(
+        configuration: CatKeyboardLockRevenueCatConfiguration.proAccessConfiguration,
+        revenueCatConfiguration: CatKeyboardLockRevenueCatConfiguration.revenueCatConfiguration
+    )
     let onboardingState = CatKeyboardLockOnboardingState()
     let settingsNavigation = CatKeyboardLockSettingsNavigationModel.shared
     let launchOptions = CatKeyboardLockLaunchOptions.current()
@@ -44,7 +48,7 @@ final class CatKeyboardLockAppDelegate: NSObject, NSApplicationDelegate {
     private lazy var settingsOpener = KikiSettingsOpener(windowController: settingsWindowController)
     private lazy var onboardingWindowController = CatKeyboardLockOnboardingWindowController(
         config: config,
-        proStatusManager: proStatusManager,
+        accessManager: accessManager,
         onboardingState: onboardingState,
         inputLockController: inputLockController,
         onFinish: { [weak self] in
@@ -85,7 +89,7 @@ final class CatKeyboardLockAppDelegate: NSObject, NSApplicationDelegate {
         )
         bindLockStateToStatusItem()
         inputLockController.refreshPermissions()
-        proStatusManager.configureIfNeeded()
+        accessManager.configureIfNeeded()
         updateTriggerCornerMonitor()
         if launchOptions.scene == .onboarding {
             onboardingWindowController.show()
@@ -93,7 +97,7 @@ final class CatKeyboardLockAppDelegate: NSObject, NSApplicationDelegate {
             onboardingWindowController.showIfNeeded()
         }
         Task { @MainActor [weak self] in
-            await self?.proStatusManager.refresh()
+            await self?.accessManager.refresh()
             self?.updateTriggerCornerMonitor()
         }
         presentLaunchSceneIfNeeded()
@@ -110,7 +114,7 @@ final class CatKeyboardLockAppDelegate: NSObject, NSApplicationDelegate {
             config: config,
             lockState: inputLockController.state,
             lockSettings: lockSettings,
-            entitlement: proStatusManager.snapshot,
+            entitlement: CatKeyboardLockEntitlementSnapshot(status: accessManager.status),
             actions: CatKeyboardLockMenuActions(
                 lock: { [weak self] in self?.lockIfAllowed() },
                 unlock: { [weak self] in self?.inputLockController.unlock(reason: .manual) },
@@ -118,12 +122,13 @@ final class CatKeyboardLockAppDelegate: NSObject, NSApplicationDelegate {
                 openPaywall: { [weak self] in self?.openPaywall() },
                 toggleDebugProAccess: { [weak self] in
 #if DEBUG
-                    self?.proStatusManager.toggleDebugProAccessOverride()
+                    guard let self else { return }
+                    self.accessManager.setDebugProAccessOverride(!self.accessManager.debugProAccessToggleIsOn)
 #endif
                 },
                 clearDebugProAccessOverride: { [weak self] in
 #if DEBUG
-                    self?.proStatusManager.clearDebugProAccessOverride()
+                    self?.accessManager.clearDebugProAccessOverride()
 #endif
                 },
                 quit: { NSApp.terminate(nil) }
@@ -132,7 +137,7 @@ final class CatKeyboardLockAppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func lockIfAllowed() {
-        guard proStatusManager.status.isActive else {
+        guard accessManager.status.isActive else {
             openPaywall()
             return
         }
@@ -216,7 +221,7 @@ final class CatKeyboardLockAppDelegate: NSObject, NSApplicationDelegate {
             }
             .store(in: &cancellables)
 
-        proStatusManager.$status
+        accessManager.$status
             .dropFirst()
             .sink { [weak self] _ in
                 self?.updateTriggerCornerMonitor()
@@ -231,7 +236,7 @@ final class CatKeyboardLockAppDelegate: NSObject, NSApplicationDelegate {
             lastTriggerCornerLockState = isLocked
         }
 
-        if lockSettings.triggerCornerEnabled && (proStatusManager.status.isActive || isLocked) {
+        if lockSettings.triggerCornerEnabled && (accessManager.status.isActive || isLocked) {
             triggerCornerMonitor.start()
         } else {
             triggerCornerMonitor.stop()

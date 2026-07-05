@@ -1,4 +1,5 @@
 import Foundation
+import KikiCommerceCore
 import KikiSettings
 import KikiTriggerCorner
 import SwiftUI
@@ -72,21 +73,21 @@ struct CatKeyboardLockSettingsView: View {
     let config: CatKeyboardLockAppConfig
     @ObservedObject var lockSettings: LockSettings
     @ObservedObject var inputLockController: InputLockController
-    @ObservedObject var proStatusManager: CatKeyboardLockProStatusManager
+    @ObservedObject var accessManager: KikiProAccessManager
     @StateObject private var navigation: CatKeyboardLockSettingsNavigationModel
 
     init(
         config: CatKeyboardLockAppConfig,
         lockSettings: LockSettings,
         inputLockController: InputLockController,
-        proStatusManager: CatKeyboardLockProStatusManager,
+        accessManager: KikiProAccessManager,
         navigationModel: CatKeyboardLockSettingsNavigationModel = .shared,
         initialTab: CatKeyboardLockInitialSettingsTab = .lock
     ) {
         self.config = config
         self.lockSettings = lockSettings
         self.inputLockController = inputLockController
-        self.proStatusManager = proStatusManager
+        self.accessManager = accessManager
         if initialTab != .lock {
             navigationModel.selectedTab = initialTab.settingsTab
         }
@@ -112,7 +113,7 @@ struct CatKeyboardLockSettingsView: View {
         .sheet(isPresented: $navigation.isPaywallSheetPresented) {
             CatKeyboardLockPaywallSheetView(
                 config: config,
-                proStatusManager: proStatusManager,
+                accessManager: accessManager,
                 context: .settings
             )
         }
@@ -164,17 +165,17 @@ struct CatKeyboardLockSettingsView: View {
         Section {
             KikiSettingsStatusRow(
                 title: "Test override",
-                value: proStatusManager.debugProAccessOverrideDisplayName,
+                value: accessManager.debugProAccessOverrideDisplayName,
                 systemImage: "hammer",
-                valueColor: proStatusManager.debugProAccessOverride == nil ? .secondary : .orange
+                valueColor: accessManager.debugProAccessOverride == nil ? .secondary : .orange
             )
 
             KikiSettingsToggleRow("Paid access", isOn: debugProAccessBinding, systemImage: "sparkles")
 
             Button("Clear Test Override") {
-                proStatusManager.clearDebugProAccessOverride()
+                accessManager.clearDebugProAccessOverride()
             }
-            .disabled(proStatusManager.debugProAccessOverride == nil)
+            .disabled(accessManager.debugProAccessOverride == nil)
         } header: {
             Text("Developer Testing")
         } footer: {
@@ -184,8 +185,8 @@ struct CatKeyboardLockSettingsView: View {
 
     private var debugProAccessBinding: Binding<Bool> {
         Binding(
-            get: { proStatusManager.debugProAccessToggleIsOn },
-            set: { proStatusManager.setDebugProAccessOverride($0) }
+            get: { accessManager.debugProAccessToggleIsOn },
+            set: { accessManager.setDebugProAccessOverride($0) }
         )
     }
 #endif
@@ -251,9 +252,9 @@ struct CatKeyboardLockSettingsView: View {
             Section {
                 KikiSettingsStatusRow(
                     title: "Status",
-                    value: proStatusManager.status.displayName,
+                    value: accessManager.status.displayName,
                     systemImage: "checkmark.seal",
-                    valueColor: proStatusManager.status.isActive ? Color(red: 0.58, green: 0.20, blue: 0.62) : .orange,
+                    valueColor: accessManager.status.isActive ? Color(red: 0.58, green: 0.20, blue: 0.62) : .orange,
                     trailingSystemImage: aboutStatusTrailingSystemImage,
                     action: aboutStatusAction
                 )

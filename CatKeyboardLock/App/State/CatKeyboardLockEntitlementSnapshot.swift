@@ -1,15 +1,25 @@
 import Foundation
+import KikiCommerceCore
 
 struct CatKeyboardLockEntitlementSnapshot: Equatable {
-    let status: CatKeyboardLockProStatus
+    let status: KikiProAccessStatus
 
-    init(status: CatKeyboardLockProStatus) {
+    init(status: KikiProAccessStatus) {
         self.status = status
     }
 
     init(isPro: Bool, isTrialActive: Bool) {
         if isPro {
-            self.status = .pro(plan: .supporterLifetime, originalPurchaseDate: nil)
+            self.status = .pro(
+                plan: CatKeyboardLockPurchasePlan.supporterLifetime.kikiProPlan,
+                entitlement: CommerceEntitlement(
+                    plan: .lifetime,
+                    productIdentifier: CatKeyboardLockPurchasePlan.supporterLifetime.id,
+                    entitlementIdentifier: "catkeyboardlock.pro",
+                    expirationDate: nil,
+                    originalPurchaseDate: nil
+                )
+            )
         } else if isTrialActive {
             self.status = .trial(daysRemaining: 2, expiresAt: .distantFuture)
         } else {
@@ -22,7 +32,10 @@ struct CatKeyboardLockEntitlementSnapshot: Equatable {
     }
 
     var isTrialActive: Bool {
-        status.isTrial
+        if case .trial = status {
+            return true
+        }
+        return false
     }
 
     var isAccessActive: Bool {
