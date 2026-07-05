@@ -7,6 +7,7 @@ import SwiftUI
 final class CatKeyboardLockOnboardingWindowController {
     private let config: CatKeyboardLockAppConfig
     private let proStatusManager: CatKeyboardLockProStatusManager
+    private let onboardingState: CatKeyboardLockOnboardingState
     private let inputLockController: InputLockController
     private let onFinish: () -> Void
     private var isCompletingIntentionally = false
@@ -38,11 +39,13 @@ final class CatKeyboardLockOnboardingWindowController {
     init(
         config: CatKeyboardLockAppConfig,
         proStatusManager: CatKeyboardLockProStatusManager,
+        onboardingState: CatKeyboardLockOnboardingState,
         inputLockController: InputLockController,
         onFinish: @escaping () -> Void
     ) {
         self.config = config
         self.proStatusManager = proStatusManager
+        self.onboardingState = onboardingState
         self.inputLockController = inputLockController
         self.onFinish = onFinish
     }
@@ -52,7 +55,7 @@ final class CatKeyboardLockOnboardingWindowController {
     }
 
     func showIfNeeded() {
-        guard proStatusManager.shouldShowOnboarding else {
+        guard onboardingState.shouldShow else {
             return
         }
 
@@ -65,12 +68,13 @@ final class CatKeyboardLockOnboardingWindowController {
 
     private func finish() {
         isCompletingIntentionally = true
+        onboardingState.markCompleted()
         windowController.close()
         onFinish()
     }
 
     private func skip() {
-        proStatusManager.completeOnboardingWithoutTrial()
+        onboardingState.markCompleted()
         finish()
     }
 
@@ -80,7 +84,7 @@ final class CatKeyboardLockOnboardingWindowController {
             return
         }
 
-        proStatusManager.completeOnboardingWithoutTrial()
+        onboardingState.markCompleted()
         onFinish()
     }
 }

@@ -1,7 +1,7 @@
 import Combine
 import Foundation
-import KikiCommerce
-import RevenueCatCommerceKit
+import KikiCommerceCore
+import KikiRevenueCat
 
 @MainActor
 final class CatKeyboardLockProStatusManager: ObservableObject {
@@ -30,14 +30,6 @@ final class CatKeyboardLockProStatusManager: ObservableObject {
         CatKeyboardLockEntitlementSnapshot(status: status)
     }
 
-    var hasCompletedOnboarding: Bool {
-        kikiProAccessManager.hasCompletedOnboarding
-    }
-
-    var shouldShowOnboarding: Bool {
-        kikiProAccessManager.shouldShowOnboarding
-    }
-
     var currentEntitlementSnapshot: CommerceEntitlement? {
         kikiProAccessManager.currentEntitlementSnapshot
     }
@@ -47,12 +39,22 @@ final class CatKeyboardLockProStatusManager: ObservableObject {
         commerceClient: (any CommerceClient)? = nil,
         now: @escaping () -> Date = Date.init
     ) {
-        let manager = KikiProAccessManager(
-            configuration: CatKeyboardLockRevenueCatConfiguration.proAccessConfiguration,
-            defaults: defaults,
-            commerceClient: commerceClient,
-            now: now
-        )
+        let manager: KikiProAccessManager
+        if let commerceClient {
+            manager = KikiProAccessManager(
+                configuration: CatKeyboardLockRevenueCatConfiguration.proAccessConfiguration,
+                defaults: defaults,
+                commerceClient: commerceClient,
+                now: now
+            )
+        } else {
+            manager = KikiProAccessManager(
+                configuration: CatKeyboardLockRevenueCatConfiguration.proAccessConfiguration,
+                revenueCatConfiguration: CatKeyboardLockRevenueCatConfiguration.revenueCatConfiguration,
+                defaults: defaults,
+                now: now
+            )
+        }
 
         self.kikiProAccessManager = manager
         self.status = CatKeyboardLockProStatus(kikiStatus: manager.status)
@@ -83,10 +85,6 @@ final class CatKeyboardLockProStatusManager: ObservableObject {
 
     func startTrial() async {
         await kikiProAccessManager.startTrial()
-    }
-
-    func completeOnboardingWithoutTrial() {
-        kikiProAccessManager.completeOnboardingWithoutTrial()
     }
 
 #if DEBUG

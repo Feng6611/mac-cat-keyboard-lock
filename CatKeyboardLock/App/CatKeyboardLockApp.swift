@@ -30,6 +30,7 @@ final class CatKeyboardLockAppDelegate: NSObject, NSApplicationDelegate {
     let lockSettings = LockSettings()
     lazy var inputLockController = InputLockController(settings: lockSettings)
     let proStatusManager = CatKeyboardLockProStatusManager()
+    let onboardingState = CatKeyboardLockOnboardingState()
     let settingsNavigation = CatKeyboardLockSettingsNavigationModel.shared
     let launchOptions = CatKeyboardLockLaunchOptions.current()
 
@@ -44,6 +45,7 @@ final class CatKeyboardLockAppDelegate: NSObject, NSApplicationDelegate {
     private lazy var onboardingWindowController = CatKeyboardLockOnboardingWindowController(
         config: config,
         proStatusManager: proStatusManager,
+        onboardingState: onboardingState,
         inputLockController: inputLockController,
         onFinish: { [weak self] in
             self?.updateTriggerCornerMonitor()

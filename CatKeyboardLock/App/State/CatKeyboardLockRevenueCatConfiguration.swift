@@ -1,6 +1,6 @@
 import Foundation
-import KikiCommerce
-import RevenueCatCommerceKit
+import KikiCommerceCore
+import KikiRevenueCat
 
 enum CatKeyboardLockRevenueCatConfiguration {
     static let trialDuration: TimeInterval = 2 * 24 * 60 * 60
@@ -20,9 +20,7 @@ enum CatKeyboardLockRevenueCatConfiguration {
 
     static var commerceConfiguration: CommerceConfiguration {
         CommerceConfiguration(
-            apiKey: apiKey,
             entitlementIdentifier: entitlementIdentifier,
-            offeringIdentifier: offeringIdentifier,
             productIdentifiers: [
                 CatKeyboardLockPurchasePlan.lifetime.commercePlan: lifetimeProductIdentifier,
                 CatKeyboardLockPurchasePlan.supporterLifetime.commercePlan: supporterProductIdentifier
@@ -30,6 +28,13 @@ enum CatKeyboardLockRevenueCatConfiguration {
             entitlementMatchingPolicy: .configuredEntitlementOrProductOnly,
             logSubsystem: Bundle.main.bundleIdentifier ?? "dev.kkuk.catkeyboardlock",
             logCategory: "Purchase"
+        )
+    }
+
+    static var revenueCatConfiguration: RevenueCatConfiguration {
+        RevenueCatConfiguration(
+            apiKey: apiKey,
+            offeringIdentifier: offeringIdentifier
         )
     }
 
@@ -41,7 +46,6 @@ enum CatKeyboardLockRevenueCatConfiguration {
             trialPolicy: .explicitStart(duration: trialDuration),
             storageKeys: KikiProAccessStorageKeys(
                 trialStartedAt: CatKeyboardLockProDefaults.Keys.trialStartedAt,
-                hasCompletedOnboarding: CatKeyboardLockProDefaults.Keys.hasCompletedOnboarding,
                 debugProAccessOverride: CatKeyboardLockProDefaults.Keys.debugProAccessOverride
             )
         )

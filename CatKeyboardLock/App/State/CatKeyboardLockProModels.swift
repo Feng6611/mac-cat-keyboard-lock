@@ -1,6 +1,5 @@
 import Foundation
-import KikiCommerce
-import RevenueCatCommerceKit
+import KikiCommerceCore
 
 enum CatKeyboardLockPurchasePlan: String, CaseIterable, Equatable, Hashable, Identifiable {
     case lifetime
@@ -207,7 +206,6 @@ struct CatKeyboardLockProPlanProduct: Equatable, Identifiable {
 enum CatKeyboardLockProDefaults {
     enum Keys {
         static let trialStartedAt = "CatKeyboardLock.Pro.trialStartedAt"
-        static let hasCompletedOnboarding = "CatKeyboardLock.Pro.hasCompletedOnboarding"
         static let debugProAccessOverride = "CatKeyboardLock.Pro.debugProAccessOverride"
     }
 }

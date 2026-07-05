@@ -1,5 +1,6 @@
 import AppKit
-import KikiCommerce
+import KikiCommerceCore
+import KikiCommercePresentation
 import SwiftUI
 
 private enum CatKeyboardLockPaywallColors {
@@ -43,9 +44,7 @@ struct CatKeyboardLockPaywallSheetView: View {
             manager: proStatusManager.kikiProAccessManager,
             context: context.kikiContext,
             copy: paywallCopy,
-            links: externalLinks,
             tint: CatKeyboardLockPaywallColors.brandAccent,
-            icon: NSApplication.shared.applicationIconImage,
             onFinish: finish
         )
     }
@@ -57,17 +56,7 @@ struct CatKeyboardLockPaywallSheetView: View {
             trialSubtitle: "Choose a plan or continue with your trial.",
             expiredSubtitle: "Your trial has ended. Upgrade to keep using Pro.",
             notStartedSubtitle: "Keep keyboard and click locking available when you need it.",
-            proCardTitle: "Pro",
-            proCardSubtitle: "All Cat Keyboard Lock Pro features are unlocked. Thank you for your support.",
             features: config.features
-        )
-    }
-
-    private var externalLinks: KikiProExternalLinks {
-        KikiProExternalLinks(
-            termsURL: config.termsURL,
-            privacyURL: config.privacyURL,
-            supportURL: config.supportURL
         )
     }
 

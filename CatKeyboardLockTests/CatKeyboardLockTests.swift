@@ -1,8 +1,8 @@
 import CoreGraphics
+import KikiCommerceCore
 import KikiMenuBar
 import KikiOverlay
 import KikiTriggerCorner
-import RevenueCatCommerceKit
 import XCTest
 @testable import CatKeyboardLock
 
@@ -699,7 +699,6 @@ final class CatKeyboardLockTests: XCTestCase {
 
         XCTAssertEqual(manager.status, .notStarted)
         XCTAssertNil(defaults.object(forKey: CatKeyboardLockProDefaults.Keys.trialStartedAt))
-        XCTAssertFalse(manager.hasCompletedOnboarding)
     }
 
     func testStartTrialWritesDateAndRoundsDays() async {
@@ -715,7 +714,6 @@ final class CatKeyboardLockTests: XCTestCase {
 
         let expectedExpiresAt = now.addingTimeInterval(CatKeyboardLockProStatusManager.Constants.trialDuration)
         XCTAssertEqual(defaults.object(forKey: CatKeyboardLockProDefaults.Keys.trialStartedAt) as? Date, now)
-        XCTAssertTrue(manager.hasCompletedOnboarding)
         XCTAssertEqual(manager.status, .trial(daysRemaining: 2, expiresAt: expectedExpiresAt))
     }
 
@@ -759,14 +757,12 @@ final class CatKeyboardLockTests: XCTestCase {
         XCTAssertEqual(manager.debugProAccessOverride, true)
         XCTAssertEqual(manager.debugProAccessOverrideDisplayName, "Paid")
         XCTAssertEqual(manager.status, .pro(plan: .supporterLifetime, originalPurchaseDate: nil))
-        XCTAssertTrue(manager.hasCompletedOnboarding)
 
         manager.setDebugProAccessOverride(false)
 
         XCTAssertEqual(manager.debugProAccessOverride, false)
         XCTAssertEqual(manager.debugProAccessOverrideDisplayName, "Unpaid")
         XCTAssertEqual(manager.status, .expired)
-        XCTAssertFalse(manager.shouldShowOnboarding)
 
         manager.clearDebugProAccessOverride()
 
