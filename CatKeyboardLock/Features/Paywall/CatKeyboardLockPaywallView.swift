@@ -3,10 +3,6 @@ import KikiCommerceCore
 import KikiCommercePresentation
 import SwiftUI
 
-private enum CatKeyboardLockPaywallColors {
-    static let brandAccent = Color(red: 0.58, green: 0.20, blue: 0.62)
-}
-
 enum CatKeyboardLockPaywallContext {
     case settings
     case onboarding
@@ -45,7 +41,7 @@ struct CatKeyboardLockPaywallSheetView: View {
             context: context.kikiContext,
             copy: paywallCopy,
             footerLinks: paywallLinks,
-            tint: CatKeyboardLockPaywallColors.brandAccent,
+            tint: CatKeyboardLockSettingsTint.brand,
             onFinish: finish
         )
     }

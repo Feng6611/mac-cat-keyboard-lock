@@ -5,6 +5,28 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Changed
+- Upgraded to Kiki_mackit 0.7.3 and aligned About, Paywall, Onboarding, and
+  Debug surfaces with the `mac-command-reopen` design language.
+  - About status now uses the canonical tone→icon→color mapping from
+    `KikiAccessStatusTone`, with the brand tint threaded through the
+    access-status row instead of a hardcoded purple.
+  - Default About links are scoped to Website, Email, and GitHub only;
+    Terms and Privacy continue to live in the paywall footer.
+  - Paywall plan cards render vertically in an `HStack` inside a tinted
+    `KikiPaywallStatsCard`; header title is 24pt bold and the message is
+    plain text.
+  - Onboarding window is 680×680 with no traffic lights, an 88×88 app-icon
+    hero, 24pt bold title, and `KikiOnboardingProgressDots` above the
+    action area.
+- Replaced the boolean Pro debug override with `KikiProAccessDebugMode`
+  (`live` / `notPro` / `trial` / `pro`). Settings exposes a
+  `KikiSettingsDebugPreviewRow` segmented picker plus Trigger Onboarding
+  and Clear Test Override actions; the menu bar toggle cycles between
+  `.pro` and live.
+- Centralized the app's brand color in `CatKeyboardLockSettingsTint.brand`
+  so Settings, Paywall, and Onboarding share one tint source.
+
 ### Added
 - Initialized `cat keyboard lock` from `Kiki_menubar_starter`.
 - Documented the keyboard-lock MVP, safety model, and platform boundary.

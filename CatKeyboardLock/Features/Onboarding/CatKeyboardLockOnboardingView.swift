@@ -1,6 +1,7 @@
 import AppKit
 import KikiAuthorization
 import KikiCommerceCore
+import KikiDesign
 import KikiOnboarding
 import SwiftUI
 
@@ -42,11 +43,11 @@ enum CatKeyboardLockOnboardingFlow {
                 steps: steps,
                 completionKey: CatKeyboardLockOnboardingState.completionKey,
                 canSkip: true,
-                tint: .orange,
+                tint: CatKeyboardLockSettingsTint.brand,
                 windowAutosaveName: "CatKeyboardLock.OnboardingWindow",
                 windowTitle: "Welcome",
-                windowSize: CGSize(width: 620, height: 660),
-                minimumWindowSize: CGSize(width: 560, height: 560),
+                windowSize: CGSize(width: 680, height: 680),
+                minimumWindowSize: CGSize(width: 600, height: 600),
                 closeDisposition: .complete
             ),
             completionStore: onboardingState.store,
@@ -61,6 +62,7 @@ private struct CatKeyboardLockOnboardingStepView: View {
     let navigation: KikiOnboardingNavigation
 
     private let pages = CatKeyboardLockOnboardingPage.allCases
+    private let tint = CatKeyboardLockSettingsTint.brand
 
     var body: some View {
         VStack(spacing: 0) {
@@ -72,15 +74,29 @@ private struct CatKeyboardLockOnboardingStepView: View {
 
             Spacer(minLength: 20)
 
-            pageIndicators
-                .padding(.bottom, 18)
+            KikiOnboardingProgressDots(
+                count: pages.count,
+                currentIndex: pageIndex,
+                tint: tint
+            )
+            .padding(.bottom, 18)
 
             actionArea
                 .padding(.horizontal, 34)
                 .padding(.bottom, 26)
         }
-        .frame(width: 620, height: 660)
-        .background(Color(nsColor: .windowBackgroundColor))
+        .frame(width: 680, height: 680)
+        .background {
+            ZStack {
+                KikiMaterialSurface(in: Rectangle(), material: .regularMaterial, tint: tint, tintOpacity: 0.02)
+                RadialGradient(
+                    colors: [tint.opacity(0.08), .clear],
+                    center: .top,
+                    startRadius: 0,
+                    endRadius: 320
+                )
+            }
+        }
         .onAppear {
             inputLockController.refreshPermissions()
         }
@@ -95,17 +111,15 @@ private struct CatKeyboardLockOnboardingStepView: View {
 
     private var pageContent: some View {
         VStack(spacing: 18) {
-            Image(systemName: page.systemImage)
-                .font(.system(size: 52, weight: .semibold))
-                .foregroundStyle(.orange)
+            Image(nsImage: NSApp.applicationIconImage)
+                .resizable()
+                .interpolation(.high)
                 .frame(width: 88, height: 88)
-                .background(
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
-                        .fill(.orange.opacity(0.09))
-                )
+                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                .shadow(color: .black.opacity(0.12), radius: 12, y: 6)
 
             Text(page.title)
-                .font(.system(size: 28, weight: .bold, design: .rounded))
+                .font(.system(size: 24, weight: .bold))
                 .multilineTextAlignment(.center)
 
             Text(page.subtitle)
@@ -119,7 +133,7 @@ private struct CatKeyboardLockOnboardingStepView: View {
                 ForEach(page.points, id: \.self) { point in
                     HStack(spacing: 9) {
                         Image(systemName: "checkmark.circle.fill")
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(tint)
                             .frame(width: 18)
                         Text(point)
                             .font(.callout)
@@ -144,7 +158,7 @@ private struct CatKeyboardLockOnboardingStepView: View {
                     .foregroundStyle(
                         inputLockController.permissionStatus.accessibilityTrusted
                             ? Color.secondary
-                            : Color.orange
+                            : tint
                     )
                     .frame(width: 20)
                 Text("Accessibility")
@@ -155,7 +169,7 @@ private struct CatKeyboardLockOnboardingStepView: View {
                     .foregroundStyle(
                         inputLockController.permissionStatus.accessibilityTrusted
                             ? Color.secondary
-                            : Color.orange
+                            : tint
                     )
             }
 
@@ -172,16 +186,6 @@ private struct CatKeyboardLockOnboardingStepView: View {
             RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .fill(Color.secondary.opacity(0.08))
         )
-    }
-
-    private var pageIndicators: some View {
-        HStack(spacing: 7) {
-            ForEach(pages.indices, id: \.self) { index in
-                Capsule()
-                    .fill(index == pageIndex ? Color.orange : Color.secondary.opacity(0.25))
-                    .frame(width: index == pageIndex ? 22 : 7, height: 7)
-            }
-        }
     }
 
     private var actionArea: some View {
@@ -207,7 +211,7 @@ private struct CatKeyboardLockOnboardingStepView: View {
                 navigation.advance()
             }
             .buttonStyle(.borderedProminent)
-            .tint(.orange)
+            .tint(tint)
             .frame(width: 118, height: 32)
         }
     }

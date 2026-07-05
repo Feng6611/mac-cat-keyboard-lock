@@ -20,7 +20,8 @@ struct CatKeyboardLockApp: App {
                 inputLockController: appDelegate.inputLockController,
                 accessManager: appDelegate.accessManager,
                 settingsCoordinator: appDelegate.settingsCoordinator,
-                route: appDelegate.settingsRoute
+                route: appDelegate.settingsRoute,
+                onTriggerOnboarding: { appDelegate.triggerOnboarding() }
             )
         }
     }
@@ -127,7 +128,11 @@ final class CatKeyboardLockAppDelegate: NSObject, NSApplicationDelegate {
                 toggleDebugProAccess: { [weak self] in
 #if DEBUG
                     guard let self else { return }
-                    self.accessManager.setDebugProAccessOverride(!self.accessManager.debugProAccessToggleIsOn)
+                    if self.accessManager.debugProAccessOverride == .pro {
+                        self.accessManager.clearDebugProAccessOverride()
+                    } else {
+                        self.accessManager.setDebugProAccessOverride(.pro)
+                    }
 #endif
                 },
                 clearDebugProAccessOverride: { [weak self] in
@@ -206,6 +211,12 @@ final class CatKeyboardLockAppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
+        onboardingCoordinator.start()
+    }
+
+    func triggerOnboarding() {
+        onboardingState.reset()
+        onboardingCoordinator.resetCompletion()
         onboardingCoordinator.start()
     }
 

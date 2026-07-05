@@ -62,6 +62,10 @@ final class CatKeyboardLockSettingsRouteModel: ObservableObject {
     @Published var isPaywallSheetPresented = false
 }
 
+enum CatKeyboardLockSettingsTint {
+    static let brand = Color(red: 0.58, green: 0.20, blue: 0.62)
+}
+
 struct CatKeyboardLockSettingsView: View {
     let config: CatKeyboardLockAppConfig
     @ObservedObject var lockSettings: LockSettings
@@ -69,6 +73,7 @@ struct CatKeyboardLockSettingsView: View {
     @ObservedObject var accessManager: KikiProAccessManager
     let settingsCoordinator: KikiSettingsCoordinator<CatKeyboardLockSettingsTab>
     @ObservedObject var route: CatKeyboardLockSettingsRouteModel
+    let onTriggerOnboarding: () -> Void
 
     init(
         config: CatKeyboardLockAppConfig,
@@ -76,7 +81,8 @@ struct CatKeyboardLockSettingsView: View {
         inputLockController: InputLockController,
         accessManager: KikiProAccessManager,
         settingsCoordinator: KikiSettingsCoordinator<CatKeyboardLockSettingsTab>,
-        route: CatKeyboardLockSettingsRouteModel
+        route: CatKeyboardLockSettingsRouteModel,
+        onTriggerOnboarding: @escaping () -> Void = {}
     ) {
         self.config = config
         self.lockSettings = lockSettings
@@ -84,6 +90,7 @@ struct CatKeyboardLockSettingsView: View {
         self.accessManager = accessManager
         self.settingsCoordinator = settingsCoordinator
         self.route = route
+        self.onTriggerOnboarding = onTriggerOnboarding
     }
 
     var body: some View {
@@ -152,12 +159,23 @@ struct CatKeyboardLockSettingsView: View {
         Section {
             KikiSettingsStatusRow(
                 title: "Test override",
-                value: accessManager.debugProAccessOverrideDisplayName,
+                value: currentDebugModeDisplayName,
                 systemImage: "hammer",
+                tone: accessManager.debugProAccessOverride == nil ? .neutral : .warning,
                 valueColor: accessManager.debugProAccessOverride == nil ? .secondary : .orange
             )
 
-            KikiSettingsToggleRow("Paid access", isOn: debugProAccessBinding, systemImage: "sparkles")
+            KikiSettingsDebugPreviewRow(
+                "Pro preview",
+                selection: debugModeBinding,
+                options: KikiProAccessDebugMode.allCases,
+                isOverrideActive: accessManager.debugProAccessOverride != nil,
+                optionTitle: { $0.displayName }
+            )
+
+            Button("Trigger Onboarding") {
+                onTriggerOnboarding()
+            }
 
             Button("Clear Test Override") {
                 accessManager.clearDebugProAccessOverride()
@@ -166,14 +184,24 @@ struct CatKeyboardLockSettingsView: View {
         } header: {
             Text("Developer Testing")
         } footer: {
-            KikiSettingsHelperText("Debug builds only. Forces the local Pro gate without making or restoring a purchase.")
+            KikiSettingsHelperText("Debug builds only. Previews a specific Pro state without making or restoring a purchase.")
         }
     }
 
-    private var debugProAccessBinding: Binding<Bool> {
+    private var currentDebugModeDisplayName: String {
+        accessManager.debugProAccessOverride?.displayName ?? "Off"
+    }
+
+    private var debugModeBinding: Binding<KikiProAccessDebugMode> {
         Binding(
-            get: { accessManager.debugProAccessToggleIsOn },
-            set: { accessManager.setDebugProAccessOverride($0) }
+            get: { accessManager.debugProAccessOverride ?? .live },
+            set: { mode in
+                if mode == .live {
+                    accessManager.clearDebugProAccessOverride()
+                } else {
+                    accessManager.setDebugProAccessOverride(mode)
+                }
+            }
         )
     }
 #endif
@@ -238,12 +266,11 @@ struct CatKeyboardLockSettingsView: View {
                 route.isPaywallSheetPresented = true
             },
             links: KikiStandardAboutLinks(
-                terms: URL(string: config.termsURL),
-                privacy: URL(string: config.privacyURL),
-                support: URL(string: config.supportURL),
+                website: URL(string: config.officialURL),
                 feedback: URL(string: config.contactEmailURL),
-                website: URL(string: config.officialURL)
-            )
+                github: URL(string: config.repositoryURL)
+            ),
+            tint: CatKeyboardLockSettingsTint.brand
         )
     }
 
@@ -280,8 +307,8 @@ struct CatKeyboardLockSettingsView: View {
         case .pro(let plan, _):
             return KikiAccessStatusPresentation(
                 tone: .active,
-                title: "Pro",
-                subtitle: plan.title,
+                title: plan.title,
+                subtitle: plan.billingDetail,
                 actionTitle: "View plans"
             )
         }

@@ -779,7 +779,7 @@ final class CatKeyboardLockTests: XCTestCase {
         XCTAssertNil(manager.debugProAccessOverride)
         XCTAssertEqual(manager.status, expectedTrial)
 
-        manager.setDebugProAccessOverride(true)
+        manager.setDebugProAccessOverride(.pro)
 
         let debugEntitlement = CommerceEntitlement(
             plan: CatKeyboardLockPurchasePlan.supporterLifetime.commercePlan,
@@ -789,23 +789,20 @@ final class CatKeyboardLockTests: XCTestCase {
             willRenew: false,
             originalPurchaseDate: nil
         )
-        XCTAssertEqual(manager.debugProAccessOverride, true)
-        XCTAssertEqual(manager.debugProAccessOverrideDisplayName, "Paid")
+        XCTAssertEqual(manager.debugProAccessOverride, .pro)
         XCTAssertEqual(
             manager.status,
             .pro(plan: CatKeyboardLockPurchasePlan.supporterLifetime.kikiProPlan, entitlement: debugEntitlement)
         )
 
-        manager.setDebugProAccessOverride(false)
+        manager.setDebugProAccessOverride(.notPro)
 
-        XCTAssertEqual(manager.debugProAccessOverride, false)
-        XCTAssertEqual(manager.debugProAccessOverrideDisplayName, "Unpaid")
-        XCTAssertEqual(manager.status, .expired)
+        XCTAssertEqual(manager.debugProAccessOverride, .notPro)
+        XCTAssertEqual(manager.status, .notStarted)
 
         manager.clearDebugProAccessOverride()
 
         XCTAssertNil(manager.debugProAccessOverride)
-        XCTAssertEqual(manager.debugProAccessOverrideDisplayName, "Off")
         XCTAssertEqual(manager.status, expectedTrial)
         XCTAssertNil(defaults.object(forKey: CatKeyboardLockProDefaults.Keys.debugProAccessOverride))
     }
