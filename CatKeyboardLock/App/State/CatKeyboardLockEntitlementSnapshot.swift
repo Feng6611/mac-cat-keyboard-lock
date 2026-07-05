@@ -21,7 +21,9 @@ struct CatKeyboardLockEntitlementSnapshot: Equatable {
                 )
             )
         } else if isTrialActive {
-            self.status = .trial(daysRemaining: 2, expiresAt: .distantFuture)
+            self.status = .trial(
+                .time(daysRemaining: 2, expiresAt: .distantFuture)
+            )
         } else {
             self.status = .expired
         }
@@ -46,7 +48,4 @@ struct CatKeyboardLockEntitlementSnapshot: Equatable {
         status.canStartTrial
     }
 
-    var displayName: String {
-        status.displayName
-    }
 }

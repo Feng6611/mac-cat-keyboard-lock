@@ -14,17 +14,23 @@ workflow.
 5. Keep UI smoke launch arguments wired to the same app-owned actions used by
    real menu items and buttons. Do not add test-only Settings windows or
    duplicate Kiki panes for screenshots.
-6. Open Settings through `KikiSettingsOpener.openForMenuBarApp()` and keep the
-   app in accessory mode; Settings must not create a temporary Dock icon.
+6. Open Settings through the app's `KikiSettingsCoordinator`; its opener must
+   keep the app in accessory mode and its view must register the exact native
+   Settings window.
 7. Verify with unit tests and the local run script.
 
 ## Boundaries
 
-- Kiki provides menu bar, settings, paywall, window, and design infrastructure.
+- Kiki_mackit provides commerce-free menu bar, settings, onboarding, paywall,
+  window, and design infrastructure.
+- KikiCommerceKit provides provider-neutral access/trial workflow, the
+  RevenueCat adapter, and reusable paywall orchestration.
 - `Platform/InputLock/` owns `CGEventTap`, permission checks, timeout, and
   fallback unlock detection.
-- Trial, purchase, and entitlement policy is app-owned and may gate new lock
-  attempts. It must not interrupt recovery for an already-active lock.
+- The app supplies plans, trial policy, product identifiers, migration rules,
+  copy, and feature gates. KikiCommerceKit owns the reusable calculation,
+  purchase, restore, offering, and transaction-refresh workflow. Access gating
+  must not interrupt recovery for an already-active lock.
 - Do not add root helpers, DriverKit, IOHID, or system extensions for this MVP.
 
 ## Verification

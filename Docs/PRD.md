@@ -42,8 +42,9 @@ keyboard input while keeping the machine awake and visible.
   recommended and selected by default.
 - Uses `CGEventTap` as an active filter only while locked.
 - Requires Accessibility for locking.
-- Uses RevenueCatCommerceKit for product loading, purchase, restore, and
-  entitlement refresh.
+- Uses KikiCommerceKit for provider-neutral trial/access state, RevenueCat
+  product loading, purchase, restore, entitlement refresh, and reusable Paywall
+  orchestration.
 
 ## Explicitly Out of Scope
 

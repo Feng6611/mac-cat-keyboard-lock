@@ -44,6 +44,7 @@ struct CatKeyboardLockPaywallSheetView: View {
             manager: accessManager,
             context: context.kikiContext,
             copy: paywallCopy,
+            footerLinks: paywallLinks,
             tint: CatKeyboardLockPaywallColors.brandAccent,
             onFinish: finish
         )
@@ -56,8 +57,26 @@ struct CatKeyboardLockPaywallSheetView: View {
             trialSubtitle: "Choose a plan or continue with your trial.",
             expiredSubtitle: "Your trial has ended. Upgrade to keep using Pro.",
             notStartedSubtitle: "Keep keyboard and click locking available when you need it.",
-            features: config.features
+            features: config.features,
+            purchaseActionTitle: "Unlock forever",
+            trialActionTitle: "Start 2-day free trial"
         )
+    }
+
+    private var paywallLinks: [KikiProPaywallLink] {
+        [
+            link(id: "terms", title: "Terms", value: config.termsURL),
+            link(id: "privacy", title: "Privacy", value: config.privacyURL),
+            link(id: "support", title: "Support", value: config.supportURL)
+        ]
+        .compactMap { $0 }
+    }
+
+    private func link(id: String, title: String, value: String) -> KikiProPaywallLink? {
+        guard let url = URL(string: value) else {
+            return nil
+        }
+        return KikiProPaywallLink(id: id, title: title, url: url)
     }
 
     private func finish() {

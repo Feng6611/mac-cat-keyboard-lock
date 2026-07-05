@@ -46,7 +46,8 @@ enum CatKeyboardLockRevenueCatConfiguration {
             trialPolicy: .explicitStart(duration: trialDuration),
             storageKeys: KikiProAccessStorageKeys(
                 trialStartedAt: CatKeyboardLockProDefaults.Keys.trialStartedAt,
-                debugProAccessOverride: CatKeyboardLockProDefaults.Keys.debugProAccessOverride
+                debugProAccessOverride: CatKeyboardLockProDefaults.Keys.debugProAccessOverride,
+                usageCountPrefix: CatKeyboardLockProDefaults.Keys.usageCountPrefix
             )
         )
     }

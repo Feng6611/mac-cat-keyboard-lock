@@ -58,15 +58,8 @@ enum CatKeyboardLockInitialSettingsTab: String {
 }
 
 @MainActor
-final class CatKeyboardLockSettingsNavigationModel: ObservableObject {
-    static let shared = CatKeyboardLockSettingsNavigationModel()
-
-    @Published var selectedTab: CatKeyboardLockSettingsTab
+final class CatKeyboardLockSettingsRouteModel: ObservableObject {
     @Published var isPaywallSheetPresented = false
-
-    init(selectedTab: CatKeyboardLockSettingsTab = .lock) {
-        self.selectedTab = selectedTab
-    }
 }
 
 struct CatKeyboardLockSettingsView: View {
@@ -74,33 +67,27 @@ struct CatKeyboardLockSettingsView: View {
     @ObservedObject var lockSettings: LockSettings
     @ObservedObject var inputLockController: InputLockController
     @ObservedObject var accessManager: KikiProAccessManager
-    @StateObject private var navigation: CatKeyboardLockSettingsNavigationModel
+    let settingsCoordinator: KikiSettingsCoordinator<CatKeyboardLockSettingsTab>
+    @ObservedObject var route: CatKeyboardLockSettingsRouteModel
 
     init(
         config: CatKeyboardLockAppConfig,
         lockSettings: LockSettings,
         inputLockController: InputLockController,
         accessManager: KikiProAccessManager,
-        navigationModel: CatKeyboardLockSettingsNavigationModel = .shared,
-        initialTab: CatKeyboardLockInitialSettingsTab = .lock
+        settingsCoordinator: KikiSettingsCoordinator<CatKeyboardLockSettingsTab>,
+        route: CatKeyboardLockSettingsRouteModel
     ) {
         self.config = config
         self.lockSettings = lockSettings
         self.inputLockController = inputLockController
         self.accessManager = accessManager
-        if initialTab != .lock {
-            navigationModel.selectedTab = initialTab.settingsTab
-        }
-        _navigation = StateObject(
-            wrappedValue: navigationModel
-        )
+        self.settingsCoordinator = settingsCoordinator
+        self.route = route
     }
 
     var body: some View {
-        KikiSettingsShell(
-            selection: $navigation.selectedTab,
-            tabs: CatKeyboardLockSettingsTab.kikiTabs
-        ) { tab in
+        KikiSettingsCoordinatorView(coordinator: settingsCoordinator) { tab in
             switch tab {
             case .lock:
                 lockPane
@@ -110,7 +97,7 @@ struct CatKeyboardLockSettingsView: View {
                 aboutPane
             }
         }
-        .sheet(isPresented: $navigation.isPaywallSheetPresented) {
+        .sheet(isPresented: $route.isPaywallSheetPresented) {
             CatKeyboardLockPaywallSheetView(
                 config: config,
                 accessManager: accessManager,
@@ -204,6 +191,10 @@ struct CatKeyboardLockSettingsView: View {
             } footer: {
                 KikiSettingsHelperText("Accessibility is required to block input while locked.")
             }
+
+#if DEBUG
+            debugTestingSection
+#endif
         }
     }
 
@@ -240,66 +231,59 @@ struct CatKeyboardLockSettingsView: View {
     }
 
     private var aboutPane: some View {
-        KikiSettingsPane {
-            Section {
-                KikiAppIdentityView(
-                    appName: config.appName,
-                    versionText: versionText
-                )
-                .padding(.vertical, 20)
-            }
+        KikiStandardAboutPane(
+            metadata: .bundle(),
+            accessStatus: accessStatusPresentation,
+            onAccessAction: {
+                route.isPaywallSheetPresented = true
+            },
+            links: KikiStandardAboutLinks(
+                terms: URL(string: config.termsURL),
+                privacy: URL(string: config.privacyURL),
+                support: URL(string: config.supportURL),
+                feedback: URL(string: config.contactEmailURL),
+                website: URL(string: config.officialURL)
+            )
+        )
+    }
 
-            Section {
-                KikiSettingsStatusRow(
-                    title: "Status",
-                    value: accessManager.status.displayName,
-                    systemImage: "checkmark.seal",
-                    valueColor: accessManager.status.isActive ? Color(red: 0.58, green: 0.20, blue: 0.62) : .orange,
-                    trailingSystemImage: aboutStatusTrailingSystemImage,
-                    action: aboutStatusAction
-                )
-            }
-
-            Section {
-                KikiSettingsLinkRow(
-                    title: "Official",
-                    value: config.officialDisplayName,
-                    urlString: config.officialURL,
-                    systemImage: "globe"
-                )
-                KikiSettingsCopyRow(
-                    title: "Email",
-                    value: config.contactEmailAddress,
-                    systemImage: "envelope"
-                )
-                KikiSettingsLinkRow(
-                    title: "GitHub",
-                    value: config.repositoryDisplayName,
-                    urlString: config.repositoryURL,
-                    systemImage: "chevron.left.forwardslash.chevron.right"
-                )
-            }
-
-#if DEBUG
-            debugTestingSection
-#endif
+    private var accessStatusPresentation: KikiAccessStatusPresentation {
+        switch accessManager.status {
+        case .notStarted:
+            return KikiAccessStatusPresentation(
+                tone: .neutral,
+                title: "Trial not started",
+                subtitle: "Start the free trial when you are ready.",
+                actionTitle: "View options"
+            )
+        case .trial(.time(let daysRemaining, _)):
+            return KikiAccessStatusPresentation(
+                tone: .trial,
+                title: "\(daysRemaining) day\(daysRemaining == 1 ? "" : "s") left",
+                subtitle: "All Pro controls are available during the trial.",
+                actionTitle: "View plans"
+            )
+        case .trial(.usage(_, let used, let limit)):
+            return KikiAccessStatusPresentation(
+                tone: .trial,
+                title: "\(max(0, limit - used)) uses left",
+                subtitle: "All Pro controls are available during the trial.",
+                actionTitle: "View plans"
+            )
+        case .expired:
+            return KikiAccessStatusPresentation(
+                tone: .expired,
+                title: "Trial ended",
+                subtitle: "Upgrade to keep using input lock controls.",
+                actionTitle: "Upgrade"
+            )
+        case .pro(let plan, _):
+            return KikiAccessStatusPresentation(
+                tone: .active,
+                title: "Pro",
+                subtitle: plan.title,
+                actionTitle: "View plans"
+            )
         }
     }
-
-    private var versionText: String {
-        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
-        let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
-        return "Version \(version) (\(build))"
-    }
-
-    private var aboutStatusTrailingSystemImage: String? {
-        "chevron.right"
-    }
-
-    private var aboutStatusAction: (() -> Void)? {
-        {
-            navigation.isPaywallSheetPresented = true
-        }
-    }
-
 }

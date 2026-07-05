@@ -15,19 +15,19 @@ that should not be automated on a developer machine.
 | F-004 | Keyboard/click policy | User chooses which input types are blocked | Settings Lock | Keyboard / clicks on/off | Core + Platform | J-002, J-004 |
 | F-005 | Recovery unlock and timeout | User can regain input safely | Global shortcut / timeout | Active / recovered | Platform/Manual | J-003 |
 | F-006 | Trigger corner | User can lock from a configured corner | Settings System / screen corner | Enabled / disabled / dwell | Platform/Kiki | J-004 |
-| F-007 | Onboarding | New user reaches a useful first state | Onboarding | First run / completed | UI/App | J-001 |
-| F-008 | Paywall | User can upgrade or restore paid access | About status / onboarding sheet / paywall smoke | Trial / paid / restore | UI/App/commerce | J-005 |
+| F-007 | Onboarding | New user reaches a useful first state without repeating onboarding after an upgrade | Onboarding | First run / completed / legacy completion / already Pro | UI/App | J-001 |
+| F-008 | Paywall | User can upgrade or restore paid access with localized offerings and visible transaction feedback | About status / onboarding sheet / paywall smoke | Loading / trial / paid / restore / error | UI/App/commerce | J-005 |
 | F-009 | About and debug status | User sees identity, support, and debug status clearly | Settings About | Release / debug | UI | J-005 |
 
 ## Agent-Friendly Journey Cases
 
 | Case ID | Journey | Covers | Boundary | Preconditions | Steps | Expected evidence | Cleanup |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| J-001 | First run and trial access | F-001, F-007 | UI/App/Core | Fresh or reset onboarding state | Run onboarding screenshot and Core access cases | Onboarding screenshot plus JSON trial route | Reset onboarding/test state |
+| J-001 | First run and trial access | F-001, F-007 | UI/App/Core | Fresh, legacy-completed, already-Pro, or reset onboarding state | Run onboarding state tests, onboarding screenshot, and Core access cases | Legacy completion migrates; Pro users skip automatic onboarding; onboarding screenshot plus JSON trial route | Reset onboarding/test state |
 | J-002 | Lock selected input | F-002, F-003, F-004 | Core + Platform/Manual | Known access and permission states | Run Core matrix; release smoke locks real input | JSON lock/openPermission action; real input is blocked only in manual smoke | Unlock and clear test override |
 | J-003 | Unlock and recover safely | F-002, F-005 | Platform/Manual | App is locked in release smoke | Use shortcut/menu/timeout recovery | Input returns and menu title changes to lock | Ensure unlocked state |
 | J-004 | Configure lock behavior | F-004, F-006 | UI + Platform | Debug build | Launch Settings smoke scenes, then let the app call `openSettings()` | Native Kiki Settings screenshots show controls; tests pass | Quit app |
-| J-005 | Review account, paywall, and support info | F-001, F-008, F-009 | UI/App/Manual | Trial/pro test states | Launch Settings About and paywall smoke scenes through normal app actions; release purchase/restore smoke | Screenshots show About status, sheet card, and support links; real purchase/restore works | Reset test entitlement |
+| J-005 | Review account, paywall, and support info | F-001, F-008, F-009 | UI/App/Manual | Trial/pro/error test states | Load offerings; launch Settings About and paywall smoke scenes through normal app actions; exercise trial/purchase/restore adapters; release purchase/restore smoke | Localized offering metadata is presented; failures remain visible; successful trial/purchase/restore completes the host flow; entitled CTA dismisses instead of purchasing again | Reset test entitlement |
 
 ## Verification Matrix
 
@@ -39,8 +39,8 @@ that should not be automated on a developer machine.
 | Keyboard/click policy | Core + Platform | `matrix` policy cases | Event mask tests | Settings Lock screenshot | Real blocked input |
 | Fallback unlock combo and timeout | Platform | No | Timing/controller tests | No | Real recovery path |
 | Trigger corner | Platform/Kiki | No | Geometry/monitor tests | Settings System screenshot | Real pointer dwell |
-| Onboarding | UI/App | No | Trial/onboarding state tests | Onboarding screenshot; trial step presents paywall sheet | Close/skip/start-trial path |
-| Paywall | UI/App/commerce | Access rules only | Purchase/restore adapter tests | About-triggered paywall sheet screenshot | Real purchase/restore |
+| Onboarding | UI/App | No | Legacy completion migration, Pro skip, and trial/onboarding state tests | Onboarding screenshot; trial step presents paywall sheet | Close/skip/start-trial path |
+| Paywall | UI/App/commerce | Access rules only | Offering load, purchase/restore completion, error feedback, and entitled CTA adapter tests | About-triggered paywall sheet screenshot | Real purchase/restore |
 | About and debug status | UI | No | App config tests | Settings About screenshot | Debug build sanity check |
 
 ## Core CLI
@@ -79,7 +79,12 @@ Use this layer before every commit.
 UI smoke tests launch fixed scenes and capture screenshots for review. The
 launch arguments only choose the startup scene; the app must still call the same
 entry points a real user action would call, such as `openSettings()`,
-`openPaywall()`, or onboarding `show()`.
+`openPaywall()`, or onboarding coordinator `start()`.
+
+The capture script prefers the expected window title. When macOS redacts window
+titles because the invoking terminal lacks Screen Recording metadata access, it
+falls back to the frontmost normal window owned by the app; each scene is
+launched in a fresh process so that fallback stays deterministic.
 
 Do not add test-only Settings windows, duplicate Kiki panes, or alternate
 paywall/onboarding surfaces for screenshots. UI smoke does not grant system

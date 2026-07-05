@@ -9,8 +9,7 @@ Settings.
 
 - Menu bar `Lock Keyboard` / `Unlock` flow.
 - Default keyboard-only lock.
-- Optional blocking for clicks and movement. Movement includes pointer movement,
-  dragging, and scrolling.
+- Optional click blocking.
 - Optional trigger corner for starting a lock from a selected screen corner.
 - Fallback unlock: hold `Control + Option + Command + L` for 1 second.
 - Selectable lock duration: 5, 10, 30, or 60 minutes.
@@ -20,7 +19,7 @@ Settings.
 - Accessibility is required for locking.
 - KikiAuthorization opens the Accessibility setup path from onboarding and
   Settings.
-- RevenueCatCommerceKit-backed paywall and restore flow.
+- KikiCommerceKit-backed access, paywall, purchase, and restore flow.
 
 ## Architecture
 

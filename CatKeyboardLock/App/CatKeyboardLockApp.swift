@@ -2,6 +2,7 @@ import AppKit
 import Combine
 import KikiCommerceCore
 import KikiMenuBar
+import KikiOnboarding
 import KikiOverlay
 import KikiSettings
 import KikiTriggerCorner
@@ -18,8 +19,8 @@ struct CatKeyboardLockApp: App {
                 lockSettings: appDelegate.lockSettings,
                 inputLockController: appDelegate.inputLockController,
                 accessManager: appDelegate.accessManager,
-                navigationModel: appDelegate.settingsNavigation,
-                initialTab: appDelegate.launchOptions.settingsTab ?? .lock
+                settingsCoordinator: appDelegate.settingsCoordinator,
+                route: appDelegate.settingsRoute
             )
         }
     }
@@ -35,18 +36,21 @@ final class CatKeyboardLockAppDelegate: NSObject, NSApplicationDelegate {
         revenueCatConfiguration: CatKeyboardLockRevenueCatConfiguration.revenueCatConfiguration
     )
     let onboardingState = CatKeyboardLockOnboardingState()
-    let settingsNavigation = CatKeyboardLockSettingsNavigationModel.shared
+    let settingsRoute = CatKeyboardLockSettingsRouteModel()
     let launchOptions = CatKeyboardLockLaunchOptions.current()
 
-    private let settingsWindowController = KikiSettingsWindowController(
-        frameAutosaveName: "CatKeyboardLock.SettingsWindow",
-        minimumContentSize: CGSize(
-            width: KikiSettingsDefaults.minimumWindowWidth,
-            height: KikiSettingsDefaults.minimumWindowHeight
+    lazy var settingsCoordinator = KikiSettingsCoordinator(
+        tabs: CatKeyboardLockSettingsTab.kikiTabs,
+        initialTab: CatKeyboardLockSettingsTab.lock,
+        windowController: KikiSettingsWindowController(
+            frameAutosaveName: "CatKeyboardLock.SettingsWindow",
+            minimumContentSize: CGSize(
+                width: KikiSettingsDefaults.minimumWindowWidth,
+                height: KikiSettingsDefaults.minimumWindowHeight
+            )
         )
     )
-    private lazy var settingsOpener = KikiSettingsOpener(windowController: settingsWindowController)
-    private lazy var onboardingWindowController = CatKeyboardLockOnboardingWindowController(
+    private lazy var onboardingCoordinator = CatKeyboardLockOnboardingFlow.makeCoordinator(
         config: config,
         accessManager: accessManager,
         onboardingState: onboardingState,
@@ -92,9 +96,9 @@ final class CatKeyboardLockAppDelegate: NSObject, NSApplicationDelegate {
         accessManager.configureIfNeeded()
         updateTriggerCornerMonitor()
         if launchOptions.scene == .onboarding {
-            onboardingWindowController.show()
+            onboardingCoordinator.start()
         } else {
-            onboardingWindowController.showIfNeeded()
+            showOnboardingIfNeeded()
         }
         Task { @MainActor [weak self] in
             await self?.accessManager.refresh()
@@ -158,15 +162,15 @@ final class CatKeyboardLockAppDelegate: NSObject, NSApplicationDelegate {
         presentsPaywall: Bool = false
     ) {
         if let initialTab {
-            settingsNavigation.selectedTab = initialTab.settingsTab
+            settingsCoordinator.select(initialTab.settingsTab)
         }
 
         if presentsPaywall {
-            settingsNavigation.selectedTab = .about
-            settingsNavigation.isPaywallSheetPresented = true
+            settingsCoordinator.select(.about)
+            settingsRoute.isPaywallSheetPresented = true
         }
 
-        settingsOpener.openForMenuBarApp()
+        settingsCoordinator.open()
     }
 
     func openPaywall() {
@@ -185,13 +189,32 @@ final class CatKeyboardLockAppDelegate: NSObject, NSApplicationDelegate {
 
             switch scene {
             case .onboarding:
-                self.onboardingWindowController.show()
+                self.onboardingCoordinator.start()
             case .settings:
                 self.openSettings(initialTab: self.launchOptions.settingsTab)
             case .paywall:
                 self.openPaywall()
             }
         }
+    }
+
+    private func showOnboardingIfNeeded() {
+        guard onboardingState.shouldShow(
+            isPro: accessManager.status.isPro,
+            hasAccessOverride: hasDebugAccessOverride
+        ) else {
+            return
+        }
+
+        onboardingCoordinator.start()
+    }
+
+    private var hasDebugAccessOverride: Bool {
+#if DEBUG
+        accessManager.debugProAccessOverride != nil
+#else
+        false
+#endif
     }
 
     private func bindLockStateToStatusItem() {

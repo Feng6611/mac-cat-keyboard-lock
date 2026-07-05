@@ -1,121 +1,66 @@
 import AppKit
 import KikiAuthorization
 import KikiCommerceCore
-import KikiWindow
+import KikiOnboarding
 import SwiftUI
 
-@MainActor
-final class CatKeyboardLockOnboardingWindowController {
-    private let config: CatKeyboardLockAppConfig
-    private let accessManager: KikiProAccessManager
-    private let onboardingState: CatKeyboardLockOnboardingState
-    private let inputLockController: InputLockController
-    private let onFinish: () -> Void
-    private var isCompletingIntentionally = false
-
-    private lazy var windowController = KikiSingleWindowController(
-        configuration: .utility(
-            title: "Welcome",
-            size: CGSize(width: 620, height: 660),
-            minimumSize: CGSize(width: 560, height: 560),
-            frameAutosaveName: "CatKeyboardLock.OnboardingWindow"
-        ),
-        onClose: { [weak self] in
-            self?.handleWindowClose()
-        }
-    ) { [weak self, accessManager] in
-        CatKeyboardLockOnboardingView(
-            config: self?.config ?? .default,
-            accessManager: accessManager,
-            inputLockController: self?.inputLockController,
-            onFinish: {
-                self?.finish()
-            },
-            onClose: {
-                self?.skip()
-            }
-        )
-    }
-
-    init(
+enum CatKeyboardLockOnboardingFlow {
+    @MainActor
+    static func makeCoordinator(
         config: CatKeyboardLockAppConfig,
         accessManager: KikiProAccessManager,
         onboardingState: CatKeyboardLockOnboardingState,
         inputLockController: InputLockController,
-        onFinish: @escaping () -> Void
-    ) {
-        self.config = config
-        self.accessManager = accessManager
-        self.onboardingState = onboardingState
-        self.inputLockController = inputLockController
-        self.onFinish = onFinish
-    }
+        onFinish: @escaping @MainActor () -> Void
+    ) -> KikiOnboardingCoordinator {
+        let steps = CatKeyboardLockOnboardingPage.allCases.map { page in
+            KikiOnboardingStep.custom(id: page.rawValue) { navigation in
+                if page == .trial {
+                    return AnyView(
+                        CatKeyboardLockPaywallSheetView(
+                            config: config,
+                            accessManager: accessManager,
+                            context: .onboarding,
+                            onFinish: navigation.finish
+                        )
+                    )
+                }
 
-    var isVisible: Bool {
-        windowController.isVisible
-    }
-
-    func showIfNeeded() {
-        guard onboardingState.shouldShow else {
-            return
+                return AnyView(
+                    CatKeyboardLockOnboardingStepView(
+                        page: page,
+                        inputLockController: inputLockController,
+                        navigation: navigation
+                    )
+                )
+            }
         }
 
-        windowController.show()
-    }
-
-    func show() {
-        windowController.show()
-    }
-
-    private func finish() {
-        isCompletingIntentionally = true
-        onboardingState.markCompleted()
-        windowController.close()
-        onFinish()
-    }
-
-    private func skip() {
-        onboardingState.markCompleted()
-        finish()
-    }
-
-    private func handleWindowClose() {
-        guard !isCompletingIntentionally else {
-            isCompletingIntentionally = false
-            return
-        }
-
-        onboardingState.markCompleted()
-        onFinish()
+        return KikiOnboardingCoordinator(
+            configuration: KikiOnboardingConfiguration(
+                appName: config.appName,
+                steps: steps,
+                completionKey: CatKeyboardLockOnboardingState.completionKey,
+                canSkip: true,
+                tint: .orange,
+                windowAutosaveName: "CatKeyboardLock.OnboardingWindow",
+                windowTitle: "Welcome",
+                windowSize: CGSize(width: 620, height: 660),
+                minimumWindowSize: CGSize(width: 560, height: 560),
+                closeDisposition: .complete
+            ),
+            completionStore: onboardingState.store,
+            onFinished: onFinish
+        )
     }
 }
 
-struct CatKeyboardLockOnboardingView: View {
-    let config: CatKeyboardLockAppConfig
-    @ObservedObject var accessManager: KikiProAccessManager
+private struct CatKeyboardLockOnboardingStepView: View {
+    let page: CatKeyboardLockOnboardingPage
     @ObservedObject var inputLockController: InputLockController
-
-    let onFinish: () -> Void
-    let onClose: () -> Void
-
-    @State private var pageIndex = 0
-    @State private var isPaywallSheetPresented = false
+    let navigation: KikiOnboardingNavigation
 
     private let pages = CatKeyboardLockOnboardingPage.allCases
-
-    init(
-        config: CatKeyboardLockAppConfig,
-        accessManager: KikiProAccessManager,
-        inputLockController: InputLockController?,
-        onFinish: @escaping () -> Void,
-        onClose: @escaping () -> Void
-    ) {
-        self.config = config
-        self.accessManager = accessManager
-        self.inputLockController = inputLockController ?? InputLockController(settings: LockSettings())
-        self.onFinish = onFinish
-        self.onClose = onClose
-    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -138,28 +83,17 @@ struct CatKeyboardLockOnboardingView: View {
         .background(Color(nsColor: .windowBackgroundColor))
         .onAppear {
             inputLockController.refreshPermissions()
-            presentPaywallIfNeeded()
         }
-        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
-            inputLockController.refreshPermissions()
-        }
-        .onChange(of: pageIndex) { _ in
-            presentPaywallIfNeeded()
-        }
-        .sheet(isPresented: $isPaywallSheetPresented) {
-            CatKeyboardLockPaywallSheetView(
-                config: config,
-                accessManager: accessManager,
-                context: .onboarding,
-                onFinish: onFinish
+        .onReceive(
+            NotificationCenter.default.publisher(
+                for: NSApplication.didBecomeActiveNotification
             )
+        ) { _ in
+            inputLockController.refreshPermissions()
         }
     }
 
-    @ViewBuilder
     private var pageContent: some View {
-        let page = pages[pageIndex]
-
         VStack(spacing: 18) {
             Image(systemName: page.systemImage)
                 .font(.system(size: 52, weight: .semibold))
@@ -207,17 +141,25 @@ struct CatKeyboardLockOnboardingView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 10) {
                 Image(systemName: KikiAuthorizationPanel.accessibility.systemImage)
-                    .foregroundStyle(inputLockController.permissionStatus.accessibilityTrusted ? Color.secondary : Color.orange)
+                    .foregroundStyle(
+                        inputLockController.permissionStatus.accessibilityTrusted
+                            ? Color.secondary
+                            : Color.orange
+                    )
                     .frame(width: 20)
                 Text("Accessibility")
                     .font(.callout.weight(.semibold))
                 Spacer(minLength: 0)
                 Text(inputLockController.permissionStatus.accessibilityText)
                     .font(.callout)
-                    .foregroundStyle(inputLockController.permissionStatus.accessibilityTrusted ? Color.secondary : Color.orange)
+                    .foregroundStyle(
+                        inputLockController.permissionStatus.accessibilityTrusted
+                            ? Color.secondary
+                            : Color.orange
+                    )
             }
 
-            if !inputLockController.permissionStatus.accessibilityTrusted {
+            if inputLockController.permissionStatus.accessibilityTrusted == false {
                 Button("Open Accessibility Settings") {
                     inputLockController.requestPermissions()
                 }
@@ -238,7 +180,6 @@ struct CatKeyboardLockOnboardingView: View {
                 Capsule()
                     .fill(index == pageIndex ? Color.orange : Color.secondary.opacity(0.25))
                     .frame(width: index == pageIndex ? 22 : 7, height: 7)
-                    .animation(.easeInOut(duration: 0.18), value: pageIndex)
             }
         }
     }
@@ -246,7 +187,7 @@ struct CatKeyboardLockOnboardingView: View {
     private var actionArea: some View {
         HStack(spacing: 12) {
             Button("Skip for now") {
-                onClose()
+                navigation.skip()
             }
             .buttonStyle(.plain)
             .foregroundStyle(.secondary)
@@ -256,47 +197,23 @@ struct CatKeyboardLockOnboardingView: View {
 
             if pageIndex > 0 {
                 Button("Back") {
-                    pageIndex -= 1
+                    navigation.back()
                 }
                 .buttonStyle(.bordered)
                 .frame(width: 82)
             }
 
-            Button {
-                handlePrimaryAction()
-            } label: {
-                HStack(spacing: 8) {
-                    Text(primaryButtonTitle)
-                        .fontWeight(.semibold)
-                }
-                .frame(width: pageIndex == pages.count - 1 ? 132 : 118, height: 32)
+            Button("Continue") {
+                navigation.advance()
             }
             .buttonStyle(.borderedProminent)
             .tint(.orange)
+            .frame(width: 118, height: 32)
         }
     }
 
-    private var primaryButtonTitle: String {
-        pageIndex == pages.count - 1 ? "Choose Plan" : "Continue"
-    }
-
-    private func handlePrimaryAction() {
-        if pageIndex < pages.count - 1 {
-            pageIndex += 1
-            return
-        }
-
-        isPaywallSheetPresented = true
-    }
-
-    private func presentPaywallIfNeeded() {
-        guard pages[pageIndex] == .trial else {
-            return
-        }
-
-        DispatchQueue.main.async {
-            isPaywallSheetPresented = true
-        }
+    private var pageIndex: Int {
+        pages.firstIndex(of: page) ?? 0
     }
 }
 

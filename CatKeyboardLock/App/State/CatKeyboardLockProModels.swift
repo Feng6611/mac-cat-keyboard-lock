@@ -41,21 +41,11 @@ enum CatKeyboardLockPurchasePlan: String, CaseIterable, Equatable, Hashable, Ide
     }
 
     var commercePlan: CommercePlan {
-        switch self {
-        case .lifetime:
-            return .yearly
-        case .supporterLifetime:
-            return .lifetime
-        }
+        CommercePlan(rawValue)
     }
 
     init?(commercePlan: CommercePlan) {
-        switch commercePlan {
-        case .yearly:
-            self = .lifetime
-        case .lifetime:
-            self = .supporterLifetime
-        }
+        self.init(rawValue: commercePlan.rawValue)
     }
 
     var kikiProPlan: KikiProPlan {
@@ -81,5 +71,6 @@ enum CatKeyboardLockProDefaults {
     enum Keys {
         static let trialStartedAt = "CatKeyboardLock.Pro.trialStartedAt"
         static let debugProAccessOverride = "CatKeyboardLock.Pro.debugProAccessOverride"
+        static let usageCountPrefix = "CatKeyboardLock.Pro.usage"
     }
 }

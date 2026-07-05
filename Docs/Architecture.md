@@ -33,25 +33,30 @@ RevenueCat state, defaults, Kiki adapters, or platform permissions.
 
 - SwiftUI `App` entry point.
 - `NSApplicationDelegate` and `.accessory` activation policy.
-- Long-lived menu bar, settings, onboarding, and input-lock controllers.
-- App-owned Pro status, local trial persistence, onboarding presentation, and
-  wiring between user actions, access state, lock state, and feature views.
-- Settings scene presentation from an accessory app. Opening Settings uses
-  `KikiSettingsOpener.openForMenuBarApp()` and must keep accessory mode so it
-  does not create a temporary Dock icon.
-- App-local settings navigation owns the selected tab and paywall sheet flag.
-  `openPaywall()` always opens Settings, selects About, and presents the
-  app-owned paywall sheet.
+- Long-lived menu bar, settings, onboarding, and input-lock composition.
+- One `KikiProAccessManager` as the paid-access source of truth, app-owned
+  onboarding migration/presentation policy, and wiring between access state,
+  lock state, and product actions.
+- One `KikiSettingsCoordinator` owns Settings tab selection, exact native-window
+  registration, and accessory-safe opening. A small app route model owns only
+  the paywall sheet flag. `openPaywall()` selects About, opens Settings, and
+  presents the app-owned sheet.
+- One `KikiOnboardingCoordinator` owns the first-run window, page navigation,
+  close disposition, and completion-store writes. Cat supplies permission and
+  paywall step content plus legacy migration and automatic-presentation policy.
 
 ### Features
 
 `Features/` owns app-facing presentation:
 
 - Menu item declaration in `CatKeyboardLockMenuModel`.
-- Settings `Lock`, `System`, and `About` panes.
-- Lightweight onboarding and RevenueCat-backed paywall presentation. The Pro
-  paywall is app-local business UI presented as a sheet from About status and
-  from the onboarding trial step.
+- Settings `Lock`, `System`, and `About` panes rendered through
+  `KikiSettingsCoordinatorView`; About uses `KikiStandardAboutPane`.
+- Product-specific onboarding steps and the thin Cat paywall copy/tint/link
+  adapter. KikiOnboarding owns navigation/window mechanics;
+  CommercePresentation owns offering/action orchestration and renders
+  KikiPaywall presets; Cat owns where the sheet appears and what successful
+  completion means.
 - Accessibility setup copy and routing into the app's permission request flow.
 
 Feature code may import SwiftUI and Kiki. It should not own `CGEventTap`
@@ -110,8 +115,12 @@ Trigger corner detection is delegated to `KikiTriggerCorner`:
 Kiki remains reusable infrastructure:
 
 - `KikiMenuBar`: `NSStatusItem` and native menu item mapping.
-- `KikiSettings`: Settings window shell and reusable rows.
-- `KikiPaywall`: reusable low-level paywall display primitives only.
+- `KikiSettings`: exact Settings-window registration, coordinator, standard
+  About pane, shell, and reusable rows.
+- `KikiPaywall`: commerce-free atoms plus `KikiCompactPaywall` and
+  `KikiOnboardingPaywall` display presets.
+- `KikiOnboarding`: completion stores, explicit close policy, and reusable
+  flow/window coordination.
 - `KikiWindow`: standalone window presentation.
 - `KikiDesign`: shared visual primitives.
 - `KikiOverlay`: non-interactive screen-edge overlay and Kiki material toast
@@ -124,19 +133,36 @@ Kiki remains reusable infrastructure:
 Do not move cat keyboard lock input policy, unlock reasons, event tap behavior,
 or Pro gating into Kiki.
 
-Commerce, paywall presentation, and trial policy stay in this app.
-`Kiki_mackit` provides reusable app shell, settings rows, presentation, and
-lightweight platform primitives; product IDs, RevenueCat configuration, local
-trial state, restore behavior, paywall layout, and gating decisions remain
-app-owned. Kiki never calls RevenueCat or decides entitlement state.
+Kiki_mackit stays commerce-free and never calls RevenueCat or decides
+entitlement state. The app supplies product IDs, RevenueCat configuration,
+trial policy, copy, onboarding migration, and feature-gating decisions.
+
+## Commerce Boundary
+
+`KikiCommerceKit` has three one-way layers:
+
+- `KikiCommerceCore` owns provider-neutral access/trial state and the single
+  `KikiProAccessManager`.
+- `KikiRevenueCat` owns SDK configuration, offering/purchase/restore transport,
+  snapshot mapping, and verified `AppTransaction` grandfathering.
+- `KikiCommercePresentation` owns reusable paywall transaction orchestration
+  and maps manager state into KikiPaywall display models.
+
+Cat does not mirror manager state in another observable manager. App-local
+types are limited to product plan metadata, pure entitlement snapshots used by
+lock/menu rules, configuration, onboarding migration, and copy.
+
+The current integration deliberately uses adjacent local package paths so Cat,
+Commerce, and Kiki resolve one Kiki package identity. Product releases must use
+the same tagged HTTPS versions instead.
 
 ## Testing-First Shape
 
 The architecture exposes three test surfaces:
 
 1. Core CLI: deterministic product rules without launching the app.
-2. Xcode tests: app integration, model behavior, purchase-state adapters,
-   trigger-corner logic, and platform wrappers that can be tested safely.
+2. Xcode tests: app integration, onboarding migration/policy, model behavior,
+   purchase-state adapters, trigger-corner logic, and safe platform wrappers.
 3. UI smoke CLI: fixed onboarding, settings, and paywall entry points that
    launch the built app and capture screenshots.
 

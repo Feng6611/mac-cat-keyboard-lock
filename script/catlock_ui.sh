@@ -44,14 +44,36 @@ import Foundation
 let targetTitle = ProcessInfo.processInfo.environment["CATLOCK_WINDOW_TITLE"] ?? ""
 let ownerName = ProcessInfo.processInfo.environment["CATLOCK_OWNER_NAME"] ?? ""
 let windows = CGWindowListCopyWindowInfo([.optionOnScreenOnly], kCGNullWindowID) as? [[String: Any]] ?? []
+var frontmostAppWindowID: Int?
 
 for window in windows {
     let owner = window[kCGWindowOwnerName as String] as? String ?? ""
     let title = window[kCGWindowName as String] as? String ?? ""
-    if owner == ownerName && title == targetTitle, let id = window[kCGWindowNumber as String] as? Int {
+    guard owner == ownerName,
+          let id = window[kCGWindowNumber as String] as? Int else {
+        continue
+    }
+
+    if title == targetTitle {
         print(id)
         exit(0)
     }
+
+    let layer = window[kCGWindowLayer as String] as? Int ?? -1
+    let bounds = window[kCGWindowBounds as String] as? [String: Any]
+    let width = bounds?["Width"] as? Double ?? 0
+    let height = bounds?["Height"] as? Double ?? 0
+    if frontmostAppWindowID == nil, layer == 0, width > 100, height > 100 {
+        frontmostAppWindowID = id
+    }
+}
+
+// Window titles may be redacted when the invoking terminal does not have
+// Screen Recording permission. CGWindowList is front-to-back, so the first
+// normal app window is the visible scene (or its frontmost attached sheet).
+if let frontmostAppWindowID {
+    print(frontmostAppWindowID)
+    exit(0)
 }
 exit(1)
 '
@@ -75,7 +97,10 @@ capture_window() {
   fi
 
   mkdir -p "$(dirname "$output")"
-  /usr/sbin/screencapture -x -l "$window_id" "$output"
+  if ! /usr/sbin/screencapture -x -l "$window_id" "$output"; then
+    echo "Window was found, but macOS denied capture. Grant Screen Recording permission to the invoking terminal or Codex app." >&2
+    return 1
+  fi
   echo "$output"
 }
 
@@ -97,27 +122,27 @@ run_single_scene() {
   case "$scene" in
     onboarding)
       run_scene "$scene" "Welcome" "$SCREENSHOT_DIR/onboarding.png" \
-        -CatKeyboardLock.Pro.hasCompletedOnboarding NO \
+        -CatKeyboardLock.Onboarding.v1 NO \
         --ui-smoke-onboarding
       ;;
     settings-lock)
       run_scene "$scene" "Lock" "$SCREENSHOT_DIR/settings-lock.png" \
-        -CatKeyboardLock.Pro.hasCompletedOnboarding YES \
+        -CatKeyboardLock.Onboarding.v1 YES \
         --ui-smoke-settings lock
       ;;
     settings-system)
       run_scene "$scene" "System" "$SCREENSHOT_DIR/settings-system.png" \
-        -CatKeyboardLock.Pro.hasCompletedOnboarding YES \
+        -CatKeyboardLock.Onboarding.v1 YES \
         --ui-smoke-settings system
       ;;
     settings-about)
       run_scene "$scene" "About" "$SCREENSHOT_DIR/settings-about.png" \
-        -CatKeyboardLock.Pro.hasCompletedOnboarding YES \
+        -CatKeyboardLock.Onboarding.v1 YES \
         --ui-smoke-settings about
       ;;
     paywall)
       run_scene "$scene" "About" "$SCREENSHOT_DIR/paywall.png" \
-        -CatKeyboardLock.Pro.hasCompletedOnboarding YES \
+        -CatKeyboardLock.Onboarding.v1 YES \
         --ui-smoke-paywall
       ;;
     *)
@@ -130,19 +155,19 @@ run_single_scene() {
 run_smoke() {
   build_app
   run_scene onboarding "Welcome" "$SCREENSHOT_DIR/onboarding.png" \
-    -CatKeyboardLock.Pro.hasCompletedOnboarding NO \
+    -CatKeyboardLock.Onboarding.v1 NO \
     --ui-smoke-onboarding
   run_scene settings-lock "Lock" "$SCREENSHOT_DIR/settings-lock.png" \
-    -CatKeyboardLock.Pro.hasCompletedOnboarding YES \
+    -CatKeyboardLock.Onboarding.v1 YES \
     --ui-smoke-settings lock
   run_scene settings-system "System" "$SCREENSHOT_DIR/settings-system.png" \
-    -CatKeyboardLock.Pro.hasCompletedOnboarding YES \
+    -CatKeyboardLock.Onboarding.v1 YES \
     --ui-smoke-settings system
   run_scene settings-about "About" "$SCREENSHOT_DIR/settings-about.png" \
-    -CatKeyboardLock.Pro.hasCompletedOnboarding YES \
+    -CatKeyboardLock.Onboarding.v1 YES \
     --ui-smoke-settings about
   run_scene paywall "About" "$SCREENSHOT_DIR/paywall.png" \
-    -CatKeyboardLock.Pro.hasCompletedOnboarding YES \
+    -CatKeyboardLock.Onboarding.v1 YES \
     --ui-smoke-paywall
 }
 

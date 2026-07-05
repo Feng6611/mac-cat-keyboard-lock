@@ -18,8 +18,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
   flow after the pointer dwells in a selected screen corner.
 - Added a lightweight first-launch onboarding window with an explicit
   `Start 2-Day Pro Trial` action.
-- Added app-owned Pro status, local one-time trial persistence, and
-  RevenueCatCommerceKit-backed purchase and restore handling.
+- Added a single KikiCommerceKit access manager, local one-time trial policy,
+  and RevenueCat-backed purchase and restore handling.
 - Added two one-time Pro plan surfaces: Lifetime at `$5.99` and recommended
   Supporter Lifetime at `$10.99`.
 - Added an app-owned paywall sheet opened from Settings About status and
@@ -29,12 +29,32 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 - Set the trigger corner hot zone to 40pt for more reliable edge activation.
 
 ### Changed
-- Bumped Kiki dependency to 0.6.0.
+- Replaced the app-local Pro status wrapper with direct
+  `KikiProAccessManager` observation across App, Settings, Onboarding, Paywall,
+  and Menu.
+- Split provider-neutral Commerce configuration from RevenueCat configuration
+  and migrated the app to the three KikiCommerceKit targets.
+- Routed onboarding completion through `KikiOnboardingCompletionStore`, with a
+  one-time migration from the legacy completion key and preserved Pro/debug
+  skip behavior.
+- Moved Paywall layout to Kiki presets while retaining CommercePresentation
+  orchestration for offerings, serialized transactions, visible feedback, and
+  successful host completion.
+- Adopted `KikiSettingsCoordinatorView` and exact Settings-window registration;
+  About now uses `KikiStandardAboutPane`.
+- Replaced the app-local onboarding window and page state machine with
+  `KikiOnboardingCoordinator`, while retaining Cat-owned permission and
+  paywall content.
+- Preserved distinct open plan identities for Lifetime and Supporter Lifetime
+  from provider mapping through access status and presentation.
+- Added Terms, Privacy, and Support links to the shared paywall presentation.
+- Unified local Cat/Commerce integration on one Kiki_mackit package identity;
+  release builds must switch to matching tagged HTTPS dependencies.
+- Updated the app integration to the Kiki 0.7.0 API.
 - Migrated overlay presentations to `KikiOverlayTone.success` for the
   lock-ended toast; preview tint/companion-tint are now inlined as
   app-owned colors since `KikiScreenEdgeOverlayPalette` is deprecated.
-- Dropped the ignored `windowTitle:` argument from the
-  `KikiSettingsWindowController` initializer.
+- Removed app-side Settings window lookup and navigation wrappers.
 - Reframed the starter paywall/mock entitlement flow during MVP development
   before replacing it with real Trial/Pro gating.
 - Kept fallback unlock keyboard events in the event tap even when keyboard
