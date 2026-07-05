@@ -29,6 +29,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 - Set the trigger corner hot zone to 40pt for more reliable edge activation.
 
 ### Changed
+- Bumped Kiki dependency to 0.6.0.
+- Migrated overlay presentations to `KikiOverlayTone.success` for the
+  lock-ended toast; preview tint/companion-tint are now inlined as
+  app-owned colors since `KikiScreenEdgeOverlayPalette` is deprecated.
+- Dropped the ignored `windowTitle:` argument from the
+  `KikiSettingsWindowController` initializer.
 - Reframed the starter paywall/mock entitlement flow during MVP development
   before replacing it with real Trial/Pro gating.
 - Kept fallback unlock keyboard events in the event tap even when keyboard

@@ -38,8 +38,7 @@ final class CatKeyboardLockAppDelegate: NSObject, NSApplicationDelegate {
         minimumContentSize: CGSize(
             width: KikiSettingsDefaults.minimumWindowWidth,
             height: KikiSettingsDefaults.minimumWindowHeight
-        ),
-        windowTitle: "Settings"
+        )
     )
     private lazy var settingsOpener = KikiSettingsOpener(windowController: settingsWindowController)
     private lazy var onboardingWindowController = CatKeyboardLockOnboardingWindowController(

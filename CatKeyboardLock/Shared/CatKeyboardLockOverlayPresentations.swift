@@ -1,5 +1,6 @@
 import Foundation
 import KikiOverlay
+import SwiftUI
 
 enum CatKeyboardLockOverlayPresentations {
     @MainActor
@@ -16,10 +17,9 @@ enum CatKeyboardLockOverlayPresentations {
 
     static func lockEnded(reason: InputLockUnlockReason?) -> KikiScreenEdgeOverlayPresentation {
         .lockEnded(
+            tone: .success,
             title: unlockTitle(for: reason),
-            subtitle: "Your keyboard is active.",
-            tint: KikiScreenEdgeOverlayPalette.success,
-            companionTint: KikiScreenEdgeOverlayPalette.deepSuccess
+            subtitle: "Your keyboard is active."
         )
     }
 
@@ -35,14 +35,17 @@ enum CatKeyboardLockOverlayPresentations {
             title: "Visual feedback",
             subtitle: "Preview",
             systemImage: "sparkles",
-            tint: KikiScreenEdgeOverlayPalette.orange,
-            companionTint: KikiScreenEdgeOverlayPalette.deepOrange,
+            tint: previewTint,
+            companionTint: previewCompanionTint,
             behavior: .momentary(duration: edgeDuration + 0.45),
             motion: .breathingWithEntryBurst,
             toastDuration: 1.4,
             edgeDuration: edgeDuration
         )
     }
+
+    private static let previewTint = Color(red: 1.0, green: 0.49, blue: 0.12)
+    private static let previewCompanionTint = Color(red: 0.86, green: 0.25, blue: 0.03)
 
     private static let edgeDuration: TimeInterval = 4.4
 
