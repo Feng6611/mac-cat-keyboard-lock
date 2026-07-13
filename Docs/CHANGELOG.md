@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-07-14
+
+- Production builds now resolve `Kiki_mackit` from the public `0.8.0` tag and
+  `KikiCommerceKit` from the public `0.1.0` tag; local sibling checkouts are
+  no longer part of the app project graph.
+
 ## 2026-07-13
 
 - Restored the onboarding welcome window to `560×520`; the guided flow now

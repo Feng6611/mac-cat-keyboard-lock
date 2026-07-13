@@ -389,8 +389,8 @@
 			);
 			mainGroup = A00700000000000000000001;
 				packageReferences = (
-					A00D00000000000000000001 /* XCLocalSwiftPackageReference "../Kiki_mackit" */,
-					A00D00000000000000000003 /* XCLocalSwiftPackageReference "../KikiCommerceKit" */,
+					A00D00000000000000000001 /* XCRemoteSwiftPackageReference "Kiki_mackit" */,
+					A00D00000000000000000003 /* XCRemoteSwiftPackageReference "KikiCommerceKit" */,
 				);
 			productRefGroup = A00700000000000000000004 /* Products */;
 			projectDirPath = "";
@@ -718,76 +718,84 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCLocalSwiftPackageReference section */
-		A00D00000000000000000001 /* XCLocalSwiftPackageReference "../Kiki_mackit" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = ../Kiki_mackit;
+	/* Begin XCRemoteSwiftPackageReference section */
+		A00D00000000000000000001 /* XCRemoteSwiftPackageReference "Kiki_mackit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Feng6611/Kiki_mackit.git";
+			requirement = {
+				kind = exactVersion;
+				version = 0.8.0;
+			};
 		};
-		A00D00000000000000000003 /* XCLocalSwiftPackageReference "../KikiCommerceKit" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = ../KikiCommerceKit;
+		A00D00000000000000000003 /* XCRemoteSwiftPackageReference "KikiCommerceKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Feng6611/KikiCommerceKit.git";
+			requirement = {
+				kind = exactVersion;
+				version = 0.1.0;
+			};
 		};
-/* End XCLocalSwiftPackageReference section */
+/* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		A00B00000000000000000001 /* KikiSettings */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = A00D00000000000000000001 /* XCLocalSwiftPackageReference "../Kiki_mackit" */;
+			package = A00D00000000000000000001 /* XCRemoteSwiftPackageReference "Kiki_mackit" */;
 			productName = KikiSettings;
 		};
 		A00B00000000000000000002 /* KikiMenuBar */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = A00D00000000000000000001 /* XCLocalSwiftPackageReference "../Kiki_mackit" */;
+			package = A00D00000000000000000001 /* XCRemoteSwiftPackageReference "Kiki_mackit" */;
 			productName = KikiMenuBar;
 		};
 		A00B00000000000000000003 /* KikiPaywall */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = A00D00000000000000000001 /* XCLocalSwiftPackageReference "../Kiki_mackit" */;
+			package = A00D00000000000000000001 /* XCRemoteSwiftPackageReference "Kiki_mackit" */;
 			productName = KikiPaywall;
 		};
 		A00B00000000000000000005 /* KikiDesign */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = A00D00000000000000000001 /* XCLocalSwiftPackageReference "../Kiki_mackit" */;
+			package = A00D00000000000000000001 /* XCRemoteSwiftPackageReference "Kiki_mackit" */;
 			productName = KikiDesign;
 		};
 		A00B00000000000000000006 /* KikiWindow */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = A00D00000000000000000001 /* XCLocalSwiftPackageReference "../Kiki_mackit" */;
+			package = A00D00000000000000000001 /* XCRemoteSwiftPackageReference "Kiki_mackit" */;
 			productName = KikiWindow;
 		};
 		A00B00000000000000000007 /* KikiOverlay */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = A00D00000000000000000001 /* XCLocalSwiftPackageReference "../Kiki_mackit" */;
+			package = A00D00000000000000000001 /* XCRemoteSwiftPackageReference "Kiki_mackit" */;
 			productName = KikiOverlay;
 		};
 		A00B00000000000000000008 /* KikiTriggerCorner */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = A00D00000000000000000001 /* XCLocalSwiftPackageReference "../Kiki_mackit" */;
+			package = A00D00000000000000000001 /* XCRemoteSwiftPackageReference "Kiki_mackit" */;
 			productName = KikiTriggerCorner;
 		};
 		A00B00000000000000000009 /* KikiAuthorization */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = A00D00000000000000000001 /* XCLocalSwiftPackageReference "../Kiki_mackit" */;
+			package = A00D00000000000000000001 /* XCRemoteSwiftPackageReference "Kiki_mackit" */;
 			productName = KikiAuthorization;
 		};
 		A00B0000000000000000000E /* KikiOnboarding */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = A00D00000000000000000001 /* XCLocalSwiftPackageReference "../Kiki_mackit" */;
+			package = A00D00000000000000000001 /* XCRemoteSwiftPackageReference "Kiki_mackit" */;
 			productName = KikiOnboarding;
 		};
 		A00B0000000000000000000B /* KikiCommerceCore */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = A00D00000000000000000003 /* XCLocalSwiftPackageReference "../KikiCommerceKit" */;
+			package = A00D00000000000000000003 /* XCRemoteSwiftPackageReference "KikiCommerceKit" */;
 			productName = KikiCommerceCore;
 		};
 		A00B0000000000000000000C /* KikiRevenueCat */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = A00D00000000000000000003 /* XCLocalSwiftPackageReference "../KikiCommerceKit" */;
+			package = A00D00000000000000000003 /* XCRemoteSwiftPackageReference "KikiCommerceKit" */;
 			productName = KikiRevenueCat;
 		};
 		A00B0000000000000000000D /* KikiCommercePresentation */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = A00D00000000000000000003 /* XCLocalSwiftPackageReference "../KikiCommerceKit" */;
+			package = A00D00000000000000000003 /* XCRemoteSwiftPackageReference "KikiCommerceKit" */;
 			productName = KikiCommercePresentation;
 		};
 /* End XCSwiftPackageProductDependency section */
