@@ -1,5 +1,19 @@
 # Decision Log
 
+## 2026-07-10 — Reference App composition and authoritative startup
+
+- Split the former all-purpose AppDelegate into immutable `AppDefinition`,
+  construction-only `AppComposition`, action-only `AppRouter`, and runtime
+  `LifecycleCoordinator`. Keep the SwiftUI App and delegate as thin adapters.
+- Make the existing pure `CatKeyboardLockCore.evaluate` result the production
+  routing source. Permission and input-policy branches may no longer be ignored
+  or replaced with hard-coded accessibility state in menu construction.
+- Wait for authoritative Commerce readiness before automatic onboarding. An
+  explicit launch scene is routed exactly once and never followed by the normal
+  automatic onboarding branch.
+- Keep unlock and teardown outside access gating so an entitlement change can
+  never strand an active input lock.
+
 ## D-001 — One access source of truth across Cat and Commerce
 
 Date: 2026-07-05

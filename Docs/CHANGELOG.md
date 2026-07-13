@@ -1,5 +1,34 @@
 # Changelog
 
+## 2026-07-13
+
+- Restored the onboarding welcome window to `560×520`; the guided flow now
+  requires Accessibility first, celebrates authorization, teaches a real
+  trigger-corner lock, celebrates, teaches trigger-corner recovery, celebrates
+  again, and then presents a closeable `520×520` paywall sheet.
+- Removed the onboarding-only 3-second lock API. Purchase success now gets a
+  final celebration, and both paywall completion and dismissal hand off to the
+  Lock tab in Settings.
+- Reduced Developer Testing to two rows: paid-access state and compact
+  Onboarding/Accessibility flow launchers.
+- Kept standard step content near the top of the flexible body region so the
+  hero and feature list do not drift into the middle of the window.
+- Adopted Kiki's shared bundle-icon resolver for About and Onboarding instead
+  of keeping an app-local `AppIcon.icns` lookup.
+
+## 2026-07-10
+
+- Split the application shell into AppDefinition, AppComposition, AppRouter,
+  and LifecycleCoordinator; AppDelegate now only forwards lifecycle events.
+- Routed all menu and trigger-corner lock requests through the Core action
+  matrix using the real Accessibility state and selected input policy.
+- Waited for authoritative Commerce readiness before automatic onboarding and
+  prevented explicit UI-smoke scenes from being presented twice.
+- Migrated app source to the product-neutral `KikiAccess*` API.
+- Added injected composition, Core-to-production router, degraded-startup, event
+  tap disabled, and fallback teardown regression tests.
+- Added the privacy document referenced by Settings and paywall links.
+
 All notable changes to this project are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 

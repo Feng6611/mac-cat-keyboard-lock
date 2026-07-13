@@ -1,4 +1,5 @@
 import Foundation
+import KikiAuthorization
 import KikiCommerceCore
 import KikiSettings
 import KikiTriggerCorner
@@ -63,14 +64,16 @@ final class CatKeyboardLockSettingsRouteModel: ObservableObject {
 }
 
 enum CatKeyboardLockSettingsTint {
-    static let brand = Color(red: 0.58, green: 0.20, blue: 0.62)
+    // Defined by Assets.xcassets/AccentColor so every system control shares
+    // the brand tint and adapts with appearance changes.
+    static let brand = Color.accentColor
 }
 
 struct CatKeyboardLockSettingsView: View {
     let config: CatKeyboardLockAppConfig
     @ObservedObject var lockSettings: LockSettings
     @ObservedObject var inputLockController: InputLockController
-    @ObservedObject var accessManager: KikiProAccessManager
+    @ObservedObject var accessManager: KikiAccessManager
     let settingsCoordinator: KikiSettingsCoordinator<CatKeyboardLockSettingsTab>
     @ObservedObject var route: CatKeyboardLockSettingsRouteModel
     let onTriggerOnboarding: () -> Void
@@ -79,7 +82,7 @@ struct CatKeyboardLockSettingsView: View {
         config: CatKeyboardLockAppConfig,
         lockSettings: LockSettings,
         inputLockController: InputLockController,
-        accessManager: KikiProAccessManager,
+        accessManager: KikiAccessManager,
         settingsCoordinator: KikiSettingsCoordinator<CatKeyboardLockSettingsTab>,
         route: CatKeyboardLockSettingsRouteModel,
         onTriggerOnboarding: @escaping () -> Void = {}
@@ -157,42 +160,31 @@ struct CatKeyboardLockSettingsView: View {
 #if DEBUG
     private var debugTestingSection: some View {
         Section {
-            KikiSettingsStatusRow(
-                title: "Test override",
-                value: currentDebugModeDisplayName,
-                systemImage: "hammer",
-                tone: accessManager.debugProAccessOverride == nil ? .neutral : .warning,
-                valueColor: accessManager.debugProAccessOverride == nil ? .secondary : .orange
-            )
-
             KikiSettingsDebugPreviewRow(
-                "Pro preview",
+                "Paid access",
                 selection: debugModeBinding,
-                options: KikiProAccessDebugMode.allCases,
+                options: KikiAccessDebugMode.allCases,
                 isOverrideActive: accessManager.debugProAccessOverride != nil,
                 optionTitle: { $0.displayName }
             )
 
-            Button("Trigger Onboarding") {
-                onTriggerOnboarding()
+            KikiSettingsValueRow("Test flows", systemImage: "play.rectangle") {
+                Button("Onboarding", action: onTriggerOnboarding)
+                Button("Accessibility") {
+                    KikiAuthorizationAssistant.shared.present(
+                        panel: .accessibility,
+                        instruction: "Turn on Cat Keyboard Lock so it can block keyboard input while locked."
+                    )
+                }
             }
-
-            Button("Clear Test Override") {
-                accessManager.clearDebugProAccessOverride()
-            }
-            .disabled(accessManager.debugProAccessOverride == nil)
         } header: {
             Text("Developer Testing")
         } footer: {
-            KikiSettingsHelperText("Debug builds only. Previews a specific Pro state without making or restoring a purchase.")
+            KikiSettingsHelperText("Debug only. Live clears the paid-access override.")
         }
     }
 
-    private var currentDebugModeDisplayName: String {
-        accessManager.debugProAccessOverride?.displayName ?? "Off"
-    }
-
-    private var debugModeBinding: Binding<KikiProAccessDebugMode> {
+    private var debugModeBinding: Binding<KikiAccessDebugMode> {
         Binding(
             get: { accessManager.debugProAccessOverride ?? .live },
             set: { mode in
@@ -306,7 +298,7 @@ struct CatKeyboardLockSettingsView: View {
             )
         case .pro(let plan, _):
             return KikiAccessStatusPresentation(
-                tone: .active,
+                tone: .lifetime,
                 title: plan.title,
                 subtitle: plan.billingDetail,
                 actionTitle: "View plans"

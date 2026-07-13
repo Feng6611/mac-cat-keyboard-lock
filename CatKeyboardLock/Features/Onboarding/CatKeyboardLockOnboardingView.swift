@@ -3,51 +3,44 @@ import KikiAuthorization
 import KikiCommerceCore
 import KikiDesign
 import KikiOnboarding
+import KikiTriggerCorner
 import SwiftUI
 
 enum CatKeyboardLockOnboardingFlow {
+    static let windowSize = KikiOnboardingDefaults.windowSize
+
     @MainActor
     static func makeCoordinator(
         config: CatKeyboardLockAppConfig,
-        accessManager: KikiProAccessManager,
+        accessManager: KikiAccessManager,
         onboardingState: CatKeyboardLockOnboardingState,
+        lockSettings: LockSettings,
         inputLockController: InputLockController,
         onFinish: @escaping @MainActor () -> Void
     ) -> KikiOnboardingCoordinator {
-        let steps = CatKeyboardLockOnboardingPage.allCases.map { page in
-            KikiOnboardingStep.custom(id: page.rawValue) { navigation in
-                if page == .trial {
-                    return AnyView(
-                        CatKeyboardLockPaywallSheetView(
-                            config: config,
-                            accessManager: accessManager,
-                            context: .onboarding,
-                            onFinish: navigation.finish
-                        )
-                    )
-                }
-
-                return AnyView(
-                    CatKeyboardLockOnboardingStepView(
-                        page: page,
-                        inputLockController: inputLockController,
-                        navigation: navigation
-                    )
+        let flow = KikiOnboardingStep.custom(id: "cat-lock-guided-flow") { navigation in
+            AnyView(
+                CatKeyboardLockOnboardingFlowView(
+                    config: config,
+                    accessManager: accessManager,
+                    lockSettings: lockSettings,
+                    inputLockController: inputLockController,
+                    onFinish: navigation.finish
                 )
-            }
+            )
         }
 
         return KikiOnboardingCoordinator(
             configuration: KikiOnboardingConfiguration(
                 appName: config.appName,
-                steps: steps,
+                steps: [flow],
                 completionKey: CatKeyboardLockOnboardingState.completionKey,
-                canSkip: true,
+                canSkip: false,
                 tint: CatKeyboardLockSettingsTint.brand,
                 windowAutosaveName: "CatKeyboardLock.OnboardingWindow",
                 windowTitle: "Welcome",
-                windowSize: CGSize(width: 680, height: 680),
-                minimumWindowSize: CGSize(width: 600, height: 600),
+                windowSize: windowSize,
+                minimumWindowSize: windowSize,
                 closeDisposition: .complete
             ),
             completionStore: onboardingState.store,
@@ -56,238 +49,229 @@ enum CatKeyboardLockOnboardingFlow {
     }
 }
 
-private struct CatKeyboardLockOnboardingStepView: View {
-    let page: CatKeyboardLockOnboardingPage
+private struct CatKeyboardLockOnboardingFlowView: View {
+    let config: CatKeyboardLockAppConfig
+    @ObservedObject var accessManager: KikiAccessManager
     @ObservedObject var inputLockController: InputLockController
-    let navigation: KikiOnboardingNavigation
+    @StateObject private var session: CatKeyboardLockOnboardingSession
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    private let pages = CatKeyboardLockOnboardingPage.allCases
     private let tint = CatKeyboardLockSettingsTint.brand
 
-    var body: some View {
-        VStack(spacing: 0) {
-            Spacer(minLength: 22)
-
-            pageContent
-                .frame(maxWidth: .infinity)
-                .padding(.horizontal, 42)
-
-            Spacer(minLength: 20)
-
-            KikiOnboardingProgressDots(
-                count: pages.count,
-                currentIndex: pageIndex,
-                tint: tint
+    init(
+        config: CatKeyboardLockAppConfig,
+        accessManager: KikiAccessManager,
+        lockSettings: LockSettings,
+        inputLockController: InputLockController,
+        onFinish: @escaping @MainActor () -> Void
+    ) {
+        self.config = config
+        self.accessManager = accessManager
+        self.inputLockController = inputLockController
+        _session = StateObject(
+            wrappedValue: CatKeyboardLockOnboardingSession(
+                lockSettings: lockSettings,
+                inputLockController: inputLockController,
+                onFinish: onFinish
             )
-            .padding(.bottom, 18)
-
-            actionArea
-                .padding(.horizontal, 34)
-                .padding(.bottom, 26)
-        }
-        .frame(width: 680, height: 680)
-        .background {
-            ZStack {
-                KikiMaterialSurface(in: Rectangle(), material: .regularMaterial, tint: tint, tintOpacity: 0.02)
-                RadialGradient(
-                    colors: [tint.opacity(0.08), .clear],
-                    center: .top,
-                    startRadius: 0,
-                    endRadius: 320
-                )
-            }
-        }
-        .onAppear {
-            inputLockController.refreshPermissions()
-        }
-        .onReceive(
-            NotificationCenter.default.publisher(
-                for: NSApplication.didBecomeActiveNotification
-            )
-        ) { _ in
-            inputLockController.refreshPermissions()
-        }
-    }
-
-    private var pageContent: some View {
-        VStack(spacing: 18) {
-            Image(nsImage: NSApp.applicationIconImage)
-                .resizable()
-                .interpolation(.high)
-                .frame(width: 88, height: 88)
-                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-                .shadow(color: .black.opacity(0.12), radius: 12, y: 6)
-
-            Text(page.title)
-                .font(.system(size: 24, weight: .bold))
-                .multilineTextAlignment(.center)
-
-            Text(page.subtitle)
-                .font(.body)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .lineSpacing(3)
-                .frame(maxWidth: 410)
-
-            VStack(alignment: .leading, spacing: 10) {
-                ForEach(page.points, id: \.self) { point in
-                    HStack(spacing: 9) {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundStyle(tint)
-                            .frame(width: 18)
-                        Text(point)
-                            .font(.callout)
-                            .foregroundStyle(.secondary)
-                        Spacer(minLength: 0)
-                    }
-                }
-            }
-            .frame(maxWidth: 380, alignment: .leading)
-            .padding(.top, 2)
-
-            if page == .permission {
-                permissionCard
-            }
-        }
-    }
-
-    private var permissionCard: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 10) {
-                Image(systemName: KikiAuthorizationPanel.accessibility.systemImage)
-                    .foregroundStyle(
-                        inputLockController.permissionStatus.accessibilityTrusted
-                            ? Color.secondary
-                            : tint
-                    )
-                    .frame(width: 20)
-                Text("Accessibility")
-                    .font(.callout.weight(.semibold))
-                Spacer(minLength: 0)
-                Text(inputLockController.permissionStatus.accessibilityText)
-                    .font(.callout)
-                    .foregroundStyle(
-                        inputLockController.permissionStatus.accessibilityTrusted
-                            ? Color.secondary
-                            : tint
-                    )
-            }
-
-            if inputLockController.permissionStatus.accessibilityTrusted == false {
-                Button("Open Accessibility Settings") {
-                    inputLockController.requestPermissions()
-                }
-                .buttonStyle(.bordered)
-            }
-        }
-        .frame(maxWidth: 380, alignment: .leading)
-        .padding(14)
-        .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Color.secondary.opacity(0.08))
         )
     }
 
-    private var actionArea: some View {
-        HStack(spacing: 12) {
-            Button("Skip for now") {
-                navigation.skip()
-            }
-            .buttonStyle(.plain)
-            .foregroundStyle(.secondary)
-            .frame(width: 110, height: 42)
-
-            Spacer(minLength: 0)
-
-            if pageIndex > 0 {
-                Button("Back") {
-                    navigation.back()
-                }
-                .buttonStyle(.bordered)
-                .frame(width: 82)
-            }
-
-            Button("Continue") {
-                navigation.advance()
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(tint)
-            .frame(width: 118, height: 32)
+    var body: some View {
+        ZStack {
+            page
+                .id(session.phase)
+                .transition(pageTransition)
+        }
+        .animation(
+            .easeInOut(duration: reduceMotion ? 0.18 : 0.34),
+            value: session.phase
+        )
+        .onAppear(perform: session.start)
+        .onReceive(
+            NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)
+        ) { _ in
+            session.refreshAccessibility()
+        }
+        .sheet(
+            isPresented: $session.isPaywallPresented,
+            onDismiss: session.complete
+        ) {
+            CatKeyboardLockPaywallSheetView(
+                config: config,
+                accessManager: accessManager,
+                context: .onboarding,
+                onFinish: session.complete
+            )
         }
     }
 
-    private var pageIndex: Int {
-        pages.firstIndex(of: page) ?? 0
+    private var pageTransition: AnyTransition {
+        guard reduceMotion == false else {
+            return .opacity
+        }
+
+        return .asymmetric(
+            insertion: .move(edge: .trailing).combined(with: .opacity),
+            removal: .move(edge: .leading).combined(with: .opacity)
+        )
+    }
+
+    private var page: some View {
+        KikiOnboardingScaffold(
+            appName: config.appName,
+            title: session.phase.title,
+            bodyText: session.phase.subtitle,
+            appIcon: session.phase == .welcome ? KikiApplicationIcon.current : nil,
+            iconSystemName: session.phase.systemImage,
+            primaryAction: primaryAction,
+            tint: tint,
+            size: CatKeyboardLockOnboardingFlow.windowSize,
+            stepIndex: session.phase.progressIndex,
+            stepCount: 4
+        ) {
+            pageContent
+        }
+    }
+
+    private var primaryAction: KikiOnboardingAction {
+        switch session.phase {
+        case .welcome:
+            return KikiOnboardingAction(title: "Continue", action: session.advance)
+        case .permission:
+            return KikiOnboardingAction(title: "Allow Accessibility", action: session.requestAccessibility)
+        case .permissionSuccess, .lockSuccess, .unlockSuccess:
+            return KikiOnboardingAction(title: "Continue", action: session.advance)
+        case .lockWithCorner:
+            return KikiOnboardingAction(title: "Waiting for trigger corner…", isEnabled: false) {}
+        case .unlockWithCorner:
+            return KikiOnboardingAction(title: "Waiting for trigger corner…", isEnabled: false) {}
+        }
+    }
+
+    @ViewBuilder
+    private var pageContent: some View {
+        switch session.phase {
+        case .welcome:
+            featureRows
+        case .permission:
+            KikiOnboardingPermissionRow(
+                panel: .accessibility,
+                instruction: "Allow Cat Keyboard Lock to block keyboard input while locked.",
+                tint: tint
+            )
+            .frame(maxWidth: 390)
+        case .permissionSuccess:
+            CatKeyboardLockCelebrationMark(tint: tint, title: "Permission granted")
+        case .lockWithCorner:
+            triggerCornerGuide(isUnlock: false)
+        case .lockSuccess:
+            CatKeyboardLockCelebrationMark(tint: tint, title: "Keyboard locked")
+        case .unlockWithCorner:
+            triggerCornerGuide(isUnlock: true)
+        case .unlockSuccess:
+            CatKeyboardLockCelebrationMark(tint: tint, title: "Keyboard restored")
+        }
+    }
+
+    private var featureRows: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            featureRow("Block accidental keyboard input")
+            featureRow("Lock and unlock from a trigger corner")
+            featureRow("Always keep a safety release available")
+        }
+        .frame(maxWidth: 380, alignment: .leading)
+    }
+
+    private func featureRow(_ title: String) -> some View {
+        HStack(spacing: 9) {
+            Image(systemName: "checkmark.circle.fill")
+                .foregroundStyle(tint)
+                .frame(width: 18)
+            Text(title)
+                .font(.callout)
+                .foregroundStyle(.secondary)
+            Spacer(minLength: 0)
+        }
+    }
+
+    private func triggerCornerGuide(isUnlock: Bool) -> some View {
+        VStack(spacing: 12) {
+            ZStack(alignment: cornerAlignment) {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(Color.secondary.opacity(0.08))
+                    .frame(width: 230, height: 118)
+
+                Circle()
+                    .fill(tint)
+                    .frame(width: 26, height: 26)
+                    .overlay {
+                        Image(systemName: "cursorarrow")
+                            .font(.caption.bold())
+                            .foregroundStyle(.white)
+                    }
+                    .padding(10)
+            }
+
+            Text(isUnlock ? "Move out, then return to the corner and hold." : "Move the pointer into the corner and hold.")
+                .font(.callout.weight(.medium))
+            Text(session.triggerCorner.title)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private var cornerAlignment: Alignment {
+        switch session.triggerCorner {
+        case .topLeft: return .topLeading
+        case .topRight: return .topTrailing
+        case .bottomLeft: return .bottomLeading
+        case .bottomRight: return .bottomTrailing
+        }
     }
 }
 
-enum CatKeyboardLockOnboardingPage: String, CaseIterable {
-    case protect
-    case permission
-    case recover
-    case trial
-
+private extension CatKeyboardLockOnboardingPhase {
     var systemImage: String {
         switch self {
-        case .protect:
-            return "keyboard.badge.ellipsis"
-        case .permission:
-            return "accessibility"
-        case .recover:
-            return "lock.rotation"
-        case .trial:
-            return "sparkles"
+        case .welcome: return "keyboard.badge.ellipsis"
+        case .permission: return KikiAuthorizationPanel.accessibility.systemImage
+        case .permissionSuccess: return "checkmark.seal.fill"
+        case .lockWithCorner: return "cursorarrow.motionlines"
+        case .lockSuccess: return "lock.fill"
+        case .unlockWithCorner: return "cursorarrow.motionlines"
+        case .unlockSuccess: return "lock.open.fill"
         }
     }
 
     var title: String {
         switch self {
-        case .protect:
-            return "Lock input when you step away"
-        case .permission:
-            return "Set up Accessibility"
-        case .recover:
-            return "Recovery stays simple"
-        case .trial:
-            return "Try the full lock for 2 days"
+        case .welcome: return "Lock input when you step away"
+        case .permission: return "Allow Accessibility"
+        case .permissionSuccess: return "Accessibility is ready"
+        case .lockWithCorner: return "Lock from the trigger corner"
+        case .lockSuccess: return "Locked!"
+        case .unlockWithCorner: return "Use the corner again"
+        case .unlockSuccess: return "Unlocked!"
         }
     }
 
     var subtitle: String {
         switch self {
-        case .protect:
+        case .welcome:
             return "Cat Keyboard Lock keeps accidental typing and clicks away from the current Mac session."
         case .permission:
-            return "macOS requires Accessibility before an app can block input. You can finish setup now or continue and grant it later."
-        case .recover:
-            return "The app favors safe recovery: menu unlock, automatic timeout, and a fallback shortcut remain available."
-        case .trial:
-            return "Start once when you are ready. During the trial, every Pro control is available."
-        }
-    }
-
-    var points: [String] {
-        switch self {
-        case .protect:
-            return [
-                "Keyboard and click locks",
-                "Manual menu bar control"
-            ]
-        case .permission:
-            return [
-                "Used only for the active input lock",
-                "Settings and menu controls remain reachable"
-            ]
-        case .recover:
-            return [
-                "Hold Control + Option + Command + L for 1 second",
-                "Timeout releases input automatically"
-            ]
-        case .trial:
-            return [
-                "No trial time is used until you start",
-                "Upgrade once to keep Pro permanently"
-            ]
+            return "macOS requires this permission before the app can block keyboard input."
+        case .permissionSuccess:
+            return "The app can now protect your keyboard."
+        case .lockWithCorner:
+            return "Practice the same gesture you will use every day."
+        case .lockSuccess:
+            return "The trigger corner blocked keyboard input."
+        case .unlockWithCorner:
+            return "Leave the corner, then trigger it once more to restore input."
+        case .unlockSuccess:
+            return "You now know how to lock and recover your keyboard."
         }
     }
 }

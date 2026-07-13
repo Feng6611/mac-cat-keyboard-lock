@@ -7,7 +7,7 @@ enum CatKeyboardLockPaywallContext {
     case settings
     case onboarding
 
-    var kikiContext: KikiProPaywallPresentationContext {
+    var kikiContext: KikiAccessPaywallContext {
         switch self {
         case .settings:
             return .settings
@@ -19,13 +19,16 @@ enum CatKeyboardLockPaywallContext {
 
 struct CatKeyboardLockPaywallSheetView: View {
     let config: CatKeyboardLockAppConfig
-    @ObservedObject var accessManager: KikiProAccessManager
+    @ObservedObject var accessManager: KikiAccessManager
     let context: CatKeyboardLockPaywallContext
     let onFinish: (() -> Void)?
 
+    @State private var isCelebratingPurchase = false
+    @State private var didHandleFinish = false
+
     init(
         config: CatKeyboardLockAppConfig,
-        accessManager: KikiProAccessManager,
+        accessManager: KikiAccessManager,
         context: CatKeyboardLockPaywallContext,
         onFinish: (() -> Void)? = nil
     ) {
@@ -36,18 +39,33 @@ struct CatKeyboardLockPaywallSheetView: View {
     }
 
     var body: some View {
-        KikiProPaywallSheet(
-            manager: accessManager,
-            context: context.kikiContext,
-            copy: paywallCopy,
-            footerLinks: paywallLinks,
-            tint: CatKeyboardLockSettingsTint.brand,
-            onFinish: finish
-        )
+        ZStack {
+            KikiAccessPaywallSheet(
+                manager: accessManager,
+                context: context.kikiContext,
+                copy: paywallCopy,
+                footerLinks: paywallLinks,
+                tint: CatKeyboardLockSettingsTint.brand,
+                onFinish: finish
+            )
+
+            if isCelebratingPurchase {
+                Rectangle()
+                    .fill(.regularMaterial)
+                    .ignoresSafeArea()
+
+                CatKeyboardLockCelebrationMark(
+                    tint: CatKeyboardLockSettingsTint.brand,
+                    title: "Pro unlocked"
+                )
+                .transition(.scale(scale: 0.92).combined(with: .opacity))
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: isCelebratingPurchase)
     }
 
-    private var paywallCopy: KikiProPaywallCopy {
-        KikiProPaywallCopy(
+    private var paywallCopy: KikiAccessPaywallCopy {
+        KikiAccessPaywallCopy(
             title: "Choose your plan",
             proSubtitle: "All features are unlocked.",
             trialSubtitle: "Choose a plan or continue with your trial.",
@@ -59,7 +77,7 @@ struct CatKeyboardLockPaywallSheetView: View {
         )
     }
 
-    private var paywallLinks: [KikiProPaywallLink] {
+    private var paywallLinks: [KikiAccessPaywallLink] {
         [
             link(id: "terms", title: "Terms", value: config.termsURL),
             link(id: "privacy", title: "Privacy", value: config.privacyURL),
@@ -68,14 +86,24 @@ struct CatKeyboardLockPaywallSheetView: View {
         .compactMap { $0 }
     }
 
-    private func link(id: String, title: String, value: String) -> KikiProPaywallLink? {
+    private func link(id: String, title: String, value: String) -> KikiAccessPaywallLink? {
         guard let url = URL(string: value) else {
             return nil
         }
-        return KikiProPaywallLink(id: id, title: title, url: url)
+        return KikiAccessPaywallLink(id: id, title: title, url: url)
     }
 
     private func finish() {
-        onFinish?()
+        guard didHandleFinish == false else { return }
+        didHandleFinish = true
+
+        if accessManager.commerceFeedback == .purchaseSucceeded {
+            isCelebratingPurchase = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.15) {
+                onFinish?()
+            }
+        } else {
+            onFinish?()
+        }
     }
 }

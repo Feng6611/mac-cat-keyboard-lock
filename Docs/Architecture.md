@@ -9,17 +9,18 @@ reusable window, settings, menu, overlay, and trigger-corner infrastructure.
 
 The current split is intentionally app-target based, not package-first:
 
-- `App/` owns lifecycle and cross-feature wiring.
+- `App/` owns product definition, dependency composition, routing, and lifecycle
+  coordination as four separate responsibilities.
 - `Features/` owns user-facing surfaces.
 - `Core/` exists only for pure product rules that now have a second consumer:
   the CLI test harness.
 - `Platform/InputLock/` owns direct macOS input interception.
 - `Shared/` owns app-local constants and copy.
 
-This is enough separation for the current risk level. Do not add another
-domain/service/use-case layer unless a file becomes hard to understand, a rule
-needs another consumer, or tests need a cleaner seam. The goal is stable
-behavior and readable ownership, not more folders.
+This is enough separation for the current risk level. The four App types are a
+repeatable app shell, not a generic framework layer. Do not add another
+domain/service/use-case layer unless a rule needs another consumer or tests need
+a cleaner seam.
 
 The main redundancy risk is `Core/`: it is justified today because menu routing
 rules are command-line testable, but it should not absorb SwiftUI view state,
@@ -32,9 +33,17 @@ RevenueCat state, defaults, Kiki adapters, or platform permissions.
 `App/` owns the application shell:
 
 - SwiftUI `App` entry point.
-- `NSApplicationDelegate` and `.accessory` activation policy.
-- Long-lived menu bar, settings, onboarding, and input-lock composition.
-- One `KikiProAccessManager` as the paid-access source of truth, app-owned
+- `CatKeyboardLockAppDefinition` is immutable product configuration: app copy,
+  access configuration, provider configuration, launch options, and stable
+  autosave names.
+- `CatKeyboardLockAppComposition` constructs and exposes the one long-lived
+  instance of each service/coordinator. It contains construction, not behavior.
+- `CatKeyboardLockAppRouter` is the only place that turns Core actions into
+  input-lock, permission, Settings, paywall, onboarding, and quit actions.
+- `CatKeyboardLockLifecycleCoordinator` owns menu bar/overlay/trigger-corner
+  runtime objects, subscriptions, startup sequencing, and teardown.
+- `NSApplicationDelegate` only forwards launch and termination to lifecycle.
+- One `KikiAccessManager` is the paid-access source of truth, app-owned
   onboarding migration/presentation policy, and wiring between access state,
   lock state, and product actions.
 - One `KikiSettingsCoordinator` owns Settings tab selection, exact native-window
@@ -44,6 +53,11 @@ RevenueCat state, defaults, Kiki adapters, or platform permissions.
 - One `KikiOnboardingCoordinator` owns the first-run window, page navigation,
   close disposition, and completion-store writes. Cat supplies permission and
   paywall step content plus legacy migration and automatic-presentation policy.
+- Automatic onboarding waits for `KikiAccessManager.readiness == .ready`.
+  A degraded/offline refresh may preserve cached active access but never treats
+  missing entitlement data as proof that the user is unpaid. Explicit UI-smoke
+  scenes remain deterministic and are presented once without waiting for the
+  network.
 
 ### Features
 
@@ -93,7 +107,7 @@ or upload data.
 Trigger corner detection is delegated to `KikiTriggerCorner`:
 
 - `LockSettings` persists the selected `KikiTriggerCorner` and enabled flag.
-- `CatKeyboardLockAppDelegate` owns access gating and starts/stops
+- `CatKeyboardLockLifecycleCoordinator` owns access gating and starts/stops
   `KikiTriggerCornerMonitor` only while an active trial/Pro entitlement exists
   or input is already locked.
 - The trigger callback calls the existing lock/unlock flow and does not bypass
@@ -142,7 +156,7 @@ trial policy, copy, onboarding migration, and feature-gating decisions.
 `KikiCommerceKit` has three one-way layers:
 
 - `KikiCommerceCore` owns provider-neutral access/trial state and the single
-  `KikiProAccessManager`.
+  `KikiAccessManager`.
 - `KikiRevenueCat` owns SDK configuration, offering/purchase/restore transport,
   snapshot mapping, and verified `AppTransaction` grandfathering.
 - `KikiCommercePresentation` owns reusable paywall transaction orchestration
@@ -150,7 +164,8 @@ trial policy, copy, onboarding migration, and feature-gating decisions.
 
 Cat does not mirror manager state in another observable manager. App-local
 types are limited to product plan metadata, pure entitlement snapshots used by
-lock/menu rules, configuration, onboarding migration, and copy.
+  lock/menu rules, configuration, onboarding migration, and copy. Existing
+  `KikiPro*` names are migration aliases only; Cat source uses `KikiAccess*`.
 
 The current integration deliberately uses adjacent local package paths so Cat,
 Commerce, and Kiki resolve one Kiki package identity. Product releases must use

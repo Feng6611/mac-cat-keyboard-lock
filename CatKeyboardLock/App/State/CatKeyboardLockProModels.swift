@@ -48,8 +48,8 @@ enum CatKeyboardLockPurchasePlan: String, CaseIterable, Equatable, Hashable, Ide
         self.init(rawValue: commercePlan.rawValue)
     }
 
-    var kikiProPlan: KikiProPlan {
-        KikiProPlan(
+    var kikiAccessPlan: KikiAccessPlan {
+        KikiAccessPlan(
             id: id,
             commercePlan: commercePlan,
             title: title,

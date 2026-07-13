@@ -56,27 +56,29 @@ final class InputLockController: ObservableObject {
     private let logger = Logger(subsystem: "dev.kkuk.catkeyboardlock", category: "InputLock")
     private static let accessibilityRequiredReason = "Cat Keyboard Lock needs Accessibility to block input."
 
+    static let presentLivePermissionHelp: @MainActor () -> Void = {
+        KikiAuthorizationAssistant.shared.present(
+            panel: .accessibility,
+            instruction: "Turn on Cat Keyboard Lock in Accessibility so it can block input while locked."
+        )
+    }
+
     init(
         settings: LockSettings,
         permissionClient: InputLockPermissionClient = .live,
-        presentPermissionHelp: @escaping @MainActor () -> Void = {
-            KikiAuthorizationAssistant.shared.present(
-                panel: .accessibility,
-                instruction: "Turn on Cat Keyboard Lock in Accessibility so it can block input while locked."
-            )
-        },
-        eventTapFactory: @escaping EventTapFactory = { policy, onFallbackUnlock, onTapDisabled in
+        presentPermissionHelp: (@MainActor () -> Void)? = nil,
+        eventTapFactory: EventTapFactory? = nil
+    ) {
+        self.settings = settings
+        self.permissionClient = permissionClient
+        self.presentPermissionHelp = presentPermissionHelp ?? Self.presentLivePermissionHelp
+        self.eventTapFactory = eventTapFactory ?? { policy, onFallbackUnlock, onTapDisabled in
             InputLockEventTap(
                 policy: policy,
                 onFallbackUnlock: onFallbackUnlock,
                 onTapDisabled: onTapDisabled
             )
         }
-    ) {
-        self.settings = settings
-        self.permissionClient = permissionClient
-        self.presentPermissionHelp = presentPermissionHelp
-        self.eventTapFactory = eventTapFactory
     }
 
     deinit {
@@ -85,6 +87,10 @@ final class InputLockController: ObservableObject {
     }
 
     func lock(now: Date = Date()) {
+        startLock(now: now, timeoutInterval: settings.lockDurationInterval)
+    }
+
+    private func startLock(now: Date, timeoutInterval: TimeInterval) {
         guard !state.isLocked else {
             return
         }
@@ -139,7 +145,7 @@ final class InputLockController: ObservableObject {
         state = .locked(startedAt: now)
         logger.info("Input lock started.")
         lastUnlockReason = nil
-        scheduleTimeout()
+        scheduleTimeout(after: timeoutInterval)
     }
 
     func unlock(reason: InputLockUnlockReason = .manual) {
@@ -147,8 +153,8 @@ final class InputLockController: ObservableObject {
         timeoutTimer = nil
         eventTap?.stop()
         eventTap = nil
-        logger.info("Input lock stopped. reason=\(String(describing: reason))")
         lastUnlockReason = reason
+        logger.info("Input lock stopped. reason=\(String(describing: reason))")
         state = .unlocked
     }
 
@@ -199,9 +205,9 @@ final class InputLockController: ObservableObject {
         return status
     }
 
-    private func scheduleTimeout() {
+    private func scheduleTimeout(after interval: TimeInterval) {
         timeoutTimer?.invalidate()
-        timeoutTimer = Timer.scheduledTimer(withTimeInterval: settings.lockDurationInterval, repeats: false) { [weak self] _ in
+        timeoutTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: false) { [weak self] _ in
             Task { @MainActor in
                 self?.unlock(reason: .timeout)
             }

@@ -23,7 +23,7 @@ that should not be automated on a developer machine.
 
 | Case ID | Journey | Covers | Boundary | Preconditions | Steps | Expected evidence | Cleanup |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| J-001 | First run and trial access | F-001, F-007 | UI/App/Core | Fresh, legacy-completed, already-Pro, or reset onboarding state | Run onboarding state tests, onboarding screenshot, and Core access cases | Legacy completion migrates; Pro users skip automatic onboarding; onboarding screenshot plus JSON trial route | Reset onboarding/test state |
+| J-001 | First run and trial access | F-001, F-007 | UI/App/Core | Fresh, legacy-completed, already-Pro, offline/degraded, or reset onboarding state | Run lifecycle readiness and onboarding state tests, onboarding screenshot, and Core access cases | Automatic onboarding waits for ready access; degraded state does not auto-present; explicit smoke scene presents once; legacy completion migrates; Pro users skip | Reset onboarding/test state |
 | J-002 | Lock selected input | F-002, F-003, F-004 | Core + Platform/Manual | Known access and permission states | Run Core matrix; release smoke locks real input | JSON lock/openPermission action; real input is blocked only in manual smoke | Unlock and clear test override |
 | J-003 | Unlock and recover safely | F-002, F-005 | Platform/Manual | App is locked in release smoke | Use shortcut/menu/timeout recovery | Input returns and menu title changes to lock | Ensure unlocked state |
 | J-004 | Configure lock behavior | F-004, F-006 | UI + Platform | Debug build | Launch Settings smoke scenes, then let the app call `openSettings()` | Native Kiki Settings screenshots show controls; tests pass | Quit app |
@@ -34,10 +34,10 @@ that should not be automated on a developer machine.
 | Feature / setting | Boundary | Core CLI | Xcode tests | UI smoke | Manual release smoke |
 | --- | --- | --- | --- | --- | --- |
 | Access state routing | Core | `script/catlock_core.sh matrix` | Pro status tests | About status and paywall sheet screenshots | Real purchase/restore |
-| Lock / unlock menu action | Core + App | `evaluate` and `matrix` | Menu model tests | No | Real lock/unlock |
+| Lock / unlock menu action | Core + App | `evaluate` and `matrix` | Menu model and AppRouter action-matrix tests | No | Real lock/unlock |
 | Accessibility required before lock | Core + Platform | `matrix` denied case | Permission adapter tests | Permission copy screenshots | Real grant/deny |
 | Keyboard/click policy | Core + Platform | `matrix` policy cases | Event mask tests | Settings Lock screenshot | Real blocked input |
-| Fallback unlock combo and timeout | Platform | No | Timing/controller tests | No | Real recovery path |
+| Fallback unlock combo and timeout | Platform | No | Timing/controller tests including event-tap fallback and disabled callbacks | No | Real recovery path |
 | Trigger corner | Platform/Kiki | No | Geometry/monitor tests | Settings System screenshot | Real pointer dwell |
 | Onboarding | UI/App | No | Legacy completion migration, Pro skip, and trial/onboarding state tests | Onboarding screenshot; trial step presents paywall sheet | Close/skip/start-trial path |
 | Paywall | UI/App/commerce | Access rules only | Offering load, purchase/restore completion, error feedback, and entitled CTA adapter tests | About-triggered paywall sheet screenshot | Real purchase/restore |
@@ -116,5 +116,7 @@ Before release, run:
 3. Full Xcode test.
 4. Debug build.
 5. UI CLI smoke screenshots.
-6. Manual check only for dangerous paths: real Accessibility grant, real lock,
+6. Confirm `CatKeyboardLockRevenueCatAPIKey` is non-empty in the signed Release
+   app and the published privacy/support links resolve.
+7. Manual check only for dangerous paths: real Accessibility grant, real lock,
    unlock, timeout, purchase, and restore.

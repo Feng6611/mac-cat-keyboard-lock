@@ -2,16 +2,16 @@ import Foundation
 import KikiCommerceCore
 
 struct CatKeyboardLockEntitlementSnapshot: Equatable {
-    let status: KikiProAccessStatus
+    let status: KikiAccessState
 
-    init(status: KikiProAccessStatus) {
+    init(status: KikiAccessState) {
         self.status = status
     }
 
     init(isPro: Bool, isTrialActive: Bool) {
         if isPro {
             self.status = .pro(
-                plan: CatKeyboardLockPurchasePlan.supporterLifetime.kikiProPlan,
+                plan: CatKeyboardLockPurchasePlan.supporterLifetime.kikiAccessPlan,
                 entitlement: CommerceEntitlement(
                     plan: .lifetime,
                     productIdentifier: CatKeyboardLockPurchasePlan.supporterLifetime.id,

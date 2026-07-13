@@ -38,13 +38,13 @@ enum CatKeyboardLockRevenueCatConfiguration {
         )
     }
 
-    static var proAccessConfiguration: KikiProAccessConfiguration {
-        KikiProAccessConfiguration(
-            plans: CatKeyboardLockPurchasePlan.allCases.map(\.kikiProPlan),
+    static var accessConfiguration: KikiAccessConfiguration {
+        KikiAccessConfiguration(
+            plans: CatKeyboardLockPurchasePlan.allCases.map(\.kikiAccessPlan),
             defaultPlanID: CatKeyboardLockPurchasePlan.defaultSelection.id,
             commerceConfiguration: commerceConfiguration,
             trialPolicy: .explicitStart(duration: trialDuration),
-            storageKeys: KikiProAccessStorageKeys(
+            storageKeys: KikiAccessStorageKeys(
                 trialStartedAt: CatKeyboardLockProDefaults.Keys.trialStartedAt,
                 debugProAccessOverride: CatKeyboardLockProDefaults.Keys.debugProAccessOverride,
                 usageCountPrefix: CatKeyboardLockProDefaults.Keys.usageCountPrefix

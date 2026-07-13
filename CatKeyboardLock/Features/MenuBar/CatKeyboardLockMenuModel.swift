@@ -4,8 +4,7 @@ import KikiMenuBar
 
 @MainActor
 struct CatKeyboardLockMenuActions {
-    let lock: () -> Void
-    let unlock: () -> Void
+    let requestLock: () -> Void
     let openSettings: () -> Void
     let openPaywall: () -> Void
     let toggleDebugProAccess: () -> Void
@@ -13,16 +12,14 @@ struct CatKeyboardLockMenuActions {
     let quit: () -> Void
 
     init(
-        lock: @escaping () -> Void,
-        unlock: @escaping () -> Void,
+        requestLock: @escaping () -> Void,
         openSettings: @escaping () -> Void,
         openPaywall: @escaping () -> Void,
         toggleDebugProAccess: @escaping () -> Void = {},
         clearDebugProAccessOverride: @escaping () -> Void = {},
         quit: @escaping () -> Void
     ) {
-        self.lock = lock
-        self.unlock = unlock
+        self.requestLock = requestLock
         self.openSettings = openSettings
         self.openPaywall = openPaywall
         self.toggleDebugProAccess = toggleDebugProAccess
@@ -43,6 +40,7 @@ enum CatKeyboardLockMenuModel {
         lockState: InputLockState,
         lockSettings: LockSettings,
         entitlement: CatKeyboardLockEntitlementSnapshot,
+        accessibilityTrusted: Bool,
         actions: CatKeyboardLockMenuActions
     ) -> [KikiMenuItem] {
         var items: [KikiMenuItem] = [
@@ -58,6 +56,7 @@ enum CatKeyboardLockMenuModel {
             for: lockState,
             lockSettings: lockSettings,
             entitlement: entitlement,
+            accessibilityTrusted: accessibilityTrusted,
             actions: actions
         ))
         items.append(.settings(title: "Settings...", action: actions.openSettings))
@@ -102,58 +101,22 @@ enum CatKeyboardLockMenuModel {
         for state: InputLockState,
         lockSettings: LockSettings,
         entitlement: CatKeyboardLockEntitlementSnapshot,
+        accessibilityTrusted: Bool,
         actions: CatKeyboardLockMenuActions
     ) -> KikiMenuItem {
         let coreInput = CatKeyboardLockCoreInput(
             access: CatKeyboardLockCoreAccess(status: entitlement.status),
             lockState: CatKeyboardLockCoreLockState(state),
-            accessibilityTrusted: true,
+            accessibilityTrusted: accessibilityTrusted,
             lockKeyboard: lockSettings.lockKeyboard,
             lockMouseClicks: lockSettings.lockMouseClicks
         )
         let evaluation = CatKeyboardLockCore.evaluate(coreInput)
 
-        if state.isLocked {
-            return .action(
-                title: evaluation.menuLockTitle,
-                shortcut: lockShortcut,
-                action: actions.unlock
-            )
-        }
-
-        guard entitlement.isAccessActive else {
-            return .action(
-                title: evaluation.menuLockTitle,
-                shortcut: lockShortcut,
-                action: actions.openPaywall
-            )
-        }
-
         return .action(
             title: evaluation.menuLockTitle,
             shortcut: lockShortcut,
-            action: actions.lock
+            action: actions.requestLock
         )
-    }
-}
-
-private extension CatKeyboardLockCoreAccess {
-    init(status: KikiProAccessStatus) {
-        switch status {
-        case .notStarted:
-            self = .notStarted
-        case .trial:
-            self = .trial
-        case .expired:
-            self = .expired
-        case .pro:
-            self = .pro
-        }
-    }
-}
-
-private extension CatKeyboardLockCoreLockState {
-    init(_ state: InputLockState) {
-        self = state.isLocked ? .locked : .unlocked
     }
 }
