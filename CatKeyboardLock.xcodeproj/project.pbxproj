@@ -724,7 +724,7 @@
 			repositoryURL = "https://github.com/Feng6611/Kiki_mackit.git";
 			requirement = {
 				kind = exactVersion;
-				version = 0.8.0;
+				version = 0.8.1;
 			};
 		};
 		A00D00000000000000000003 /* XCRemoteSwiftPackageReference "KikiCommerceKit" */ = {
@@ -732,7 +732,7 @@
 			repositoryURL = "https://github.com/Feng6611/KikiCommerceKit.git";
 			requirement = {
 				kind = exactVersion;
-				version = 0.1.0;
+				version = 0.1.1;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */

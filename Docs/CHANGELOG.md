@@ -2,9 +2,11 @@
 
 ## 2026-07-14
 
-- Production builds now resolve `Kiki_mackit` from the public `0.8.0` tag and
-  `KikiCommerceKit` from the public `0.1.0` tag; local sibling checkouts are
+- Production builds now resolve `Kiki_mackit` from the public `0.8.1` tag and
+  `KikiCommerceKit` from the public `0.1.1` tag; local sibling checkouts are
   no longer part of the app project graph.
+- Transparent onboarding keeps its rounded parent window while the paywall
+  sheet is presented.
 
 ## 2026-07-13
 
