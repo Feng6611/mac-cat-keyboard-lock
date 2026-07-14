@@ -28,23 +28,32 @@ keyboard input while keeping the machine awake and visible.
 - Lock duration is selectable: 5, 10, 30, or 60 minutes. The default is
   10 minutes.
 - First launch shows a lightweight onboarding window covering the lock model,
-  Accessibility setup, recovery, and optional trial start. The final onboarding
-  step presents the same paywall sheet used by Settings About. Starting the
-  trial from onboarding or the paywall begins a one-time 2-day Pro trial.
-- Trial and Pro unlock the full input-lock feature set. When the trial has not
-  started or has expired, new lock attempts open the paywall instead of starting
-  a lock.
+  Accessibility setup, recovery, and the active trial. The final onboarding
+  step presents the same paywall sheet used by Settings About. A one-time 2-day
+  app-managed Pro trial starts automatically on first launch.
+- Trial and Pro unlock the full input-lock feature set. When the trial has
+  expired, new lock attempts open the paywall instead of starting a lock.
 - Settings exposes Pro status in About. Clicking the About status row opens the
   app-owned paywall sheet for upgrade, restore, and active Pro status. Purchase
   controls are not duplicated in other Settings tabs.
-- Pro is sold as two one-time purchases with identical entitlements: Lifetime
-  at `$5.99` and Supporter Lifetime at `$10.99`. The Supporter option is
-  recommended and selected by default.
+- Pro is sold through Apple In-App Purchase and one RevenueCat offering with two
+  non-consumable packages that unlock the same `cat keyboard lock Pro`
+  entitlement: Lifetime (`dev.kkuk.catkeyboardlock.pro.lifetime`) with a target
+  US price of `$6.99`, and Support Developer Lifetime
+  (`dev.kkuk.catkeyboardlock.pro.supporter`) with a target US price of `$10.99`.
+  Lifetime is selected by default. App Store Connect owns authoritative
+  localized prices.
+- Upgrade surfaces remain app-owned Kiki views. They consume RevenueCat
+  offering metadata and route purchase/restore through `KikiRevenueCat`;
+  RevenueCat Paywall and Customer Center UI are intentionally not integrated.
+- Purchase, restore, and CustomerInfo changes refresh the single
+  `KikiAccessManager` before the app makes a routing decision.
 - Uses `CGEventTap` as an active filter only while locked.
 - Requires Accessibility for locking.
 - Uses KikiCommerceKit for provider-neutral trial/access state, RevenueCat
   product loading, purchase, restore, entitlement refresh, and reusable Paywall
-  orchestration.
+  orchestration. The app links the `RevenueCat` SDK directly only for typed
+  CustomerInfo access needed by app-owned account logic.
 
 ## Explicitly Out of Scope
 
@@ -94,11 +103,12 @@ keyboard input while keeping the machine awake and visible.
 
 ## Success Criteria
 
-- A user can launch the app, start the trial, lock the keyboard from the menu
-  bar, and unlock it from the menu bar with default settings.
-- The trial is not consumed by launch alone; it starts only from onboarding or
-  the paywall.
-- Expired or not-started access opens the paywall for new lock attempts.
+- A user can launch the app, use the automatically started trial, lock the
+  keyboard from the menu bar, and unlock it from the menu bar with default
+  settings.
+- The app records one stable trial start date on first launch and never restarts
+  the trial after expiration.
+- Expired access opens the paywall for new lock attempts.
 - The fallback long-press unlock works even when pointer options make the menu
   bar difficult or impossible to use.
 - The app releases the lock after the selected lock duration.

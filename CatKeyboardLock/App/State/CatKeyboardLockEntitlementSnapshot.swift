@@ -11,11 +11,11 @@ struct CatKeyboardLockEntitlementSnapshot: Equatable {
     init(isPro: Bool, isTrialActive: Bool) {
         if isPro {
             self.status = .pro(
-                plan: CatKeyboardLockPurchasePlan.supporterLifetime.kikiAccessPlan,
+                plan: CatKeyboardLockPurchasePlan.lifetime.kikiAccessPlan,
                 entitlement: CommerceEntitlement(
                     plan: .lifetime,
-                    productIdentifier: CatKeyboardLockPurchasePlan.supporterLifetime.id,
-                    entitlementIdentifier: "catkeyboardlock.pro",
+                    productIdentifier: CatKeyboardLockRevenueCatConfiguration.lifetimeProductIdentifier,
+                    entitlementIdentifier: CatKeyboardLockRevenueCatConfiguration.entitlementIdentifier,
                     expirationDate: nil,
                     originalPurchaseDate: nil
                 )

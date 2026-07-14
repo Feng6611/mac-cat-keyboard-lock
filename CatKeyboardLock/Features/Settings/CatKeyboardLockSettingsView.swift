@@ -271,8 +271,8 @@ struct CatKeyboardLockSettingsView: View {
         case .notStarted:
             return KikiAccessStatusPresentation(
                 tone: .neutral,
-                title: "Trial not started",
-                subtitle: "Start the free trial when you are ready.",
+                title: "Pro inactive",
+                subtitle: "Choose a lifetime unlock to keep using Pro.",
                 actionTitle: "View options"
             )
         case .trial(.time(let daysRemaining, _)):

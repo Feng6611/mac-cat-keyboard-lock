@@ -32,7 +32,7 @@ enum CatKeyboardLockRevenueCatConfiguration {
     }
 
     static var revenueCatConfiguration: RevenueCatConfiguration {
-        RevenueCatConfiguration(
+        RevenueCatConfiguration.standardPro(
             apiKey: apiKey,
             offeringIdentifier: offeringIdentifier
         )
@@ -43,7 +43,7 @@ enum CatKeyboardLockRevenueCatConfiguration {
             plans: CatKeyboardLockPurchasePlan.allCases.map(\.kikiAccessPlan),
             defaultPlanID: CatKeyboardLockPurchasePlan.defaultSelection.id,
             commerceConfiguration: commerceConfiguration,
-            trialPolicy: .explicitStart(duration: trialDuration),
+            trialPolicy: .autoStart(duration: trialDuration),
             storageKeys: KikiAccessStorageKeys(
                 trialStartedAt: CatKeyboardLockProDefaults.Keys.trialStartedAt,
                 debugProAccessOverride: CatKeyboardLockProDefaults.Keys.debugProAccessOverride,

@@ -1,12 +1,12 @@
 # Issue Log
 
-## I-001 — Commerce plan identity is still a fixed yearly/lifetime enum
+## I-001 — Commerce plan identity is still a fixed product enum
 
 Status: Resolved 2026-07-05
 
 `CommercePlan` is now an open, hashable string identity. Cat maps `lifetime`
 and `supporterLifetime` without semantic aliases; RevenueCat offering and
-entitlement mapping resolve through configured product identifiers.
+entitlement mapping resolve through the two stable Apple product identifiers.
 
 ## I-002 — Cat has not adopted the high-level Settings and Onboarding flows
 
@@ -25,6 +25,10 @@ Automated tests cover offering mapping, transaction workflow, error feedback,
 and completion callbacks with test clients. A signed build with a configured
 RevenueCat API key must still verify real purchase, cancellation, activation
 refresh, restore-with-purchase, and restore-without-purchase before release.
+
+The local Debug configuration uses a RevenueCat Test Store key. Release remains
+blocked until a production Apple public SDK key, App Store products, entitlement
+attachments, and offering packages are configured.
 
 ## I-004 — Phase B/C review regressions
 

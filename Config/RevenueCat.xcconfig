@@ -1,0 +1,4 @@
+// Shared RevenueCat build settings. LocalSecrets.xcconfig is intentionally
+// optional so CI can inject CATLOCK_REVENUECAT_API_KEY through its environment.
+CATLOCK_REVENUECAT_API_KEY =
+#include? "LocalSecrets.xcconfig"

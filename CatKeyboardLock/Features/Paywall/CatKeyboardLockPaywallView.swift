@@ -66,14 +66,14 @@ struct CatKeyboardLockPaywallSheetView: View {
 
     private var paywallCopy: KikiAccessPaywallCopy {
         KikiAccessPaywallCopy(
-            title: "Choose your plan",
+            title: "Unlock Pro forever",
             proSubtitle: "All features are unlocked.",
             trialSubtitle: "Choose a plan or continue with your trial.",
             expiredSubtitle: "Your trial has ended. Upgrade to keep using Pro.",
             notStartedSubtitle: "Keep keyboard and click locking available when you need it.",
             features: config.features,
-            purchaseActionTitle: "Unlock forever",
-            trialActionTitle: "Start 2-day free trial"
+            purchaseActionTitle: "Unlock Pro",
+            trialActionTitle: "Continue 2-day free trial"
         )
     }
 

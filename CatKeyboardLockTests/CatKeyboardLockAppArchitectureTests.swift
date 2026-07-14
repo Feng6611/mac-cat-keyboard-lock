@@ -91,7 +91,6 @@ final class CatKeyboardLockAppArchitectureTests: XCTestCase {
         )
 
         await composition.accessManager.refresh()
-        await composition.accessManager.startTrial()
         composition.router.requestLockAction()
 
         XCTAssertTrue(composition.inputLockController.state.isLocked)
@@ -99,14 +98,12 @@ final class CatKeyboardLockAppArchitectureTests: XCTestCase {
         XCTAssertEqual(commerceClient.configureCallCount, 1)
     }
 
-    func testRouterDrivesPermissionBranchFromActualPermissionState() async {
+    func testRouterDrivesPermissionBranchFromActualPermissionState() {
         var didPresentPermissionHelp = false
         let composition = makeComposition(
             permissionClient: .architectureDenied,
             presentPermissionHelp: { didPresentPermissionHelp = true }
         )
-        await composition.accessManager.startTrial()
-
         composition.router.requestLockAction()
 
         XCTAssertTrue(didPresentPermissionHelp)
@@ -116,9 +113,8 @@ final class CatKeyboardLockAppArchitectureTests: XCTestCase {
         )
     }
 
-    func testRouterDrivesInputSelectionAndPaywallBranches() async {
+    func testRouterDrivesInputSelectionAndPaywallBranches() {
         let composition = makeComposition(permissionClient: .architectureAllowed)
-        await composition.accessManager.startTrial()
         composition.settingsCoordinator.select(.system)
         composition.lockSettings.lockKeyboard = false
         composition.lockSettings.lockMouseClicks = false
@@ -127,7 +123,15 @@ final class CatKeyboardLockAppArchitectureTests: XCTestCase {
 
         XCTAssertEqual(composition.router.lastPerformedLockAction, .chooseInput)
 
-        let inactiveComposition = makeComposition(permissionClient: .architectureAllowed)
+        let inactiveDefaults = isolatedDefaults()
+        inactiveDefaults.set(
+            Date(timeIntervalSince1970: 0),
+            forKey: CatKeyboardLockProDefaults.Keys.trialStartedAt
+        )
+        let inactiveComposition = makeComposition(
+            defaults: inactiveDefaults,
+            permissionClient: .architectureAllowed
+        )
         inactiveComposition.router.requestLockAction()
 
         XCTAssertEqual(inactiveComposition.router.lastPerformedLockAction, .openPaywall)
@@ -140,7 +144,6 @@ final class CatKeyboardLockAppArchitectureTests: XCTestCase {
             permissionClient: .architectureAllowed,
             eventTap: eventTap
         )
-        await composition.accessManager.startTrial()
         composition.router.requestLockAction()
         XCTAssertTrue(composition.inputLockController.state.isLocked)
 
@@ -158,7 +161,6 @@ final class CatKeyboardLockAppArchitectureTests: XCTestCase {
             permissionClient: .architectureAllowed,
             eventTap: eventTap
         )
-        await composition.accessManager.startTrial()
         composition.router.requestLockAction()
 
         eventTap.simulateDisabled(reason: "macOS disabled the event tap.")
@@ -175,7 +177,6 @@ final class CatKeyboardLockAppArchitectureTests: XCTestCase {
 #if DEBUG
     func testAccessExpirationCannotBlockRecoveryForActiveLock() async {
         let composition = makeComposition(permissionClient: .architectureAllowed)
-        await composition.accessManager.startTrial()
         composition.router.requestLockAction()
         XCTAssertTrue(composition.inputLockController.state.isLocked)
 

@@ -691,7 +691,7 @@ final class CatKeyboardLockTests: XCTestCase {
         )
     }
 
-    func testProStatusDoesNotStartTrialOnInitialization() {
+    func testProStatusStartsTwoDayTrialOnInitialization() {
         let defaults = isolatedDefaults()
         let now = Date(timeIntervalSince1970: 1_700_000_000)
         let manager = KikiAccessManager(
@@ -701,8 +701,12 @@ final class CatKeyboardLockTests: XCTestCase {
             now: { now }
         )
 
-        XCTAssertEqual(manager.status, .notStarted)
-        XCTAssertNil(defaults.object(forKey: CatKeyboardLockProDefaults.Keys.trialStartedAt))
+        let expectedExpiresAt = now.addingTimeInterval(CatKeyboardLockRevenueCatConfiguration.trialDuration)
+        XCTAssertEqual(defaults.object(forKey: CatKeyboardLockProDefaults.Keys.trialStartedAt) as? Date, now)
+        XCTAssertEqual(
+            manager.status,
+            .trial(.time(daysRemaining: 2, expiresAt: expectedExpiresAt))
+        )
     }
 
     func testOnboardingStateMigratesLegacyCompletion() {
@@ -723,7 +727,7 @@ final class CatKeyboardLockTests: XCTestCase {
         XCTAssertFalse(state.shouldShow(isPro: false, hasAccessOverride: true))
     }
 
-    func testStartTrialWritesDateAndRoundsDays() async {
+    func testAutomaticTrialKeepsStableStartDate() async {
         let defaults = isolatedDefaults()
         let now = Date(timeIntervalSince1970: 1_700_000_000)
         let manager = KikiAccessManager(
@@ -733,9 +737,11 @@ final class CatKeyboardLockTests: XCTestCase {
             now: { now }
         )
 
+        let originalStart = defaults.object(forKey: CatKeyboardLockProDefaults.Keys.trialStartedAt) as? Date
         await manager.startTrial()
 
         let expectedExpiresAt = now.addingTimeInterval(CatKeyboardLockRevenueCatConfiguration.trialDuration)
+        XCTAssertEqual(originalStart, now)
         XCTAssertEqual(defaults.object(forKey: CatKeyboardLockProDefaults.Keys.trialStartedAt) as? Date, now)
         XCTAssertEqual(
             manager.status,
@@ -785,8 +791,8 @@ final class CatKeyboardLockTests: XCTestCase {
         manager.setDebugProAccessOverride(.pro)
 
         let debugEntitlement = CommerceEntitlement(
-            plan: CatKeyboardLockPurchasePlan.supporterLifetime.commercePlan,
-            productIdentifier: "debug.\(CatKeyboardLockPurchasePlan.supporterLifetime.id)",
+            plan: CatKeyboardLockPurchasePlan.lifetime.commercePlan,
+            productIdentifier: "debug.\(CatKeyboardLockPurchasePlan.lifetime.id)",
             entitlementIdentifier: "debug.pro",
             expirationDate: nil,
             willRenew: false,
@@ -795,7 +801,7 @@ final class CatKeyboardLockTests: XCTestCase {
         XCTAssertEqual(manager.debugProAccessOverride, .pro)
         XCTAssertEqual(
             manager.status,
-            .pro(plan: CatKeyboardLockPurchasePlan.supporterLifetime.kikiAccessPlan, entitlement: debugEntitlement)
+            .pro(plan: CatKeyboardLockPurchasePlan.lifetime.kikiAccessPlan, entitlement: debugEntitlement)
         )
 
         manager.setDebugProAccessOverride(.notPro)
@@ -814,47 +820,27 @@ final class CatKeyboardLockTests: XCTestCase {
     func testPurchasePlansUnlockPro() async throws {
         let now = Date(timeIntervalSince1970: 1_700_000_000)
 
-        let lifetimeClient = MockCommerceClient()
-        let lifetimeEntitlement = CommerceEntitlement(
-            plan: CatKeyboardLockPurchasePlan.lifetime.commercePlan,
-            productIdentifier: CatKeyboardLockRevenueCatConfiguration.lifetimeProductIdentifier,
-            entitlementIdentifier: CatKeyboardLockRevenueCatConfiguration.entitlementIdentifier,
-            expirationDate: nil,
-            originalPurchaseDate: now
-        )
-        lifetimeClient.purchaseEntitlement = lifetimeEntitlement
-        let lifetimeManager = KikiAccessManager(
-            configuration: CatKeyboardLockRevenueCatConfiguration.accessConfiguration,
-            defaults: isolatedDefaults(),
-            commerceClient: lifetimeClient,
-            now: { now }
-        )
-        try await lifetimeManager.purchase(planID: CatKeyboardLockPurchasePlan.lifetime.id)
-        XCTAssertEqual(
-            lifetimeManager.status,
-            .pro(plan: CatKeyboardLockPurchasePlan.lifetime.kikiAccessPlan, entitlement: lifetimeEntitlement)
-        )
+        for plan in CatKeyboardLockPurchasePlan.allCases {
+            let client = MockCommerceClient()
+            let entitlement = CommerceEntitlement(
+                plan: plan.commercePlan,
+                productIdentifier: productIdentifier(for: plan),
+                entitlementIdentifier: CatKeyboardLockRevenueCatConfiguration.entitlementIdentifier,
+                expirationDate: nil,
+                originalPurchaseDate: now
+            )
+            client.purchaseEntitlement = entitlement
+            let manager = KikiAccessManager(
+                configuration: CatKeyboardLockRevenueCatConfiguration.accessConfiguration,
+                defaults: isolatedDefaults(),
+                commerceClient: client,
+                now: { now }
+            )
 
-        let supporterClient = MockCommerceClient()
-        let supporterEntitlement = CommerceEntitlement(
-            plan: CatKeyboardLockPurchasePlan.supporterLifetime.commercePlan,
-            productIdentifier: CatKeyboardLockRevenueCatConfiguration.supporterProductIdentifier,
-            entitlementIdentifier: CatKeyboardLockRevenueCatConfiguration.entitlementIdentifier,
-            expirationDate: nil,
-            originalPurchaseDate: now
-        )
-        supporterClient.purchaseEntitlement = supporterEntitlement
-        let supporterManager = KikiAccessManager(
-            configuration: CatKeyboardLockRevenueCatConfiguration.accessConfiguration,
-            defaults: isolatedDefaults(),
-            commerceClient: supporterClient,
-            now: { now }
-        )
-        try await supporterManager.purchase(planID: CatKeyboardLockPurchasePlan.supporterLifetime.id)
-        XCTAssertEqual(
-            supporterManager.status,
-            .pro(plan: CatKeyboardLockPurchasePlan.supporterLifetime.kikiAccessPlan, entitlement: supporterEntitlement)
-        )
+            try await manager.purchase(planID: plan.id)
+
+            XCTAssertEqual(manager.status, .pro(plan: plan.kikiAccessPlan, entitlement: entitlement))
+        }
     }
 
     func testRestoreSuccessAndNoPurchaseFeedback() async throws {
@@ -891,21 +877,58 @@ final class CatKeyboardLockTests: XCTestCase {
         )
 
         try await emptyManager.restorePurchases()
-        XCTAssertEqual(emptyManager.status, .notStarted)
+        XCTAssertEqual(
+            emptyManager.status,
+            .trial(
+                .time(
+                    daysRemaining: 2,
+                    expiresAt: now.addingTimeInterval(CatKeyboardLockRevenueCatConfiguration.trialDuration)
+                )
+            )
+        )
         XCTAssertEqual(emptyManager.commerceFeedback, .noActivePurchase)
     }
 
     func testPurchasePlanMapsToOpenCommerceAndKikiPlans() {
-        let purchasePlan = CatKeyboardLockPurchasePlan.supporterLifetime
-        let plan = purchasePlan.kikiAccessPlan
+        XCTAssertEqual(CatKeyboardLockPurchasePlan.defaultSelection, .lifetime)
+        XCTAssertEqual(CatKeyboardLockPurchasePlan.allCases.map(\.id), ["lifetime", "supporterLifetime"])
 
-        XCTAssertEqual(CatKeyboardLockPurchasePlan.defaultSelection, .supporterLifetime)
-        XCTAssertEqual(purchasePlan.commercePlan.rawValue, "supporterLifetime")
-        XCTAssertEqual(CatKeyboardLockPurchasePlan(commercePlan: purchasePlan.commercePlan), purchasePlan)
-        XCTAssertEqual(plan.id, "supporterLifetime")
-        XCTAssertEqual(plan.title, "Supporter Lifetime")
-        XCTAssertEqual(plan.fallbackDisplayPrice, "$10.99")
-        XCTAssertEqual(plan.badge, "Recommended")
+        for purchasePlan in CatKeyboardLockPurchasePlan.allCases {
+            let plan = purchasePlan.kikiAccessPlan
+            XCTAssertEqual(purchasePlan.commercePlan.rawValue, purchasePlan.id)
+            XCTAssertEqual(CatKeyboardLockPurchasePlan(commercePlan: purchasePlan.commercePlan), purchasePlan)
+            XCTAssertEqual(plan.id, purchasePlan.id)
+        }
+
+        XCTAssertEqual(CatKeyboardLockPurchasePlan.lifetime.kikiAccessPlan.fallbackDisplayPrice, "$6.99")
+        XCTAssertEqual(CatKeyboardLockPurchasePlan.supporterLifetime.kikiAccessPlan.fallbackDisplayPrice, "$10.99")
+        XCTAssertEqual(CatKeyboardLockPurchasePlan.lifetime.kikiAccessPlan.badge, "Default")
+        XCTAssertEqual(CatKeyboardLockPurchasePlan.supporterLifetime.kikiAccessPlan.badge, "Support Developer")
+    }
+
+    func testRevenueCatConfigurationMapsAllProductIdentifiers() {
+        let identifiers = CatKeyboardLockRevenueCatConfiguration.commerceConfiguration.productIdentifiers
+
+        XCTAssertEqual(
+            identifiers[CatKeyboardLockPurchasePlan.lifetime.commercePlan],
+            "dev.kkuk.catkeyboardlock.pro.lifetime"
+        )
+        XCTAssertEqual(
+            identifiers[CatKeyboardLockPurchasePlan.supporterLifetime.commercePlan],
+            "dev.kkuk.catkeyboardlock.pro.supporter"
+        )
+        XCTAssertEqual(CatKeyboardLockRevenueCatConfiguration.entitlementIdentifier, "cat keyboard lock Pro")
+    }
+
+    func testCustomerInfoSnapshotCarriesAppOwnedEntitlementResult() {
+        let managementURL = URL(string: "https://apps.apple.com/account/subscriptions")
+        let snapshot = CatKeyboardLockCustomerInfoSnapshot(
+            hasProAccess: true,
+            managementURL: managementURL
+        )
+
+        XCTAssertTrue(snapshot.hasProAccess)
+        XCTAssertEqual(snapshot.managementURL, managementURL)
     }
 
     func testAppConfigAboutLinks() {
@@ -1002,6 +1025,15 @@ final class CatKeyboardLockTests: XCTestCase {
         }
         defaults.removePersistentDomain(forName: suiteName)
         return defaults
+    }
+
+    private func productIdentifier(for plan: CatKeyboardLockPurchasePlan) -> String {
+        switch plan {
+        case .lifetime:
+            return CatKeyboardLockRevenueCatConfiguration.lifetimeProductIdentifier
+        case .supporterLifetime:
+            return CatKeyboardLockRevenueCatConfiguration.supporterProductIdentifier
+        }
     }
 }
 

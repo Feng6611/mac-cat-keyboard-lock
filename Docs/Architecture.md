@@ -68,9 +68,9 @@ RevenueCat state, defaults, Kiki adapters, or platform permissions.
   `KikiSettingsCoordinatorView`; About uses `KikiStandardAboutPane`.
 - Product-specific onboarding steps and the thin Cat paywall copy/tint/link
   adapter. KikiOnboarding owns navigation/window mechanics;
-  CommercePresentation owns offering/action orchestration and renders
-  KikiPaywall presets; Cat owns where the sheet appears and what successful
-  completion means.
+  KikiCommercePresentation owns offering/action orchestration and renders the
+  app-owned paywall; Cat owns where the sheet appears, CustomerInfo helpers,
+  and what successful completion means.
 - Accessibility setup copy and routing into the app's permission request flow.
 
 Feature code may import SwiftUI and Kiki. It should not own `CGEventTap`
@@ -153,23 +153,33 @@ trial policy, copy, onboarding migration, and feature-gating decisions.
 
 ## Commerce Boundary
 
-`KikiCommerceKit` has three one-way layers:
+`KikiCommerceKit` keeps three one-way layers:
 
 - `KikiCommerceCore` owns provider-neutral access/trial state and the single
   `KikiAccessManager`.
 - `KikiRevenueCat` owns SDK configuration, offering/purchase/restore transport,
   snapshot mapping, and verified `AppTransaction` grandfathering.
-- `KikiCommercePresentation` owns reusable paywall transaction orchestration
-  and maps manager state into KikiPaywall display models.
+- `KikiCommercePresentation` owns reusable app-controlled paywall transaction
+  orchestration and maps manager state into Kiki paywall display models.
 
 Cat does not mirror manager state in another observable manager. App-local
 types are limited to product plan metadata, pure entitlement snapshots used by
-  lock/menu rules, configuration, onboarding migration, and copy. Existing
-  `KikiPro*` names are migration aliases only; Cat source uses `KikiAccess*`.
+lock/menu rules, configuration, onboarding migration, and copy. Existing
+`KikiPro*` names are migration aliases only; Cat source uses `KikiAccess*`.
 
-The current integration deliberately uses adjacent local package paths so Cat,
-Commerce, and Kiki resolve one Kiki package identity. Product releases must use
-the same tagged HTTPS versions instead.
+Cat resolves Kiki and Commerce from exact tagged HTTPS versions. The app and
+KikiCommerceKit must select compatible Kiki and RevenueCat versions so SwiftPM
+resolves one identity for each shared package.
+
+Cat also declares the same exact `purchases-ios-spm` version selected by
+KikiCommerceKit and links only the `RevenueCat` product for typed CustomerInfo
+access. SwiftPM must resolve exactly one package identity. `KikiAccessManager`
+remains the only mutable access source; direct CustomerInfo reads are snapshots
+for app-owned logic and must not become a second entitlement store.
+
+RevenueCatUI, RevenueCat Paywall, and Customer Center are outside this
+integration. All visible purchase and account surfaces remain owned by Cat and
+Kiki components.
 
 ## Testing-First Shape
 

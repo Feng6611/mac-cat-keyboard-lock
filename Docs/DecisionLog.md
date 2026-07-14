@@ -1,5 +1,41 @@
 # Decision Log
 
+## 2026-07-14 — Two Apple lifetime products with one Pro entitlement
+
+- Keep the stable product identifiers
+  `dev.kkuk.catkeyboardlock.pro.lifetime` and
+  `dev.kkuk.catkeyboardlock.pro.supporter` as Apple non-consumables.
+- Target `$6.99` for Lifetime and `$10.99` for Support Developer Lifetime in the
+  US storefront. Select Lifetime by default and attach both products to the
+  same `cat keyboard lock Pro` entitlement.
+- Start the stable, app-managed 2-day trial automatically on first launch.
+  Apple introductory trials are not used because the products are lifetime
+  non-consumables rather than auto-renewable subscriptions.
+- Keep purchase, restore, and payment confirmation in Apple's StoreKit system
+  through RevenueCat, while retaining Cat's app-owned Kiki purchase UI.
+
+Why: both prices represent the same permanent Pro access, while the supporter
+option lets users voluntarily contribute more without creating a second access
+level or subscription lifecycle.
+
+## 2026-07-14 — RevenueCat SDK-only with app-owned Kiki purchase UI
+
+- Link only the `RevenueCat` product from the same exact `purchases-ios-spm`
+  version already selected by KikiCommerceKit. Do not link RevenueCatUI.
+- Keep the app-owned `KikiAccessPaywallSheet` for the two lifetime products;
+  offering loading, purchase, and restore continue through KikiRevenueCat.
+- Expose typed CustomerInfo snapshots for app-owned logic and treat
+  `CustomerInfo.entitlements["cat keyboard lock Pro"]?.isActive` as the direct
+  SDK entitlement check. Keep `KikiAccessManager` as the only observable access
+  source.
+- Inject the public SDK key through xcconfig. Permit the supplied `test_` key
+  only in Debug and require a production `appl_` key for Release.
+- RevenueCat Paywall and Customer Center pages are intentionally out of scope;
+  visible purchase and account logic remains app-owned.
+
+Why: Cat needs RevenueCat transport and entitlement support without delegating
+its product UI or routing decisions to RevenueCat-owned pages.
+
 ## 2026-07-10 — Reference App composition and authoritative startup
 
 - Split the former all-purpose AppDelegate into immutable `AppDefinition`,

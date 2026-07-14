@@ -5,7 +5,7 @@ enum CatKeyboardLockPurchasePlan: String, CaseIterable, Equatable, Hashable, Ide
     case lifetime
     case supporterLifetime
 
-    static let defaultSelection: Self = .supporterLifetime
+    static let defaultSelection: Self = .lifetime
 
     var id: String { rawValue }
 
@@ -14,14 +14,14 @@ enum CatKeyboardLockPurchasePlan: String, CaseIterable, Equatable, Hashable, Ide
         case .lifetime:
             return "Lifetime"
         case .supporterLifetime:
-            return "Supporter Lifetime"
+            return "Support Developer Lifetime"
         }
     }
 
     var fallbackDisplayPrice: String {
         switch self {
         case .lifetime:
-            return "$5.99"
+            return "$6.99"
         case .supporterLifetime:
             return "$10.99"
         }
@@ -34,9 +34,9 @@ enum CatKeyboardLockPurchasePlan: String, CaseIterable, Equatable, Hashable, Ide
     var badge: String? {
         switch self {
         case .lifetime:
-            return nil
+            return "Default"
         case .supporterLifetime:
-            return "Recommended"
+            return "Support Developer"
         }
     }
 

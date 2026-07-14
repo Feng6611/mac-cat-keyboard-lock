@@ -2,6 +2,10 @@
 
 ## 2026-07-14
 
+- Added RevenueCat SDK support for two Apple lifetime products at `$6.99` and
+  `$10.99`, automatic app-managed 2-day trial, CustomerInfo entitlement
+  snapshots, and Debug/Release API-key build guards while retaining the
+  app-owned Kiki purchase UI.
 - Production builds now resolve `Kiki_mackit` from the public `0.8.1` tag and
   `KikiCommerceKit` from the public `0.1.1` tag; local sibling checkouts are
   no longer part of the app project graph.
@@ -75,12 +79,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 - Added a five-level lock feedback setting.
 - Added an optional trigger corner component that toggles the normal lock/unlock
   flow after the pointer dwells in a selected screen corner.
-- Added a lightweight first-launch onboarding window with an explicit
-  `Start 2-Day Pro Trial` action.
+- Added a lightweight first-launch onboarding window with an automatic 2-day
+  Pro trial.
 - Added a single KikiCommerceKit access manager, local one-time trial policy,
   and RevenueCat-backed purchase and restore handling.
-- Added two one-time Pro plan surfaces: Lifetime at `$5.99` and recommended
-  Supporter Lifetime at `$10.99`.
+- Added two one-time Pro plan surfaces: Lifetime at `$6.99` and Support
+  Developer Lifetime at `$10.99`.
 - Added an app-owned paywall sheet opened from Settings About status and
   onboarding.
 - Added a Debug-only test entry for forcing paid or unpaid Pro access while
