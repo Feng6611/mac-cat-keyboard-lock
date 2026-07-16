@@ -111,9 +111,7 @@ struct InputLockPolicy: Equatable {
     let lockMouseClicks: Bool
 
     var eventTypes: [CGEventType] {
-        var types = suppressedEventTypes
-        types.appendUnique(contentsOf: Self.fallbackUnlockEventTypes)
-        return types
+        suppressedEventTypes
     }
 
     var suppressedEventTypes: [CGEventType] {
@@ -154,8 +152,6 @@ struct InputLockPolicy: Equatable {
     static func mask(for eventType: CGEventType) -> CGEventMask {
         CGEventMask(1) << CGEventMask(eventType.rawValue)
     }
-
-    private static let fallbackUnlockEventTypes: [CGEventType] = [.keyDown, .keyUp, .flagsChanged]
 }
 
 private extension Array where Element == CGEventType {

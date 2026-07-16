@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APP_NAME="CatKeyboardLock"
-APP_OWNER_NAME="cat keyboard lock"
+APP_OWNER_NAME="Cat Keyboard Lock"
 APP_BUNDLE="$ROOT_DIR/dist/$APP_NAME.app"
 SCREENSHOT_DIR="${CATLOCK_UI_SCREENSHOT_DIR:-$ROOT_DIR/build/ui-smoke}"
 

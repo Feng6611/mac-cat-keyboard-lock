@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-07-15
+
+- Removed the lock/unlock shortcut from the menu and input event filter.
+- Onboarding now uses the default trigger corner to start and end a real
+  keyboard-only practice without manual lock/unlock buttons. Input restores
+  automatically after 60 seconds, and skipping preserves the prior setting.
+- Clarified automatic 2-day trial terms, lifetime purchase actions, recovery
+  guidance, menu punctuation, product naming, and lock feedback.
+- Improved reusable plan-card labeling/selection accessibility and made
+  purchase, restore, and trial failures operation-specific in the shared kits.
+- Switched the coordinated development graph to adjacent Kiki and Commerce
+  checkouts so Cat consumes these shared fixes before the release-tag sequence.
+
 ## 2026-07-14
 
 - Added RevenueCat SDK support for two Apple lifetime products at `$6.99` and

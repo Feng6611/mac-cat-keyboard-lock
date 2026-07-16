@@ -35,13 +35,13 @@ enum CatKeyboardLockOnboardingFlow {
                 appName: config.appName,
                 steps: [flow],
                 completionKey: CatKeyboardLockOnboardingState.completionKey,
-                canSkip: false,
+                canSkip: true,
                 tint: CatKeyboardLockSettingsTint.brand,
                 windowAutosaveName: "CatKeyboardLock.OnboardingWindow",
                 windowTitle: "Welcome",
                 windowSize: windowSize,
                 minimumWindowSize: windowSize,
-                closeDisposition: .complete
+                closeDisposition: .keepPending
             ),
             completionStore: onboardingState.store,
             onFinished: onFinish
@@ -125,6 +125,10 @@ private struct CatKeyboardLockOnboardingFlowView: View {
             appIcon: session.phase == .welcome ? KikiApplicationIcon.current : nil,
             iconSystemName: session.phase.systemImage,
             primaryAction: primaryAction,
+            skipAction: KikiOnboardingAction(
+                title: session.phase == .unlockPractice ? "Stop Practice" : "Set Up Later",
+                action: session.complete
+            ),
             tint: tint,
             size: CatKeyboardLockOnboardingFlow.windowSize,
             stepIndex: session.phase.progressIndex,
@@ -134,18 +138,18 @@ private struct CatKeyboardLockOnboardingFlowView: View {
         }
     }
 
-    private var primaryAction: KikiOnboardingAction {
+    private var primaryAction: KikiOnboardingAction? {
         switch session.phase {
         case .welcome:
-            return KikiOnboardingAction(title: "Continue", action: session.advance)
+            return KikiOnboardingAction(title: "Set Up Cat Lock", action: session.advance)
         case .permission:
             return KikiOnboardingAction(title: "Allow Accessibility", action: session.requestAccessibility)
-        case .permissionSuccess, .lockSuccess, .unlockSuccess:
-            return KikiOnboardingAction(title: "Continue", action: session.advance)
-        case .lockWithCorner:
-            return KikiOnboardingAction(title: "Waiting for trigger corner…", isEnabled: false) {}
-        case .unlockWithCorner:
-            return KikiOnboardingAction(title: "Waiting for trigger corner…", isEnabled: false) {}
+        case .permissionSuccess:
+            return KikiOnboardingAction(title: "Try Trigger Corner", action: session.advance)
+        case .lockPractice, .unlockPractice:
+            return nil
+        case .unlockSuccess:
+            return KikiOnboardingAction(title: "View Pro Options", action: session.advance)
         }
     }
 
@@ -163,11 +167,9 @@ private struct CatKeyboardLockOnboardingFlowView: View {
             .frame(maxWidth: 390)
         case .permissionSuccess:
             CatKeyboardLockCelebrationMark(tint: tint, title: "Permission granted")
-        case .lockWithCorner:
+        case .lockPractice:
             triggerCornerGuide(isUnlock: false)
-        case .lockSuccess:
-            CatKeyboardLockCelebrationMark(tint: tint, title: "Keyboard locked")
-        case .unlockWithCorner:
+        case .unlockPractice:
             triggerCornerGuide(isUnlock: true)
         case .unlockSuccess:
             CatKeyboardLockCelebrationMark(tint: tint, title: "Keyboard restored")
@@ -177,8 +179,8 @@ private struct CatKeyboardLockOnboardingFlowView: View {
     private var featureRows: some View {
         VStack(alignment: .leading, spacing: 10) {
             featureRow("Block accidental keyboard input")
-            featureRow("Lock and unlock from a trigger corner")
-            featureRow("Always keep a safety release available")
+            featureRow("Optionally block mouse and trackpad clicks")
+            featureRow("Restore input automatically with a safety timer")
         }
         .frame(maxWidth: 380, alignment: .leading)
     }
@@ -218,6 +220,18 @@ private struct CatKeyboardLockOnboardingFlowView: View {
             Text(session.triggerCorner.title)
                 .font(.caption)
                 .foregroundStyle(.secondary)
+
+            if case .permissionRequired(let reason) = inputLockController.state {
+                Text(reason)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+                    .multilineTextAlignment(.center)
+            } else if case .failed(let reason) = inputLockController.state {
+                Text(reason)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+                    .multilineTextAlignment(.center)
+            }
         }
     }
 
@@ -237,9 +251,8 @@ private extension CatKeyboardLockOnboardingPhase {
         case .welcome: return "keyboard.badge.ellipsis"
         case .permission: return KikiAuthorizationPanel.accessibility.systemImage
         case .permissionSuccess: return "checkmark.seal.fill"
-        case .lockWithCorner: return "cursorarrow.motionlines"
-        case .lockSuccess: return "lock.fill"
-        case .unlockWithCorner: return "cursorarrow.motionlines"
+        case .lockPractice: return "cursorarrow.motionlines"
+        case .unlockPractice: return "lock.fill"
         case .unlockSuccess: return "lock.open.fill"
         }
     }
@@ -249,9 +262,8 @@ private extension CatKeyboardLockOnboardingPhase {
         case .welcome: return "Lock input when you step away"
         case .permission: return "Allow Accessibility"
         case .permissionSuccess: return "Accessibility is ready"
-        case .lockWithCorner: return "Lock from the trigger corner"
-        case .lockSuccess: return "Locked!"
-        case .unlockWithCorner: return "Use the corner again"
+        case .lockPractice: return "Lock from the trigger corner"
+        case .unlockPractice: return "Use the corner again"
         case .unlockSuccess: return "Unlocked!"
         }
     }
@@ -259,17 +271,15 @@ private extension CatKeyboardLockOnboardingPhase {
     var subtitle: String {
         switch self {
         case .welcome:
-            return "Cat Keyboard Lock keeps accidental typing and clicks away from the current Mac session."
+            return "Cat Keyboard Lock blocks accidental typing and can optionally block clicks. Your 2-day Pro trial starts automatically and never renews or charges you."
         case .permission:
             return "macOS requires this permission before the app can block keyboard input."
         case .permissionSuccess:
             return "The app can now protect your keyboard."
-        case .lockWithCorner:
-            return "Practice the same gesture you will use every day."
-        case .lockSuccess:
-            return "The trigger corner blocked keyboard input."
-        case .unlockWithCorner:
-            return "Leave the corner, then trigger it once more to restore input."
+        case .lockPractice:
+            return "The keyboard-only practice starts automatically when the corner triggers."
+        case .unlockPractice:
+            return "Trigger the corner again to unlock. Input also restores automatically after 60 seconds."
         case .unlockSuccess:
             return "You now know how to lock and recover your keyboard."
         }

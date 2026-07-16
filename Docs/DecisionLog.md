@@ -1,5 +1,23 @@
 # Decision Log
 
+## 2026-07-15 — Remove the shortcut and teach trigger-corner recovery safely
+
+- Remove the menu key equivalent and event-tap long-press shortcut entirely.
+  Recovery remains available through the menu bar, an optional trigger corner,
+  the selected timeout, or quitting the app.
+- Use the selected/default trigger corner as the onboarding interaction. The
+  first dwell starts a real keyboard-only lock; leaving and dwelling again
+  unlocks it. The event-driven steps have no manual lock/unlock buttons.
+- Always end the practice lock after 60 seconds. Temporarily suspend the normal
+  trigger monitor to avoid duplicate callbacks, restore the prior setting on
+  skip, and enable the corner only after both practice actions succeed.
+- Disclose the automatically started 2-day trial on the welcome page before
+  setup begins and state that it neither renews nor charges the user.
+
+Why: a hidden long-press gesture was hard to discover. Trigger-corner practice
+demonstrates the app's default hands-off workflow, while the fixed timeout keeps
+the real input lock reversible even if the user does not complete the gesture.
+
 ## 2026-07-14 — Two Apple lifetime products with one Pro entitlement
 
 - Keep the stable product identifiers

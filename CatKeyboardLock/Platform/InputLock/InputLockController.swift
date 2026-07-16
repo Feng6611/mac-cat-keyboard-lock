@@ -37,9 +37,10 @@ struct InputLockPermissionStatus: Equatable {
 
 @MainActor
 final class InputLockController: ObservableObject {
+    static let onboardingPracticeTimeout: TimeInterval = 60
+
     typealias EventTapFactory = (
         _ policy: InputLockPolicy,
-        _ onFallbackUnlock: @escaping () -> Void,
         _ onTapDisabled: @escaping (String) -> Void
     ) -> InputLockEventTapping
 
@@ -72,10 +73,9 @@ final class InputLockController: ObservableObject {
         self.settings = settings
         self.permissionClient = permissionClient
         self.presentPermissionHelp = presentPermissionHelp ?? Self.presentLivePermissionHelp
-        self.eventTapFactory = eventTapFactory ?? { policy, onFallbackUnlock, onTapDisabled in
+        self.eventTapFactory = eventTapFactory ?? { policy, onTapDisabled in
             InputLockEventTap(
                 policy: policy,
-                onFallbackUnlock: onFallbackUnlock,
                 onTapDisabled: onTapDisabled
             )
         }
@@ -87,15 +87,30 @@ final class InputLockController: ObservableObject {
     }
 
     func lock(now: Date = Date()) {
-        startLock(now: now, timeoutInterval: settings.lockDurationInterval)
+        startLock(
+            policy: settings.policy,
+            now: now,
+            timeoutInterval: settings.lockDurationInterval
+        )
     }
 
-    private func startLock(now: Date, timeoutInterval: TimeInterval) {
+    func lockForOnboardingPractice(now: Date = Date()) {
+        startLock(
+            policy: InputLockPolicy(lockKeyboard: true, lockMouseClicks: false),
+            now: now,
+            timeoutInterval: Self.onboardingPracticeTimeout
+        )
+    }
+
+    private func startLock(
+        policy: InputLockPolicy,
+        now: Date,
+        timeoutInterval: TimeInterval
+    ) {
         guard !state.isLocked else {
             return
         }
 
-        let policy = settings.policy
         guard !policy.isEmpty else {
             state = .failed(reason: "Choose at least one input type to lock.")
             return
@@ -115,11 +130,6 @@ final class InputLockController: ObservableObject {
 
         let tap = eventTapFactory(
             policy,
-            { [weak self] in
-                Task { @MainActor in
-                    self?.unlock(reason: .fallbackShortcut)
-                }
-            },
             { [weak self] reason in
                 Task { @MainActor in
                     self?.handleTapDisabled(reason: reason)

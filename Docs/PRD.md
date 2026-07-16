@@ -24,13 +24,17 @@ keyboard input while keeping the machine awake and visible.
 - Settings can enable an optional trigger corner when access is active. When
   enabled, resting the pointer in the selected screen corner briefly toggles the
   normal lock/unlock flow.
-- Fallback unlock is `Control + Option + Command + L` held for 1 second.
 - Lock duration is selectable: 5, 10, 30, or 60 minutes. The default is
   10 minutes.
-- First launch shows a lightweight onboarding window covering the lock model,
-  Accessibility setup, recovery, and the active trial. The final onboarding
-  step presents the same paywall sheet used by Settings About. A one-time 2-day
-  app-managed Pro trial starts automatically on first launch.
+- First launch shows a lightweight, skippable onboarding window covering the
+  lock model, Accessibility setup, and recovery. Its practice blocks only the
+  keyboard for at most 60 seconds, keeps pointer clicks available, and advances
+  automatically when the user dwells in the default trigger corner to lock and
+  then returns to it to unlock. There are no manual lock/unlock buttons in the
+  practice. Completing both corner actions enables that trigger corner; skipping
+  preserves the prior setting. The final onboarding step presents the same
+  paywall sheet used by Settings About. A one-time 2-day app-managed Pro trial
+  starts automatically on first launch, never renews, and never charges the user.
 - Trial and Pro unlock the full input-lock feature set. When the trial has
   expired, new lock attempts open the paywall instead of starting a lock.
 - Settings exposes Pro status in About. Clicking the About status row opens the
@@ -72,10 +76,11 @@ keyboard input while keeping the machine awake and visible.
   the existing lock/unlock flow only after the pointer dwells in the selected
   corner. The trigger corner does not install an event tap, suppress input, or
   add another privacy permission.
-- When locked, non-unlock keyboard events are suppressed by returning `nil` from
-  the event tap callback.
+- When locked, selected keyboard and click events are suppressed by returning
+  `nil` from the event tap callback.
 - If a trial expires during an active lock, the current lock is not interrupted;
-  unlock, timeout, and the fallback shortcut remain available.
+  menu-bar unlock, trigger-corner unlock when configured, timeout, and quitting
+  the app remain available.
 - Lock and unlock transitions show KikiOverlay global orange screen-edge
   breathing as visual feedback. Trigger moments use a stronger short burst,
   the persistent locked state keeps a subtle visible breathing rhythm, toasts
@@ -83,10 +88,9 @@ keyboard input while keeping the machine awake and visible.
 - The menu bar item uses one stable keyboard symbol. Locked and unlocked are
   represented as active/inactive and tinted/untinted states of that symbol, not
   unrelated icons.
-- Click suppression may make menu bar unlock unavailable, so the fallback combo
-  and lock duration release remain mandatory.
-- The unlock combo does not depend on Delete and should work while the keyboard
-  filter is active.
+- Click suppression may make menu-bar unlock unavailable. Settings must explain
+  that the selected timeout always restores input and that an enabled trigger
+  corner remains available because pointer movement is not blocked.
 - If event tap creation fails, the app shows a permission or failure state
   instead of pretending the system is locked.
 - If Accessibility is missing, onboarding and Settings route setup through
@@ -109,12 +113,13 @@ keyboard input while keeping the machine awake and visible.
 - The app records one stable trial start date on first launch and never restarts
   the trial after expiration.
 - Expired access opens the paywall for new lock attempts.
-- The fallback long-press unlock works even when pointer options make the menu
-  bar difficult or impossible to use.
+- Onboarding proves a real keyboard-only lock and trigger-corner recovery. The
+  practice automatically restores input after 60 seconds if the second corner
+  action is not completed.
 - The app releases the lock after the selected lock duration.
 - If enabled, the selected trigger corner toggles lock state after a brief dwell
   and avoids repeated triggers while the pointer remains in the corner.
 - Quitting or crashing the app removes the filter because the event tap is owned
   by the app process.
-- Unit tests cover menu mapping, lock policy masks, fallback combo timing,
+- Unit tests cover menu mapping, lock policy masks, onboarding practice policy,
   trigger corner geometry/dwell behavior, and timeout behavior.

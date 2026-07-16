@@ -18,18 +18,21 @@ final class CatKeyboardLockAppArchitectureTests: XCTestCase {
                 .welcome,
                 .permission,
                 .permissionSuccess,
-                .lockWithCorner,
-                .lockSuccess,
-                .unlockWithCorner,
+                .lockPractice,
+                .unlockPractice,
                 .unlockSuccess
             ]
         )
         XCTAssertEqual(composition.onboardingCoordinator.configuration.steps.count, 1)
-        XCTAssertFalse(composition.onboardingCoordinator.canSkip)
+        XCTAssertTrue(composition.onboardingCoordinator.canSkip)
     }
 
-    func testOnboardingRequiresPermissionThenUsesCornerToLockAndUnlock() {
-        let composition = makeComposition(permissionClient: .architectureAllowed)
+    func testOnboardingRequiresPermissionThenPracticesTriggerCornerLockAndUnlock() {
+        let eventTap = CallbackInputLockEventTap()
+        let composition = makeComposition(
+            permissionClient: .architectureAllowed,
+            eventTap: eventTap
+        )
         var didFinish = false
         let session = CatKeyboardLockOnboardingSession(
             lockSettings: composition.lockSettings,
@@ -42,14 +45,13 @@ final class CatKeyboardLockAppArchitectureTests: XCTestCase {
         XCTAssertEqual(session.phase, .permissionSuccess)
 
         session.advance()
-        XCTAssertEqual(session.phase, .lockWithCorner)
+        XCTAssertEqual(session.phase, .lockPractice)
 
         session.handleCornerTrigger()
-        XCTAssertEqual(session.phase, .lockSuccess)
+        XCTAssertEqual(session.phase, .unlockPractice)
         XCTAssertTrue(composition.inputLockController.state.isLocked)
-
-        session.advance()
-        XCTAssertEqual(session.phase, .unlockWithCorner)
+        XCTAssertEqual(eventTap.policy, InputLockPolicy(lockKeyboard: true, lockMouseClicks: false))
+        XCTAssertEqual(InputLockController.onboardingPracticeTimeout, 60)
 
         session.handleCornerTrigger()
         XCTAssertEqual(session.phase, .unlockSuccess)
@@ -63,7 +65,29 @@ final class CatKeyboardLockAppArchitectureTests: XCTestCase {
         XCTAssertTrue(composition.lockSettings.triggerCornerEnabled)
     }
 
-    func testOnboardingDoesNotReachCornerTutorialWithoutPermission() {
+    func testOnboardingPracticeTimeoutRestoresInputWithoutEnablingCorner() {
+        let composition = makeComposition(permissionClient: .architectureAllowed)
+        let session = CatKeyboardLockOnboardingSession(
+            lockSettings: composition.lockSettings,
+            inputLockController: composition.inputLockController,
+            onFinish: {}
+        )
+
+        session.start()
+        session.advance()
+        session.advance()
+        session.handleCornerTrigger()
+        XCTAssertEqual(session.phase, .unlockPractice)
+
+        composition.inputLockController.expireLockForTesting()
+
+        XCTAssertEqual(session.phase, .unlockSuccess)
+        XCTAssertEqual(composition.inputLockController.lastUnlockReason, .timeout)
+        session.complete()
+        XCTAssertFalse(composition.lockSettings.triggerCornerEnabled)
+    }
+
+    func testOnboardingDoesNotReachLockPracticeWithoutPermission() {
         let composition = makeComposition(permissionClient: .architectureDenied)
         let session = CatKeyboardLockOnboardingSession(
             lockSettings: composition.lockSettings,
@@ -138,23 +162,6 @@ final class CatKeyboardLockAppArchitectureTests: XCTestCase {
         XCTAssertTrue(inactiveComposition.settingsRoute.isPaywallSheetPresented)
     }
 
-    func testFallbackCallbackAlwaysTearsDownActiveLock() async {
-        let eventTap = CallbackInputLockEventTap()
-        let composition = makeComposition(
-            permissionClient: .architectureAllowed,
-            eventTap: eventTap
-        )
-        composition.router.requestLockAction()
-        XCTAssertTrue(composition.inputLockController.state.isLocked)
-
-        eventTap.simulateFallbackUnlock()
-        await Task.yield()
-
-        XCTAssertEqual(composition.inputLockController.state, .unlocked)
-        XCTAssertEqual(composition.inputLockController.lastUnlockReason, .fallbackShortcut)
-        XCTAssertTrue(eventTap.didStop)
-    }
-
     func testTapDisabledCallbackTearsDownAndReportsFailure() async {
         let eventTap = CallbackInputLockEventTap()
         let composition = makeComposition(
@@ -218,8 +225,8 @@ final class CatKeyboardLockAppArchitectureTests: XCTestCase {
             commerceClient: commerceClient,
             permissionClient: permissionClient,
             presentPermissionHelp: presentPermissionHelp,
-            eventTapFactory: { _, onFallbackUnlock, onTapDisabled in
-                eventTap.onFallbackUnlock = onFallbackUnlock
+            eventTapFactory: { policy, onTapDisabled in
+                eventTap.policy = policy
                 eventTap.onTapDisabled = onTapDisabled
                 return eventTap
             }
@@ -245,7 +252,7 @@ private extension InputLockPermissionClient {
 }
 
 private final class CallbackInputLockEventTap: InputLockEventTapping {
-    var onFallbackUnlock: (() -> Void)?
+    var policy: InputLockPolicy?
     var onTapDisabled: ((String) -> Void)?
     var didStart = false
     var didStop = false
@@ -258,10 +265,6 @@ private final class CallbackInputLockEventTap: InputLockEventTapping {
 
     func stop() {
         didStop = true
-    }
-
-    func simulateFallbackUnlock() {
-        onFallbackUnlock?()
     }
 
     func simulateDisabled(reason: String) {

@@ -123,23 +123,18 @@ struct CatKeyboardLockSettingsView: View {
                 KikiSettingsToggleRow("Clicks", isOn: $lockSettings.lockMouseClicks)
             } footer: {
                 KikiSettingsHelperText(
-                    "Keyboard is the core lock. Clicks are an optional extension."
+                    "Keyboard input is blocked by default. Turn on Clicks to block mouse and trackpad clicks too."
                 )
             }
 
             Section {
-                KikiSettingsValueRow("Lock / unlock shortcut") {
-                    Text("⌃⌥⌘L (hold 1s)")
-                        .foregroundStyle(.secondary)
-                        .monospaced()
-                }
                 lockDurationRow
                 lockFeedbackRow
             } header: {
-                Text("Shortcut & Safety")
+                Text("Safety")
             } footer: {
                 KikiSettingsHelperText(
-                    "Use the shortcut or menu bar item to switch lock state. The app also releases the lock after the selected duration."
+                    "Unlock from the menu bar or trigger corner. If clicks are locked and the trigger corner is off, input returns when the selected duration ends."
                 )
             }
 
@@ -271,22 +266,22 @@ struct CatKeyboardLockSettingsView: View {
         case .notStarted:
             return KikiAccessStatusPresentation(
                 tone: .neutral,
-                title: "Pro inactive",
-                subtitle: "Choose a lifetime unlock to keep using Pro.",
+                title: "Free trial available",
+                subtitle: "Start a 2-day trial or choose a lifetime purchase.",
                 actionTitle: "View options"
             )
-        case .trial(.time(let daysRemaining, _)):
+        case .trial(.time(_, let expiresAt)):
             return KikiAccessStatusPresentation(
                 tone: .trial,
-                title: "\(daysRemaining) day\(daysRemaining == 1 ? "" : "s") left",
-                subtitle: "All Pro controls are available during the trial.",
+                title: "Trial active",
+                subtitle: "Ends \(expiresAt.formatted(date: .abbreviated, time: .shortened)). No renewal or charge.",
                 actionTitle: "View plans"
             )
         case .trial(.usage(_, let used, let limit)):
             return KikiAccessStatusPresentation(
                 tone: .trial,
-                title: "\(max(0, limit - used)) uses left",
-                subtitle: "All Pro controls are available during the trial.",
+                title: "Trial active",
+                subtitle: "Uses remaining: \(max(0, limit - used).formatted()). No renewal or charge.",
                 actionTitle: "View plans"
             )
         case .expired:

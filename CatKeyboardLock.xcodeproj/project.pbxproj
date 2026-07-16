@@ -26,7 +26,6 @@
 		A00100000000000000000015 /* CatKeyboardLockEntitlementSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0020000000000000000000D /* CatKeyboardLockEntitlementSnapshot.swift */; };
 		A00100000000000000000017 /* InputLockState.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000010 /* InputLockState.swift */; };
 		A00100000000000000000018 /* LockSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000011 /* LockSettings.swift */; };
-		A00100000000000000000019 /* UnlockGestureDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000012 /* UnlockGestureDetector.swift */; };
 		A0010000000000000000001A /* InputLockEventTap.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000013 /* InputLockEventTap.swift */; };
 		A0010000000000000000001B /* InputLockController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000014 /* InputLockController.swift */; };
 		A0010000000000000000001E /* KikiOverlay in Frameworks */ = {isa = PBXBuildFile; productRef = A00B00000000000000000007 /* KikiOverlay */; };
@@ -85,7 +84,6 @@
 		A0020000000000000000000F /* Architecture.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Docs/Architecture.md; sourceTree = "<group>"; };
 		A00200000000000000000010 /* InputLockState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Platform/InputLock/InputLockState.swift; sourceTree = "<group>"; };
 		A00200000000000000000011 /* LockSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Platform/InputLock/LockSettings.swift; sourceTree = "<group>"; };
-		A00200000000000000000012 /* UnlockGestureDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Platform/InputLock/UnlockGestureDetector.swift; sourceTree = "<group>"; };
 		A00200000000000000000013 /* InputLockEventTap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Platform/InputLock/InputLockEventTap.swift; sourceTree = "<group>"; };
 		A00200000000000000000014 /* InputLockController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Platform/InputLock/InputLockController.swift; sourceTree = "<group>"; };
 		A00200000000000000000017 /* CatKeyboardLockOverlayPresentations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shared/CatKeyboardLockOverlayPresentations.swift; sourceTree = "<group>"; };
@@ -273,7 +271,6 @@
 			children = (
 				A00200000000000000000010 /* InputLockState.swift */,
 				A00200000000000000000011 /* LockSettings.swift */,
-				A00200000000000000000012 /* UnlockGestureDetector.swift */,
 				A00200000000000000000013 /* InputLockEventTap.swift */,
 				A00200000000000000000014 /* InputLockController.swift */,
 			);
@@ -413,8 +410,8 @@
 			);
 			mainGroup = A00700000000000000000001;
 				packageReferences = (
-					A00D00000000000000000001 /* XCRemoteSwiftPackageReference "Kiki_mackit" */,
-					A00D00000000000000000003 /* XCRemoteSwiftPackageReference "KikiCommerceKit" */,
+					A00D00000000000000000001 /* XCLocalSwiftPackageReference "../Kiki_mackit" */,
+					A00D00000000000000000003 /* XCLocalSwiftPackageReference "../KikiCommerceKit" */,
 					A00D00000000000000000004 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */,
 				);
 			productRefGroup = A00700000000000000000004 /* Products */;
@@ -486,7 +483,6 @@
 				A00100000000000000000015 /* CatKeyboardLockEntitlementSnapshot.swift in Sources */,
 				A00100000000000000000017 /* InputLockState.swift in Sources */,
 				A00100000000000000000018 /* LockSettings.swift in Sources */,
-				A00100000000000000000019 /* UnlockGestureDetector.swift in Sources */,
 				A0010000000000000000001A /* InputLockEventTap.swift in Sources */,
 				A0010000000000000000001B /* InputLockController.swift in Sources */,
 				A00100000000000000000020 /* CatKeyboardLockOverlayPresentations.swift in Sources */,
@@ -658,8 +654,8 @@
 					ENABLE_HARDENED_RUNTIME = NO;
 					ENABLE_PREVIEWS = YES;
 					GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "cat keyboard lock";
-				INFOPLIST_KEY_CFBundleName = "cat keyboard lock";
+				INFOPLIST_KEY_CFBundleDisplayName = "Cat Keyboard Lock";
+				INFOPLIST_KEY_CFBundleName = "Cat Keyboard Lock";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
@@ -691,8 +687,8 @@
 					ENABLE_HARDENED_RUNTIME = YES;
 					ENABLE_PREVIEWS = NO;
 					GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "cat keyboard lock";
-				INFOPLIST_KEY_CFBundleName = "cat keyboard lock";
+				INFOPLIST_KEY_CFBundleDisplayName = "Cat Keyboard Lock";
+				INFOPLIST_KEY_CFBundleName = "Cat Keyboard Lock";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
@@ -769,23 +765,18 @@
 		};
 /* End XCConfigurationList section */
 
+	/* Begin XCLocalSwiftPackageReference section */
+		A00D00000000000000000001 /* XCLocalSwiftPackageReference "../Kiki_mackit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../Kiki_mackit;
+		};
+		A00D00000000000000000003 /* XCLocalSwiftPackageReference "../KikiCommerceKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../KikiCommerceKit;
+		};
+	/* End XCLocalSwiftPackageReference section */
+
 	/* Begin XCRemoteSwiftPackageReference section */
-		A00D00000000000000000001 /* XCRemoteSwiftPackageReference "Kiki_mackit" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/Feng6611/Kiki_mackit.git";
-			requirement = {
-				kind = exactVersion;
-				version = 0.8.1;
-			};
-		};
-		A00D00000000000000000003 /* XCRemoteSwiftPackageReference "KikiCommerceKit" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/Feng6611/KikiCommerceKit.git";
-			requirement = {
-				kind = exactVersion;
-				version = 0.1.1;
-			};
-		};
 		A00D00000000000000000004 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/RevenueCat/purchases-ios-spm.git";
@@ -799,62 +790,62 @@
 /* Begin XCSwiftPackageProductDependency section */
 		A00B00000000000000000001 /* KikiSettings */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = A00D00000000000000000001 /* XCRemoteSwiftPackageReference "Kiki_mackit" */;
+			package = A00D00000000000000000001 /* XCLocalSwiftPackageReference "../Kiki_mackit" */;
 			productName = KikiSettings;
 		};
 		A00B00000000000000000002 /* KikiMenuBar */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = A00D00000000000000000001 /* XCRemoteSwiftPackageReference "Kiki_mackit" */;
+			package = A00D00000000000000000001 /* XCLocalSwiftPackageReference "../Kiki_mackit" */;
 			productName = KikiMenuBar;
 		};
 		A00B00000000000000000003 /* KikiPaywall */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = A00D00000000000000000001 /* XCRemoteSwiftPackageReference "Kiki_mackit" */;
+			package = A00D00000000000000000001 /* XCLocalSwiftPackageReference "../Kiki_mackit" */;
 			productName = KikiPaywall;
 		};
 		A00B00000000000000000005 /* KikiDesign */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = A00D00000000000000000001 /* XCRemoteSwiftPackageReference "Kiki_mackit" */;
+			package = A00D00000000000000000001 /* XCLocalSwiftPackageReference "../Kiki_mackit" */;
 			productName = KikiDesign;
 		};
 		A00B00000000000000000006 /* KikiWindow */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = A00D00000000000000000001 /* XCRemoteSwiftPackageReference "Kiki_mackit" */;
+			package = A00D00000000000000000001 /* XCLocalSwiftPackageReference "../Kiki_mackit" */;
 			productName = KikiWindow;
 		};
 		A00B00000000000000000007 /* KikiOverlay */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = A00D00000000000000000001 /* XCRemoteSwiftPackageReference "Kiki_mackit" */;
+			package = A00D00000000000000000001 /* XCLocalSwiftPackageReference "../Kiki_mackit" */;
 			productName = KikiOverlay;
 		};
 		A00B00000000000000000008 /* KikiTriggerCorner */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = A00D00000000000000000001 /* XCRemoteSwiftPackageReference "Kiki_mackit" */;
+			package = A00D00000000000000000001 /* XCLocalSwiftPackageReference "../Kiki_mackit" */;
 			productName = KikiTriggerCorner;
 		};
 		A00B00000000000000000009 /* KikiAuthorization */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = A00D00000000000000000001 /* XCRemoteSwiftPackageReference "Kiki_mackit" */;
+			package = A00D00000000000000000001 /* XCLocalSwiftPackageReference "../Kiki_mackit" */;
 			productName = KikiAuthorization;
 		};
 		A00B0000000000000000000E /* KikiOnboarding */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = A00D00000000000000000001 /* XCRemoteSwiftPackageReference "Kiki_mackit" */;
+			package = A00D00000000000000000001 /* XCLocalSwiftPackageReference "../Kiki_mackit" */;
 			productName = KikiOnboarding;
 		};
 		A00B0000000000000000000B /* KikiCommerceCore */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = A00D00000000000000000003 /* XCRemoteSwiftPackageReference "KikiCommerceKit" */;
+			package = A00D00000000000000000003 /* XCLocalSwiftPackageReference "../KikiCommerceKit" */;
 			productName = KikiCommerceCore;
 		};
 		A00B0000000000000000000C /* KikiRevenueCat */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = A00D00000000000000000003 /* XCRemoteSwiftPackageReference "KikiCommerceKit" */;
+			package = A00D00000000000000000003 /* XCLocalSwiftPackageReference "../KikiCommerceKit" */;
 			productName = KikiRevenueCat;
 		};
 		A00B0000000000000000000D /* KikiCommercePresentation */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = A00D00000000000000000003 /* XCRemoteSwiftPackageReference "KikiCommerceKit" */;
+			package = A00D00000000000000000003 /* XCLocalSwiftPackageReference "../KikiCommerceKit" */;
 			productName = KikiCommercePresentation;
 		};
 		A00B0000000000000000000F /* RevenueCat */ = {

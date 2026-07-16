@@ -29,11 +29,6 @@ struct CatKeyboardLockMenuActions {
 }
 
 enum CatKeyboardLockMenuModel {
-    private static let lockShortcut = KikiMenuShortcut(
-        key: "l",
-        modifiers: [.control, .option, .command]
-    )
-
     @MainActor
     static func items(
         config: CatKeyboardLockAppConfig,
@@ -47,10 +42,6 @@ enum CatKeyboardLockMenuModel {
             .status(title: lockState.menuStatusText(lockDurationInterval: lockSettings.lockDurationInterval)),
         ]
 
-        if lockState.isLocked {
-            items.append(.status(title: "Hold ⌃⌥⌘L for 1s to unlock"))
-        }
-
         items.append(.separator)
         items.append(lockAction(
             for: lockState,
@@ -59,11 +50,11 @@ enum CatKeyboardLockMenuModel {
             accessibilityTrusted: accessibilityTrusted,
             actions: actions
         ))
-        items.append(.settings(title: "Settings...", action: actions.openSettings))
+        items.append(.settings(title: "Settings…", action: actions.openSettings))
 
-        if !entitlement.isPro {
+        if !entitlement.isPro && entitlement.isAccessActive {
             items.append(.action(
-                title: "Upgrade to Pro...",
+                title: "Upgrade to Pro…",
                 isEnabled: true,
                 action: actions.openPaywall
             ))
@@ -115,7 +106,6 @@ enum CatKeyboardLockMenuModel {
 
         return .action(
             title: evaluation.menuLockTitle,
-            shortcut: lockShortcut,
             action: actions.requestLock
         )
     }

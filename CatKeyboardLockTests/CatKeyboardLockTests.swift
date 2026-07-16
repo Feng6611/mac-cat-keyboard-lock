@@ -21,8 +21,8 @@ final class CatKeyboardLockTests: XCTestCase {
         var expectedTitles = [
             "Ready to lock",
             "Lock Keyboard",
-            "Settings...",
-            "Upgrade to Pro...",
+            "Settings…",
+            "Upgrade to Pro…",
             "Quit Cat Keyboard Lock"
         ]
 #if DEBUG
@@ -33,10 +33,7 @@ final class CatKeyboardLockTests: XCTestCase {
         XCTAssertEqual(items.compactMap(\.title), expectedTitles)
         XCTAssertEqual(menuItem(titled: "Ready to lock", in: items)?.isEnabled, false)
         XCTAssertEqual(menuItem(titled: "Lock Keyboard", in: items)?.isEnabled, true)
-        XCTAssertEqual(
-            actionShortcut(titled: "Lock Keyboard", in: items),
-            KikiMenuShortcut(key: "l", modifiers: [.control, .option, .command])
-        )
+        XCTAssertNil(actionShortcut(titled: "Lock Keyboard", in: items))
     }
 
     func testMenuModelForLockedState() {
@@ -50,11 +47,8 @@ final class CatKeyboardLockTests: XCTestCase {
         )
 
         XCTAssertNotNil(menuItem(titled: "Unlock", in: items))
-        XCTAssertEqual(
-            actionShortcut(titled: "Unlock", in: items),
-            KikiMenuShortcut(key: "l", modifiers: [.control, .option, .command])
-        )
-        XCTAssertNil(menuItem(titled: "Upgrade to Pro...", in: items))
+        XCTAssertNil(actionShortcut(titled: "Unlock", in: items))
+        XCTAssertNil(menuItem(titled: "Upgrade to Pro…", in: items))
     }
 
     func testMenuModelRoutesNotStartedLockToPaywall() {
@@ -73,7 +67,7 @@ final class CatKeyboardLockTests: XCTestCase {
             )
         )
 
-        guard case .action(_, _, _, let action) = menuItem(titled: "Start Trial / Upgrade...", in: items) else {
+        guard case .action(_, _, _, let action) = menuItem(titled: "Start Free Trial…", in: items) else {
             XCTFail("Expected lock entry to route to paywall.")
             return
         }
@@ -98,7 +92,7 @@ final class CatKeyboardLockTests: XCTestCase {
             )
         )
 
-        guard case .action(_, _, _, let action) = menuItem(titled: "Upgrade to Lock...", in: unlockedItems) else {
+        guard case .action(_, _, _, let action) = menuItem(titled: "Upgrade to Lock…", in: unlockedItems) else {
             XCTFail("Expected expired lock entry to route to paywall.")
             return
         }
@@ -116,7 +110,7 @@ final class CatKeyboardLockTests: XCTestCase {
         )
 
         XCTAssertNotNil(menuItem(titled: "Unlock", in: lockedItems))
-        XCTAssertNil(menuItem(titled: "Upgrade to Lock...", in: lockedItems))
+        XCTAssertNil(menuItem(titled: "Upgrade to Lock…", in: lockedItems))
     }
 
     func testCoreEvaluationRoutesInactiveAccessToPaywall() {
@@ -129,7 +123,7 @@ final class CatKeyboardLockTests: XCTestCase {
             )
         )
 
-        XCTAssertEqual(evaluation.menuLockTitle, "Start Trial / Upgrade...")
+        XCTAssertEqual(evaluation.menuLockTitle, "Start Free Trial…")
         XCTAssertEqual(evaluation.lockRequestAction, .openPaywall)
         XCTAssertEqual(evaluation.statusText, "Trial not started")
         XCTAssertEqual(evaluation.permissionText, "Needs permission")
@@ -518,59 +512,15 @@ final class CatKeyboardLockTests: XCTestCase {
         XCTAssertEqual(triggerCount, 1)
     }
 
-    func testFallbackUnlockEventsStayObservedForClickOnlyLock() {
+    func testClickOnlyLockDoesNotObserveOrSuppressKeyboardEvents() {
         let policy = InputLockPolicy(
             lockKeyboard: false,
             lockMouseClicks: true
         )
 
-        XCTAssertTrue(policy.includes(.keyDown))
+        XCTAssertFalse(policy.eventTypes.contains(.keyDown))
         XCTAssertFalse(policy.shouldSuppress(.keyDown))
         XCTAssertTrue(policy.shouldSuppress(.leftMouseDown))
-    }
-
-    func testFallbackUnlockRequiresExactComboAndHold() {
-        var detector = UnlockGestureDetector(requiredHoldDuration: 1)
-
-        XCTAssertEqual(
-            detector.observe(
-                eventType: .keyDown,
-                keyCode: UnlockGestureDetector.unlockKeyCode,
-                flags: [.maskControl, .maskCommand],
-                timestamp: 0
-            ),
-            .none
-        )
-
-        XCTAssertEqual(
-            detector.observe(
-                eventType: .keyDown,
-                keyCode: UnlockGestureDetector.unlockKeyCode,
-                flags: [.maskControl, .maskAlternate, .maskCommand],
-                timestamp: 0
-            ),
-            .holding(token: 1, shouldScheduleTimer: true)
-        )
-
-        XCTAssertEqual(
-            detector.observe(
-                eventType: .keyDown,
-                keyCode: UnlockGestureDetector.unlockKeyCode,
-                flags: [.maskControl, .maskAlternate, .maskCommand],
-                timestamp: 0.9
-            ),
-            .holding(token: 1, shouldScheduleTimer: false)
-        )
-
-        XCTAssertEqual(
-            detector.observe(
-                eventType: .keyDown,
-                keyCode: UnlockGestureDetector.unlockKeyCode,
-                flags: [.maskControl, .maskAlternate, .maskCommand],
-                timestamp: 1.0
-            ),
-            .unlock
-        )
     }
 
     func testTimeoutUnlockStopsEventTap() {
@@ -579,7 +529,7 @@ final class CatKeyboardLockTests: XCTestCase {
         let controller = InputLockController(
             settings: settings,
             permissionClient: .allowed,
-            eventTapFactory: { _, _, _ in fakeTap }
+            eventTapFactory: { _, _ in fakeTap }
         )
 
         controller.lock(now: Date(timeIntervalSince1970: 0))
@@ -598,7 +548,7 @@ final class CatKeyboardLockTests: XCTestCase {
         let controller = InputLockController(
             settings: settings,
             permissionClient: .denied,
-            eventTapFactory: { _, _, _ in FakeInputLockEventTap() }
+            eventTapFactory: { _, _ in FakeInputLockEventTap() }
         )
 
         controller.refreshPermissions()
@@ -613,7 +563,7 @@ final class CatKeyboardLockTests: XCTestCase {
         let controller = InputLockController(
             settings: settings,
             permissionClient: .denied,
-            eventTapFactory: { _, _, _ in fakeTap }
+            eventTapFactory: { _, _ in fakeTap }
         )
 
         controller.lock(now: Date(timeIntervalSince1970: 0))
@@ -630,7 +580,7 @@ final class CatKeyboardLockTests: XCTestCase {
         let controller = InputLockController(
             settings: settings,
             permissionClient: .allowed,
-            eventTapFactory: { _, _, _ in fakeTap }
+            eventTapFactory: { _, _ in fakeTap }
         )
 
         controller.lock(now: Date(timeIntervalSince1970: 0))
@@ -646,7 +596,7 @@ final class CatKeyboardLockTests: XCTestCase {
         let controller = InputLockController(
             settings: settings,
             permissionClient: .allowed,
-            eventTapFactory: { _, _, _ in fakeTap }
+            eventTapFactory: { _, _ in fakeTap }
         )
 
         controller.lock(now: Date(timeIntervalSince1970: 0))
@@ -662,7 +612,7 @@ final class CatKeyboardLockTests: XCTestCase {
         let controller = InputLockController(
             settings: settings,
             permissionClient: .allowed,
-            eventTapFactory: { _, _, _ in FakeInputLockEventTap() }
+            eventTapFactory: { _, _ in FakeInputLockEventTap() }
         )
 
         controller.requestPermissions()
@@ -679,7 +629,7 @@ final class CatKeyboardLockTests: XCTestCase {
             presentPermissionHelp: {
                 didPresentPermissionHelp = true
             },
-            eventTapFactory: { _, _, _ in FakeInputLockEventTap() }
+            eventTapFactory: { _, _ in FakeInputLockEventTap() }
         )
 
         controller.requestPermissions()
@@ -943,7 +893,7 @@ final class CatKeyboardLockTests: XCTestCase {
         let locked = CatKeyboardLockOverlayPresentations.lockStarted()
 
         XCTAssertEqual(locked.title, "Keyboard locked")
-        XCTAssertEqual(locked.subtitle, "Hold ⌃⌥⌘L to unlock")
+        XCTAssertEqual(locked.subtitle, "Input returns when you unlock or the timer ends.")
         XCTAssertEqual(locked.systemImage, "lock.fill")
         XCTAssertEqual(locked.behavior, .persistent)
         XCTAssertEqual(locked.motion, .breathingWithEntryBurst)
@@ -959,10 +909,6 @@ final class CatKeyboardLockTests: XCTestCase {
     }
 
     func testOverlayPresentationsMapUnlockReasonsAndWarnings() {
-        XCTAssertEqual(
-            CatKeyboardLockOverlayPresentations.lockEnded(reason: .fallbackShortcut).title,
-            "Unlocked with shortcut"
-        )
         XCTAssertEqual(
             CatKeyboardLockOverlayPresentations.lockEnded(reason: .triggerCorner).title,
             "Unlocked from corner"

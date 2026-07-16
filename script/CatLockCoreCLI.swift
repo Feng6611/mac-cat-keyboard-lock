@@ -96,7 +96,7 @@ struct CatLockCoreCLI {
                     lockKeyboard: true,
                     lockMouseClicks: false
                 ),
-                expectedMenuLockTitle: "Upgrade to Lock...",
+                expectedMenuLockTitle: "Upgrade to Lock…",
                 expectedAction: .openPaywall,
                 expectedWarnings: ["Access is not active."]
             ),
@@ -108,7 +108,7 @@ struct CatLockCoreCLI {
                     lockKeyboard: true,
                     lockMouseClicks: false
                 ),
-                expectedMenuLockTitle: "Start Trial / Upgrade...",
+                expectedMenuLockTitle: "Start Free Trial…",
                 expectedAction: .openPaywall,
                 expectedWarnings: ["Access is not active."]
             ),

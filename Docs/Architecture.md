@@ -94,11 +94,11 @@ install event taps.
 `Platform/InputLock/` owns direct macOS input interception:
 
 - `InputLockController` coordinates permission checks, lock state, timeout, and
-  event tap installation/removal.
+  event tap installation/removal. Its onboarding practice entry point uses a
+  keyboard-only policy and a fixed 60-second timeout.
 - `InputLockEventTap` wraps Core Graphics event tap creation and teardown.
 - `LockSettings` stores user preferences and derives the Core Graphics event
   mask used while locked.
-- `UnlockGestureDetector` contains pure timing logic for the fallback long press.
 
 This layer may import AppKit, ApplicationServices, CoreGraphics, and focused
 Kiki platform modules for shared value types. It must not record input content
@@ -112,6 +112,9 @@ Trigger corner detection is delegated to `KikiTriggerCorner`:
   or input is already locked.
 - The trigger callback calls the existing lock/unlock flow and does not bypass
   `InputLockController`.
+- Onboarding temporarily disables the persistent trigger monitor while its own
+  monitor teaches the selected/default corner. It restores the prior setting on
+  skip and enables the corner after a completed lock-and-unlock practice.
 - The reusable package owns pointer polling, multi-display corner geometry,
   dwell/cooldown timing, and re-arm behavior.
 
@@ -167,9 +170,10 @@ types are limited to product plan metadata, pure entitlement snapshots used by
 lock/menu rules, configuration, onboarding migration, and copy. Existing
 `KikiPro*` names are migration aliases only; Cat source uses `KikiAccess*`.
 
-Cat resolves Kiki and Commerce from exact tagged HTTPS versions. The app and
-KikiCommerceKit must select compatible Kiki and RevenueCat versions so SwiftPM
-resolves one identity for each shared package.
+During coordinated development, Cat resolves Kiki and Commerce from adjacent
+local checkouts, and Commerce resolves that same local Kiki checkout. Release
+branches must switch all three repositories back to compatible exact tagged
+HTTPS versions so SwiftPM resolves one identity for each shared package.
 
 Cat also declares the same exact `purchases-ios-spm` version selected by
 KikiCommerceKit and links only the `RevenueCat` product for typed CustomerInfo
@@ -225,8 +229,9 @@ Accessibility, lock real input, make purchases, or restore purchases.
   for locked/unlocked mode feedback.
 - Pro gating blocks only new lock attempts. Existing locks keep their normal
   recovery paths even if a trial expires while locked.
-- Click suppression can interfere with menu bar interaction; the fallback combo
-  and selected timeout are always available.
+- Click suppression can interfere with menu bar interaction; the selected
+  timeout is always available, and an enabled trigger corner can still respond
+  to pointer movement.
 - Permission failures are surfaced as state, not hidden behind a lock-looking UI.
 
 ## Release Readiness

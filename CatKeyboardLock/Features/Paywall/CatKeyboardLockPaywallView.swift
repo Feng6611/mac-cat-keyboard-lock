@@ -66,15 +66,23 @@ struct CatKeyboardLockPaywallSheetView: View {
 
     private var paywallCopy: KikiAccessPaywallCopy {
         KikiAccessPaywallCopy(
-            title: "Unlock Pro forever",
+            title: "Choose Pro access",
             proSubtitle: "All features are unlocked.",
-            trialSubtitle: "Choose a plan or continue with your trial.",
-            expiredSubtitle: "Your trial has ended. Upgrade to keep using Pro.",
-            notStartedSubtitle: "Keep keyboard and click locking available when you need it.",
+            trialSubtitle: trialSubtitle,
+            expiredSubtitle: "Your trial has ended. Choose a lifetime purchase to keep using Pro.",
+            notStartedSubtitle: "Start a free 2-day trial or choose a lifetime purchase. The trial never renews or charges you.",
             features: config.features,
-            purchaseActionTitle: "Unlock Pro",
-            trialActionTitle: "Continue 2-day free trial"
+            purchaseActionTitle: "Buy Selected Plan",
+            trialActionTitle: "Start 2-Day Free Trial"
         )
+    }
+
+    private var trialSubtitle: String {
+        guard case .trial(.time(_, let expiresAt)) = accessManager.status else {
+            return "Your free trial is active. It never renews or charges you."
+        }
+
+        return "Your 2-day Pro trial ends \(expiresAt.formatted(date: .abbreviated, time: .shortened)). It never renews or charges you."
     }
 
     private var paywallLinks: [KikiAccessPaywallLink] {

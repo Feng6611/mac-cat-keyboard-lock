@@ -1,5 +1,16 @@
 # Issue Log
 
+## I-005 — Onboarding, recovery, and purchase copy audit
+
+Status: Resolved 2026-07-15
+
+Removed the shortcut implementation and made onboarding use a skippable,
+keyboard-only trigger-corner lock/unlock practice with a 60-second automatic
+release and no manual lock buttons. Trial terms now appear before setup, plan
+cards retain their plan names and selected accessibility state,
+purchase/restore/trial failures identify the operation, and menu/app naming uses
+consistent native macOS punctuation.
+
 ## I-001 — Commerce plan identity is still a fixed product enum
 
 Status: Resolved 2026-07-05

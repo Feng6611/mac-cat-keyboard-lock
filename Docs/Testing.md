@@ -13,9 +13,9 @@ that should not be automated on a developer machine.
 | F-002 | Lock / unlock action | User can lock and unlock input from the menu bar | Menu extra | Locked / unlocked | Core + App + Manual | J-002, J-003 |
 | F-003 | Accessibility gate | User is guided before input locking needs permission | Menu / Settings / onboarding | Allowed / denied | Core + Platform/UI | J-002 |
 | F-004 | Keyboard/click policy | User chooses which input types are blocked | Settings Lock | Keyboard / clicks on/off | Core + Platform | J-002, J-004 |
-| F-005 | Recovery unlock and timeout | User can regain input safely | Global shortcut / timeout | Active / recovered | Platform/Manual | J-003 |
+| F-005 | Recovery unlock and timeout | User can regain input safely | Menu / trigger corner / timeout | Active / recovered | Platform/Manual | J-003 |
 | F-006 | Trigger corner | User can lock from a configured corner | Settings System / screen corner | Enabled / disabled / dwell | Platform/Kiki | J-004 |
-| F-007 | Onboarding | New user reaches a useful first state without repeating onboarding after an upgrade | Onboarding | First run / completed / legacy completion / already Pro | UI/App | J-001 |
+| F-007 | Onboarding | New user can skip setup or practice trigger-corner lock and unlock with a 60-second safety release | Onboarding | First run / permission / waiting for corner / locked / timeout / unlocked / completed | UI/App | J-001 |
 | F-008 | Paywall and RevenueCat SDK | User can buy or restore either Apple lifetime unlock from the app-owned paywall | About status / onboarding sheet / paywall smoke | Loading / trial / paid / restore / cancel / error | UI/App/commerce | J-005 |
 | F-009 | About and account status | User sees identity, entitlement status, support, and debug state clearly | Settings About | Release / debug / lifetime | UI | J-005 |
 
@@ -23,9 +23,9 @@ that should not be automated on a developer machine.
 
 | Case ID | Journey | Covers | Boundary | Preconditions | Steps | Expected evidence | Cleanup |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| J-001 | First run and trial access | F-001, F-007 | UI/App/Core | Fresh, legacy-completed, already-Pro, offline/degraded, or reset onboarding state | Run lifecycle readiness and onboarding state tests, onboarding screenshot, and Core access cases | Automatic onboarding waits for ready access; degraded state does not auto-present; explicit smoke scene presents once; legacy completion migrates; Pro users skip | Reset onboarding/test state |
+| J-001 | First run and trial access | F-001, F-007 | UI/App/Core | Fresh, legacy-completed, already-Pro, offline/degraded, or reset onboarding state | Run lifecycle readiness and onboarding state tests, onboarding screenshot, and Core access cases | Setup can be deferred; the default corner advances lock/unlock without buttons; practice blocks only the keyboard; timeout restores input after 60 seconds; completed practice enables the corner | Unlock and reset onboarding/test state |
 | J-002 | Lock selected input | F-002, F-003, F-004 | Core + Platform/Manual | Known access and permission states | Run Core matrix; release smoke locks real input | JSON lock/openPermission action; real input is blocked only in manual smoke | Unlock and clear test override |
-| J-003 | Unlock and recover safely | F-002, F-005 | Platform/Manual | App is locked in release smoke | Use shortcut/menu/timeout recovery | Input returns and menu title changes to lock | Ensure unlocked state |
+| J-003 | Unlock and recover safely | F-002, F-005 | Platform/Manual | App is locked in release smoke | Use menu, configured trigger corner, and timeout recovery | Input returns and menu title changes to lock | Ensure unlocked state |
 | J-004 | Configure lock behavior | F-004, F-006 | UI + Platform | Debug build | Launch Settings smoke scenes, then let the app call `openSettings()` | Native Kiki Settings screenshots show controls; tests pass | Quit app |
 | J-005 | Review account, paywall, and support info | F-001, F-008, F-009 | UI/App/Manual | Trial/pro/error test states; Debug has a valid RevenueCat test key | Launch Settings About and the Kiki paywall through normal app actions; verify both non-consumable plan mappings and `$6.99`/`$10.99` fallback metadata; exercise CustomerInfo entitlement checks, purchase/restore callbacks, error/cancel handling; run sandbox purchase/restore manually | App-owned paywall exposes Lifetime and Support Developer Lifetime; either active product grants `cat keyboard lock Pro`; manager refresh follows CustomerInfo changes; failures remain visible | Reset test entitlement and sandbox purchases |
 
@@ -37,9 +37,9 @@ that should not be automated on a developer machine.
 | Lock / unlock menu action | Core + App | `evaluate` and `matrix` | Menu model and AppRouter action-matrix tests | No | Real lock/unlock |
 | Accessibility required before lock | Core + Platform | `matrix` denied case | Permission adapter tests | Permission copy screenshots | Real grant/deny |
 | Keyboard/click policy | Core + Platform | `matrix` policy cases | Event mask tests | Settings Lock screenshot | Real blocked input |
-| Fallback unlock combo and timeout | Platform | No | Timing/controller tests including event-tap fallback and disabled callbacks | No | Real recovery path |
+| Menu, trigger-corner, and timeout recovery | Platform | No | Controller timeout, trigger-corner, and event-tap disabled callback tests | No | Real recovery paths |
 | Trigger corner | Platform/Kiki | No | Geometry/monitor tests | Settings System screenshot | Real pointer dwell |
-| Onboarding | UI/App | No | Legacy completion migration, Pro skip, and automatic trial-start tests | Onboarding screenshot; final step presents paywall sheet | Close/skip/active-trial path |
+| Onboarding | UI/App | No | Trigger-corner practice, 60-second timeout, preference restoration, legacy migration, Pro skip, and trial tests | Onboarding screenshot; final step presents paywall sheet | Skip, corner lock/unlock, timeout, and active-trial path |
 | Paywall | UI/App/commerce | Access rules only | Product mapping, CustomerInfo entitlement checks, purchase/restore refresh, and error/cancel adapter tests | About-triggered Kiki paywall screenshot | Real sandbox purchase/restore |
 | About and account status | UI | No | App config tests | Settings About screenshot | Debug key and entitlement sanity check |
 

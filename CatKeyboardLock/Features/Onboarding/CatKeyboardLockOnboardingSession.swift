@@ -6,9 +6,8 @@ enum CatKeyboardLockOnboardingPhase: String, CaseIterable, Equatable {
     case welcome
     case permission
     case permissionSuccess
-    case lockWithCorner
-    case lockSuccess
-    case unlockWithCorner
+    case lockPractice
+    case unlockPractice
     case unlockSuccess
 
     var progressIndex: Int {
@@ -17,9 +16,9 @@ enum CatKeyboardLockOnboardingPhase: String, CaseIterable, Equatable {
             return 0
         case .permission, .permissionSuccess:
             return 1
-        case .lockWithCorner, .lockSuccess:
+        case .lockPractice, .unlockPractice:
             return 2
-        case .unlockWithCorner, .unlockSuccess:
+        case .unlockSuccess:
             return 3
         }
     }
@@ -36,6 +35,8 @@ final class CatKeyboardLockOnboardingSession: ObservableObject {
     private var cancellables: Set<AnyCancellable> = []
     private var didStart = false
     private var didComplete = false
+    private var didCompleteCornerPractice = false
+    private var previousTriggerCornerEnabled: Bool?
 
     private lazy var cornerMonitor = KikiTriggerCornerMonitor(
         configurationProvider: { [weak self] in
@@ -93,12 +94,9 @@ final class CatKeyboardLockOnboardingSession: ObservableObject {
         case .permission:
             requestAccessibility()
         case .permissionSuccess:
-            beginCornerTutorial()
-        case .lockWithCorner, .unlockWithCorner:
+            beginCornerPractice()
+        case .lockPractice, .unlockPractice:
             break
-        case .lockSuccess:
-            cornerMonitor.disarmUntilExit()
-            phase = .unlockWithCorner
         case .unlockSuccess:
             isPaywallPresented = true
         }
@@ -125,17 +123,29 @@ final class CatKeyboardLockOnboardingSession: ObservableObject {
             inputLockController.unlock(reason: .manual)
         }
 
-        // Completing the tutorial opts in the corner the user just practiced.
-        lockSettings.triggerCornerEnabled = true
+        if let previousTriggerCornerEnabled {
+            lockSettings.triggerCornerEnabled = previousTriggerCornerEnabled || didCompleteCornerPractice
+        }
+
         onFinish()
     }
 
-    private func beginCornerTutorial() {
-        // The tutorial owns its monitor. Keeping the persisted monitor disabled
-        // avoids two monitors responding to the same dwell while onboarding.
+    func handleCornerTrigger() {
+        switch phase {
+        case .lockPractice:
+            inputLockController.lockForOnboardingPractice()
+        case .unlockPractice:
+            inputLockController.unlock(reason: .triggerCorner)
+        default:
+            break
+        }
+    }
+
+    private func beginCornerPractice() {
+        previousTriggerCornerEnabled = lockSettings.triggerCornerEnabled
         lockSettings.triggerCornerEnabled = false
         cornerMonitor.start()
-        phase = .lockWithCorner
+        phase = .lockPractice
     }
 
     private func handlePermissionStatus(_ status: InputLockPermissionStatus) {
@@ -143,24 +153,13 @@ final class CatKeyboardLockOnboardingSession: ObservableObject {
         phase = .permissionSuccess
     }
 
-    func handleCornerTrigger() {
-        switch phase {
-        case .lockWithCorner:
-            inputLockController.lock()
-        case .unlockWithCorner:
-            inputLockController.unlock(reason: .triggerCorner)
-        default:
-            break
-        }
-    }
-
     private func handleLockState(_ state: InputLockState) {
         switch phase {
-        case .lockWithCorner where state.isLocked:
+        case .lockPractice where state.isLocked:
             cornerMonitor.disarmUntilExit()
-            phase = .lockSuccess
-        case .unlockWithCorner where !state.isLocked:
-            guard inputLockController.lastUnlockReason == .triggerCorner else { return }
+            phase = .unlockPractice
+        case .unlockPractice where !state.isLocked:
+            didCompleteCornerPractice = inputLockController.lastUnlockReason == .triggerCorner
             cornerMonitor.stop()
             phase = .unlockSuccess
         default:

@@ -101,7 +101,7 @@ enum CatKeyboardLockCore {
         }
 
         guard input.access.isActive else {
-            return input.access.canStartTrial ? "Start Trial / Upgrade..." : "Upgrade to Lock..."
+            return input.access.canStartTrial ? "Start Free Trial…" : "Upgrade to Lock…"
         }
 
         return hasPointerLock(input) ? "Lock Input" : "Lock Keyboard"

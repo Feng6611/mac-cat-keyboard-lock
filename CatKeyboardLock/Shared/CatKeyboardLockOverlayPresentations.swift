@@ -11,7 +11,7 @@ enum CatKeyboardLockOverlayPresentations {
     static func lockStarted() -> KikiScreenEdgeOverlayPresentation {
         .lockStarted(
             title: "Keyboard locked",
-            subtitle: "Hold ⌃⌥⌘L to unlock"
+            subtitle: "Input returns when you unlock or the timer ends."
         )
     }
 
@@ -51,8 +51,6 @@ enum CatKeyboardLockOverlayPresentations {
 
     static func unlockTitle(for reason: InputLockUnlockReason?) -> String {
         switch reason {
-        case .fallbackShortcut:
-            return "Unlocked with shortcut"
         case .triggerCorner:
             return "Unlocked from corner"
         case .timeout:

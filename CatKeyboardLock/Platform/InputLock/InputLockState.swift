@@ -58,7 +58,6 @@ enum InputLockState: Equatable {
 
 enum InputLockUnlockReason: Equatable {
     case manual
-    case fallbackShortcut
     case triggerCorner
     case timeout
     case tapDisabled
