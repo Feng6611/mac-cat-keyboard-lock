@@ -11,12 +11,18 @@ Copy `Config/LocalSecrets.xcconfig.example` to
 `Config/LocalSecrets.xcconfig` and set:
 
 ```xcconfig
-CATLOCK_REVENUECAT_API_KEY = test_or_appl_public_sdk_key
+CATLOCK_REVENUECAT_API_KEY = appl_your_public_sdk_key
 ```
 
-The local file is gitignored. Debug accepts RevenueCat Test Store keys. Release
-rejects missing, placeholder, and `test_` keys; use the Apple public SDK key
-from the production RevenueCat app before archiving.
+The local file is gitignored. This app does not use RevenueCat Test Store:
+Debug is an Apple Development-signed Apple Sandbox build and Release is the
+production configuration. Both use the same Apple public SDK key (`appl_`), and
+all App Store configurations reject `test_`.
+
+The Xcode guard runs after the app resources are produced and verifies the
+final built `Info.plist`, including the embedded key and production bundle ID.
+This prevents a valid local setting from silently producing an app with an
+empty or mismatched RevenueCat configuration.
 
 ## Dashboard and store configuration
 
@@ -37,8 +43,8 @@ from the production RevenueCat app before archiving.
 6. Configure App Store Connect agreements, tax/banking, product metadata,
    localization, availability, and review screenshots before release.
 
-RevenueCat Test Store products with the same identifiers are sufficient for
-local Debug validation. Real App Store prices and periods remain dashboard/store
+Apple Sandbox uses the real App Store Connect product identifiers and a Sandbox
+Apple Account. Real App Store prices and periods remain dashboard/store
 configuration and are never hardcoded as authoritative app data. The code's
 `$6.99` and `$10.99` values are fallback copy only.
 
@@ -76,6 +82,6 @@ xcodebuild test -project CatKeyboardLock.xcodeproj \
 ./script/catlock_ui.sh smoke
 ```
 
-Before release, replace the test key and manually verify offering load, both
-purchases, cancellation, restore with and without entitlement, trial and paid
-relaunch persistence, lifetime access, and offline behavior.
+Before release, keep the production `appl_` key and manually verify offering
+load, both purchases, cancellation, restore with and without entitlement, trial
+and paid relaunch persistence, lifetime access, and offline behavior.

@@ -54,6 +54,18 @@ mkdir -p "$DIST_DIR"
 /usr/bin/ditto "$BUILD_APP_BUNDLE" "$APP_BUNDLE"
 /usr/bin/xattr -dr com.apple.quarantine "$APP_BUNDLE" >/dev/null 2>&1 || true
 
+CONFIGURATION=Debug \
+TARGET_BUILD_DIR="$DIST_DIR" \
+INFOPLIST_PATH="$APP_NAME.app/Contents/Info.plist" \
+  "$ROOT_DIR/script/verify_revenuecat_api_key.sh"
+
+/usr/bin/codesign --verify --deep --strict --verbose=2 "$APP_BUNDLE"
+SIGNING_DETAILS="$(/usr/bin/codesign -dv --verbose=4 "$APP_BUNDLE" 2>&1)"
+if [[ "$SIGNING_DETAILS" != *"TeamIdentifier=Q3DZRXLGA3"* || "$SIGNING_DETAILS" == *"Signature=adhoc"* ]]; then
+  echo "error: Debug must be Apple Development-signed before Apple Sandbox launch." >&2
+  exit 1
+fi
+
 open_app() {
   if [[ ${#APP_ARGS[@]} -gt 0 ]]; then
     /usr/bin/open -n "$APP_BUNDLE" --args "${APP_ARGS[@]}"
