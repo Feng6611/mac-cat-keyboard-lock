@@ -6,8 +6,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/Feng6611/Kiki_mackit.git",
       "state" : {
-        "revision" : "f77fd067801020aa8fab4d5433e3b65b20a2c5ce",
-        "version" : "0.8.2"
+        "revision" : "a4f4ee12841e86300bccd28205133024680645e0",
+        "version" : "0.9.0"
       }
     },
     {
@@ -15,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/Feng6611/KikiCommerceKit.git",
       "state" : {
-        "revision" : "1556a72d17bb8a7ce5010c1f21c5e3f6521c6904",
-        "version" : "0.1.2"
+        "revision" : "60fbd26bb26be3f6aca978a5760aad4850544b48",
+        "version" : "0.2.0"
       }
     },
     {
