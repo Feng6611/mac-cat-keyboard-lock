@@ -1,3 +1,4 @@
+import AppKit
 import KikiCommerceCore
 import XCTest
 @testable import CatKeyboardLock
@@ -120,6 +121,37 @@ final class CatKeyboardLockAppArchitectureTests: XCTestCase {
         XCTAssertTrue(composition.inputLockController.state.isLocked)
         XCTAssertTrue(eventTap.didStart)
         XCTAssertEqual(commerceClient.configureCallCount, 1)
+    }
+
+    func testLifecycleRestartsTriggerCornerAfterSettingIsTurnedOffAndOn() {
+        let composition = makeComposition(permissionClient: .architectureAllowed)
+        composition.lifecycle.start()
+        defer { composition.lifecycle.stop() }
+
+        composition.lockSettings.triggerCornerEnabled = true
+        XCTAssertTrue(composition.lifecycle.isTriggerCornerMonitorRunning)
+
+        composition.lockSettings.triggerCornerEnabled = false
+        XCTAssertFalse(composition.lifecycle.isTriggerCornerMonitorRunning)
+
+        composition.lockSettings.triggerCornerEnabled = true
+        XCTAssertTrue(composition.lifecycle.isTriggerCornerMonitorRunning)
+    }
+
+    func testLifecycleRefreshesAccessibilityWhenAppBecomesActive() {
+        var isAccessibilityTrusted = false
+        let permissionClient = InputLockPermissionClient(
+            isAccessibilityTrusted: { _ in isAccessibilityTrusted }
+        )
+        let composition = makeComposition(permissionClient: permissionClient)
+        composition.lifecycle.start()
+        defer { composition.lifecycle.stop() }
+
+        XCTAssertFalse(composition.inputLockController.permissionStatus.accessibilityTrusted)
+        isAccessibilityTrusted = true
+        NotificationCenter.default.post(name: NSApplication.didBecomeActiveNotification, object: NSApp)
+
+        XCTAssertTrue(composition.inputLockController.permissionStatus.accessibilityTrusted)
     }
 
     func testRouterDrivesPermissionBranchFromActualPermissionState() {

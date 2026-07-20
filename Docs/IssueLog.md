@@ -1,5 +1,17 @@
 # Issue Log
 
+## I-006 — Trigger corner and Accessibility state can stay stale after re-enabling
+
+Status: Resolved 2026-07-21
+
+Lifecycle subscriptions previously reacted to `@Published` changes by reading
+the observable object's stored property again. Because `@Published` emits from
+`willSet`, the trigger-corner subscription saw the previous enabled value: the
+off transition kept the monitor running and the following on transition stopped
+it. Runtime updates now use the value delivered by each publisher. The app also
+refreshes Accessibility whenever it becomes active again so returning from
+System Settings updates the permission row and the next lock request.
+
 ## I-005 — Onboarding, recovery, and purchase copy audit
 
 Status: Resolved 2026-07-15

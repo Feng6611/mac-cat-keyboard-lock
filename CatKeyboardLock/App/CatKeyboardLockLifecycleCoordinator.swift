@@ -30,6 +30,10 @@ final class CatKeyboardLockLifecycleCoordinator {
     private var lastTriggerCornerLockState = false
     private var didStart = false
 
+    var isTriggerCornerMonitorRunning: Bool {
+        triggerCornerMonitor.isRunning
+    }
+
     init(
         definition: CatKeyboardLockAppDefinition,
         lockSettings: LockSettings,
@@ -129,7 +133,13 @@ final class CatKeyboardLockLifecycleCoordinator {
             .sink { [weak self] state in
                 self?.updateStatusItem(for: state)
                 self?.showEdgeHighlightIfNeeded(for: state)
-                self?.updateTriggerCornerMonitor()
+                self?.updateTriggerCornerMonitor(isLocked: state.isLocked)
+            }
+            .store(in: &cancellables)
+
+        NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)
+            .sink { [weak self] _ in
+                self?.inputLockController.refreshPermissions()
             }
             .store(in: &cancellables)
 
@@ -144,23 +154,33 @@ final class CatKeyboardLockLifecycleCoordinator {
 
         lockSettings.$triggerCornerEnabled
             .dropFirst()
-            .sink { [weak self] _ in self?.updateTriggerCornerMonitor() }
+            .sink { [weak self] isEnabled in
+                self?.updateTriggerCornerMonitor(triggerCornerEnabled: isEnabled)
+            }
             .store(in: &cancellables)
 
         accessManager.$status
             .dropFirst()
-            .sink { [weak self] _ in self?.updateTriggerCornerMonitor() }
+            .sink { [weak self] status in
+                self?.updateTriggerCornerMonitor(accessIsActive: status.isActive)
+            }
             .store(in: &cancellables)
     }
 
-    private func updateTriggerCornerMonitor() {
-        let isLocked = inputLockController.state.isLocked
+    private func updateTriggerCornerMonitor(
+        triggerCornerEnabled: Bool? = nil,
+        accessIsActive: Bool? = nil,
+        isLocked: Bool? = nil
+    ) {
+        let triggerCornerEnabled = triggerCornerEnabled ?? lockSettings.triggerCornerEnabled
+        let accessIsActive = accessIsActive ?? accessManager.status.isActive
+        let isLocked = isLocked ?? inputLockController.state.isLocked
         if isLocked != lastTriggerCornerLockState {
             triggerCornerMonitor.disarmUntilExit()
             lastTriggerCornerLockState = isLocked
         }
 
-        if lockSettings.triggerCornerEnabled && (accessManager.status.isActive || isLocked) {
+        if triggerCornerEnabled && (accessIsActive || isLocked) {
             triggerCornerMonitor.start()
         } else {
             triggerCornerMonitor.stop()
