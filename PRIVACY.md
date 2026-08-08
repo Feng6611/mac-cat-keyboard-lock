@@ -20,15 +20,14 @@ setting is enabled; the position is not persisted.
 ## Local settings
 
 Settings such as lock duration, selected input types, trigger corner, feedback
-level, and trial state are stored locally in macOS preferences. No clipboard
+level is stored locally in macOS preferences. No clipboard
 history or input log is written to disk.
 
-## Purchases
+## Support
 
-Purchases are handled by Apple and validated through RevenueCat. Those services
-may process the Apple account, device, transaction, and entitlement metadata
-needed to complete a purchase or restore. Cat Lock does not receive payment
-card details and does not use purchase data for advertising or analytics.
+Cat Lock has no in-app purchases or account system. If you choose to donate,
+the external Buy Me a Coffee website handles that interaction under its own
+privacy policy. Cat Lock does not receive payment details.
 
 ## Analytics and support
 

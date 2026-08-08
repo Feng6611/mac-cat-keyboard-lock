@@ -27,7 +27,6 @@ enum CatKeyboardLockOnboardingPhase: String, CaseIterable, Equatable {
 @MainActor
 final class CatKeyboardLockOnboardingSession: ObservableObject {
     @Published private(set) var phase: CatKeyboardLockOnboardingPhase = .welcome
-    @Published var isPaywallPresented = false
 
     private let lockSettings: LockSettings
     private let inputLockController: InputLockController
@@ -98,7 +97,7 @@ final class CatKeyboardLockOnboardingSession: ObservableObject {
         case .lockPractice, .unlockPractice:
             break
         case .unlockSuccess:
-            isPaywallPresented = true
+            complete()
         }
     }
 
@@ -115,7 +114,6 @@ final class CatKeyboardLockOnboardingSession: ObservableObject {
     func complete() {
         guard !didComplete else { return }
         didComplete = true
-        isPaywallPresented = false
         cornerMonitor.stop()
         cancellables.removeAll()
 

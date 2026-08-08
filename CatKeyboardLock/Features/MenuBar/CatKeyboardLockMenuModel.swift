@@ -1,29 +1,22 @@
 import AppKit
-import KikiCommerceCore
 import KikiMenuBar
 
 @MainActor
 struct CatKeyboardLockMenuActions {
     let requestLock: () -> Void
     let openSettings: () -> Void
-    let openPaywall: () -> Void
-    let toggleDebugProAccess: () -> Void
-    let clearDebugProAccessOverride: () -> Void
+    let openTipPage: () -> Void
     let quit: () -> Void
 
     init(
         requestLock: @escaping () -> Void,
         openSettings: @escaping () -> Void,
-        openPaywall: @escaping () -> Void,
-        toggleDebugProAccess: @escaping () -> Void = {},
-        clearDebugProAccessOverride: @escaping () -> Void = {},
+        openTipPage: @escaping () -> Void = {},
         quit: @escaping () -> Void
     ) {
         self.requestLock = requestLock
         self.openSettings = openSettings
-        self.openPaywall = openPaywall
-        self.toggleDebugProAccess = toggleDebugProAccess
-        self.clearDebugProAccessOverride = clearDebugProAccessOverride
+        self.openTipPage = openTipPage
         self.quit = quit
     }
 }
@@ -34,8 +27,8 @@ enum CatKeyboardLockMenuModel {
         config: CatKeyboardLockAppConfig,
         lockState: InputLockState,
         lockSettings: LockSettings,
-        entitlement: CatKeyboardLockEntitlementSnapshot,
         accessibilityTrusted: Bool,
+        showsTipEntry: Bool = false,
         actions: CatKeyboardLockMenuActions
     ) -> [KikiMenuItem] {
         var items: [KikiMenuItem] = [
@@ -46,35 +39,18 @@ enum CatKeyboardLockMenuModel {
         items.append(lockAction(
             for: lockState,
             lockSettings: lockSettings,
-            entitlement: entitlement,
             accessibilityTrusted: accessibilityTrusted,
             actions: actions
         ))
         items.append(.settings(title: "Settings…", action: actions.openSettings))
 
-        if !entitlement.isPro && entitlement.isAccessActive {
+        // Quiet, permanent, and only after the app has proven itself.
+        if showsTipEntry {
             items.append(.action(
-                title: "Upgrade to Pro…",
-                isEnabled: true,
-                action: actions.openPaywall
+                title: "Buy the Cat a Can…",
+                action: actions.openTipPage
             ))
         }
-
-#if DEBUG
-        items.append(.separator)
-        items.append(.toggle(
-            title: "Test Paid Access",
-            isOn: entitlement.isPro,
-            isEnabled: true,
-            action: actions.toggleDebugProAccess
-        ))
-
-        items.append(.action(
-            title: "Clear Test Override",
-            isEnabled: true,
-            action: actions.clearDebugProAccessOverride
-        ))
-#endif
 
         items.append(contentsOf: [
             .separator,
@@ -91,12 +67,10 @@ enum CatKeyboardLockMenuModel {
     private static func lockAction(
         for state: InputLockState,
         lockSettings: LockSettings,
-        entitlement: CatKeyboardLockEntitlementSnapshot,
         accessibilityTrusted: Bool,
         actions: CatKeyboardLockMenuActions
     ) -> KikiMenuItem {
         let coreInput = CatKeyboardLockCoreInput(
-            access: CatKeyboardLockCoreAccess(status: entitlement.status),
             lockState: CatKeyboardLockCoreLockState(state),
             accessibilityTrusted: accessibilityTrusted,
             lockKeyboard: lockSettings.lockKeyboard,

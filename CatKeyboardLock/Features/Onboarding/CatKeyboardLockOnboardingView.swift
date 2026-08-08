@@ -1,6 +1,5 @@
 import AppKit
 import KikiAuthorization
-import KikiCommerceCore
 import KikiDesign
 import KikiOnboarding
 import KikiTriggerCorner
@@ -12,7 +11,6 @@ enum CatKeyboardLockOnboardingFlow {
     @MainActor
     static func makeCoordinator(
         config: CatKeyboardLockAppConfig,
-        accessManager: KikiAccessManager,
         onboardingState: CatKeyboardLockOnboardingState,
         lockSettings: LockSettings,
         inputLockController: InputLockController,
@@ -22,7 +20,6 @@ enum CatKeyboardLockOnboardingFlow {
             AnyView(
                 CatKeyboardLockOnboardingFlowView(
                     config: config,
-                    accessManager: accessManager,
                     lockSettings: lockSettings,
                     inputLockController: inputLockController,
                     onFinish: navigation.finish
@@ -51,7 +48,6 @@ enum CatKeyboardLockOnboardingFlow {
 
 private struct CatKeyboardLockOnboardingFlowView: View {
     let config: CatKeyboardLockAppConfig
-    @ObservedObject var accessManager: KikiAccessManager
     @ObservedObject var inputLockController: InputLockController
     @StateObject private var session: CatKeyboardLockOnboardingSession
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -60,13 +56,11 @@ private struct CatKeyboardLockOnboardingFlowView: View {
 
     init(
         config: CatKeyboardLockAppConfig,
-        accessManager: KikiAccessManager,
         lockSettings: LockSettings,
         inputLockController: InputLockController,
         onFinish: @escaping @MainActor () -> Void
     ) {
         self.config = config
-        self.accessManager = accessManager
         self.inputLockController = inputLockController
         _session = StateObject(
             wrappedValue: CatKeyboardLockOnboardingSession(
@@ -92,17 +86,6 @@ private struct CatKeyboardLockOnboardingFlowView: View {
             NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)
         ) { _ in
             session.refreshAccessibility()
-        }
-        .sheet(
-            isPresented: $session.isPaywallPresented,
-            onDismiss: session.complete
-        ) {
-            CatKeyboardLockPaywallSheetView(
-                config: config,
-                accessManager: accessManager,
-                context: .onboarding,
-                onFinish: session.complete
-            )
         }
     }
 
@@ -149,7 +132,7 @@ private struct CatKeyboardLockOnboardingFlowView: View {
         case .lockPractice, .unlockPractice:
             return nil
         case .unlockSuccess:
-            return KikiOnboardingAction(title: "View Pro Options", action: session.advance)
+            return KikiOnboardingAction(title: "Finish Setup", action: session.advance)
         }
     }
 
@@ -172,7 +155,16 @@ private struct CatKeyboardLockOnboardingFlowView: View {
         case .unlockPractice:
             triggerCornerGuide(isUnlock: true)
         case .unlockSuccess:
-            CatKeyboardLockCelebrationMark(tint: tint, title: "Keyboard restored")
+            VStack(spacing: 14) {
+                CatKeyboardLockCelebrationMark(tint: tint, title: "Keyboard restored")
+
+                // The one moment the app has demonstrably earned the ask.
+                Button("Cat Lock is free forever — buy the cat a can") {
+                    CatKeyboardLockSupportLinks.openTipPage(config)
+                }
+                .buttonStyle(.link)
+                .font(.callout)
+            }
         }
     }
 
@@ -271,7 +263,7 @@ private extension CatKeyboardLockOnboardingPhase {
     var subtitle: String {
         switch self {
         case .welcome:
-            return "Cat Keyboard Lock blocks accidental typing and can optionally block clicks. Your 2-day Pro trial starts automatically and never renews or charges you."
+            return "Cat Keyboard Lock blocks accidental typing and can optionally block clicks. Everything is free to use, with no subscription or purchase required."
         case .permission:
             return "macOS requires this permission before the app can block keyboard input."
         case .permissionSuccess:

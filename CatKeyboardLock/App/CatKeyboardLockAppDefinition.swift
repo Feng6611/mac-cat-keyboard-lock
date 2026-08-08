@@ -1,11 +1,7 @@
 import Foundation
-import KikiCommerceCore
-import KikiRevenueCat
 
 struct CatKeyboardLockAppDefinition {
     let config: CatKeyboardLockAppConfig
-    let accessConfiguration: KikiAccessConfiguration
-    let revenueCatConfiguration: RevenueCatConfiguration
     let launchOptions: CatKeyboardLockLaunchOptions
 
     let settingsAutosaveName: String
@@ -16,8 +12,6 @@ struct CatKeyboardLockAppDefinition {
     ) -> Self {
         Self(
             config: .default,
-            accessConfiguration: CatKeyboardLockRevenueCatConfiguration.accessConfiguration,
-            revenueCatConfiguration: CatKeyboardLockRevenueCatConfiguration.revenueCatConfiguration,
             launchOptions: .current(arguments: arguments),
             settingsAutosaveName: "CatKeyboardLock.SettingsWindow",
             statusItemAutosaveName: "CatKeyboardLock.StatusItem"

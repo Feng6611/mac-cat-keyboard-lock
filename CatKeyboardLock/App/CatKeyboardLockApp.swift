@@ -12,9 +12,8 @@ struct CatKeyboardLockApp: App {
                 config: composition.definition.config,
                 lockSettings: composition.lockSettings,
                 inputLockController: composition.inputLockController,
-                accessManager: composition.accessManager,
+                supportState: composition.supportState,
                 settingsCoordinator: composition.settingsCoordinator,
-                route: composition.settingsRoute,
                 onTriggerOnboarding: composition.router.triggerOnboarding
             )
         }
@@ -37,7 +36,6 @@ final class CatKeyboardLockAppDelegate: NSObject, NSApplicationDelegate {
 enum CatKeyboardLockLaunchScene: Equatable {
     case onboarding
     case settings
-    case paywall
 }
 
 struct CatKeyboardLockLaunchOptions: Equatable {
@@ -55,8 +53,6 @@ struct CatKeyboardLockLaunchOptions: Equatable {
             switch argument {
             case "--ui-smoke-onboarding":
                 scene = .onboarding
-            case "--ui-smoke-paywall":
-                scene = .paywall
             case "--ui-smoke-settings":
                 scene = .settings
                 if index + 1 < arguments.count,

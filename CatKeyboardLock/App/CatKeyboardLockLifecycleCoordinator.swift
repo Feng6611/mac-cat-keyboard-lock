@@ -1,6 +1,5 @@
 import AppKit
 import Combine
-import KikiCommerceCore
 import KikiMenuBar
 import KikiOverlay
 import KikiTriggerCorner
@@ -10,7 +9,7 @@ final class CatKeyboardLockLifecycleCoordinator {
     private let definition: CatKeyboardLockAppDefinition
     private let lockSettings: LockSettings
     private let inputLockController: InputLockController
-    private let accessManager: KikiAccessManager
+    private let supportState: CatKeyboardLockSupportState
     private let router: CatKeyboardLockAppRouter
 
     private lazy var screenEdgeOverlayController = KikiScreenEdgeOverlayController(
@@ -28,6 +27,7 @@ final class CatKeyboardLockLifecycleCoordinator {
     private var cancellables: Set<AnyCancellable> = []
     private var lastObservedLockState: InputLockState?
     private var lastTriggerCornerLockState = false
+    private var lastSupportCountedLockState = false
     private var didStart = false
 
     var isTriggerCornerMonitorRunning: Bool {
@@ -38,13 +38,13 @@ final class CatKeyboardLockLifecycleCoordinator {
         definition: CatKeyboardLockAppDefinition,
         lockSettings: LockSettings,
         inputLockController: InputLockController,
-        accessManager: KikiAccessManager,
+        supportState: CatKeyboardLockSupportState,
         router: CatKeyboardLockAppRouter
     ) {
         self.definition = definition
         self.lockSettings = lockSettings
         self.inputLockController = inputLockController
-        self.accessManager = accessManager
+        self.supportState = supportState
         self.router = router
     }
 
@@ -88,10 +88,8 @@ final class CatKeyboardLockLifecycleCoordinator {
 
         Task { @MainActor [weak self] in
             guard let self else { return }
-            await self.accessManager.refresh()
-            self.updateTriggerCornerMonitor()
             if self.definition.launchOptions.scene == nil {
-                self.router.showAutomaticOnboardingIfAllowed()
+                self.router.showOnboardingIfNeeded()
             }
         }
     }
@@ -102,26 +100,14 @@ final class CatKeyboardLockLifecycleCoordinator {
             config: definition.config,
             lockState: inputLockController.state,
             lockSettings: lockSettings,
-            entitlement: CatKeyboardLockEntitlementSnapshot(status: accessManager.status),
             accessibilityTrusted: inputLockController.permissionStatus.accessibilityTrusted,
+            showsTipEntry: supportState.showsMenuEntry,
             actions: CatKeyboardLockMenuActions(
                 requestLock: { [weak self] in self?.router.requestLockAction() },
                 openSettings: { [weak self] in self?.router.openSettings() },
-                openPaywall: { [weak self] in self?.router.openPaywall() },
-                toggleDebugProAccess: { [weak self] in
-#if DEBUG
+                openTipPage: { [weak self] in
                     guard let self else { return }
-                    if self.accessManager.debugProAccessOverride == .pro {
-                        self.accessManager.clearDebugProAccessOverride()
-                    } else {
-                        self.accessManager.setDebugProAccessOverride(.pro)
-                    }
-#endif
-                },
-                clearDebugProAccessOverride: { [weak self] in
-#if DEBUG
-                    self?.accessManager.clearDebugProAccessOverride()
-#endif
+                    CatKeyboardLockSupportLinks.openTipPage(self.definition.config)
                 },
                 quit: { [weak self] in self?.router.quit() }
             )
@@ -134,6 +120,7 @@ final class CatKeyboardLockLifecycleCoordinator {
                 self?.updateStatusItem(for: state)
                 self?.showEdgeHighlightIfNeeded(for: state)
                 self?.updateTriggerCornerMonitor(isLocked: state.isLocked)
+                self?.recordLockForSupport(state)
             }
             .store(in: &cancellables)
 
@@ -158,33 +145,31 @@ final class CatKeyboardLockLifecycleCoordinator {
                 self?.updateTriggerCornerMonitor(triggerCornerEnabled: isEnabled)
             }
             .store(in: &cancellables)
-
-        accessManager.$status
-            .dropFirst()
-            .sink { [weak self] status in
-                self?.updateTriggerCornerMonitor(accessIsActive: status.isActive)
-            }
-            .store(in: &cancellables)
     }
 
     private func updateTriggerCornerMonitor(
         triggerCornerEnabled: Bool? = nil,
-        accessIsActive: Bool? = nil,
         isLocked: Bool? = nil
     ) {
         let triggerCornerEnabled = triggerCornerEnabled ?? lockSettings.triggerCornerEnabled
-        let accessIsActive = accessIsActive ?? accessManager.status.isActive
         let isLocked = isLocked ?? inputLockController.state.isLocked
         if isLocked != lastTriggerCornerLockState {
             triggerCornerMonitor.disarmUntilExit()
             lastTriggerCornerLockState = isLocked
         }
 
-        if triggerCornerEnabled && (accessIsActive || isLocked) {
+        if triggerCornerEnabled {
             triggerCornerMonitor.start()
         } else {
             triggerCornerMonitor.stop()
         }
+    }
+
+    private func recordLockForSupport(_ state: InputLockState) {
+        let isLocked = state.isLocked
+        defer { lastSupportCountedLockState = isLocked }
+        guard isLocked, !lastSupportCountedLockState else { return }
+        supportState.recordLock()
     }
 
     private func updateOverlayStyle(showPreview: Bool) {

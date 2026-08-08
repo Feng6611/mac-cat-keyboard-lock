@@ -11,6 +11,9 @@ struct CatKeyboardLockAppConfig: Equatable {
     let privacyURL: String
     let repositoryURL: String
     let repositoryDisplayName: String
+    /// Optional developer tip jar. The query keeps the source attributable
+    /// because every kkuk app points at the same page.
+    let tipURL: String
     let contactEmailAddress: String
     let contactEmailURL: String
     let features: [String]
@@ -26,6 +29,7 @@ struct CatKeyboardLockAppConfig: Equatable {
         privacyURL: "https://github.com/Feng6611/mac-cat-keyboard-lock/blob/main/PRIVACY.md",
         repositoryURL: "https://github.com/Feng6611/mac-cat-keyboard-lock",
         repositoryDisplayName: "Feng6611/mac-cat-keyboard-lock",
+        tipURL: "https://buymeacoffee.com/kkuk?utm_source=catlock-app",
         contactEmailAddress: "fchen6611@gmail.com",
         contactEmailURL: "mailto:fchen6611@gmail.com",
         features: [

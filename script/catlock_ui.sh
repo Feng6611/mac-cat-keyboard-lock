@@ -14,7 +14,6 @@ usage:
   script/catlock_ui.sh settings-lock
   script/catlock_ui.sh settings-system
   script/catlock_ui.sh settings-about
-  script/catlock_ui.sh paywall
   script/catlock_ui.sh smoke
 
 The command builds the app, opens the requested UI scene, and captures the
@@ -140,11 +139,6 @@ run_single_scene() {
         -CatKeyboardLock.Onboarding.v1 YES \
         --ui-smoke-settings about
       ;;
-    paywall)
-      run_scene "$scene" "About" "$SCREENSHOT_DIR/paywall.png" \
-        -CatKeyboardLock.Onboarding.v1 YES \
-        --ui-smoke-paywall
-      ;;
     *)
       usage
       exit 2
@@ -166,14 +160,11 @@ run_smoke() {
   run_scene settings-about "About" "$SCREENSHOT_DIR/settings-about.png" \
     -CatKeyboardLock.Onboarding.v1 YES \
     --ui-smoke-settings about
-  run_scene paywall "About" "$SCREENSHOT_DIR/paywall.png" \
-    -CatKeyboardLock.Onboarding.v1 YES \
-    --ui-smoke-paywall
 }
 
 command="${1:-}"
 case "$command" in
-  onboarding|settings-lock|settings-system|settings-about|paywall)
+  onboarding|settings-lock|settings-system|settings-about)
     run_single_scene "$command"
     ;;
   smoke)

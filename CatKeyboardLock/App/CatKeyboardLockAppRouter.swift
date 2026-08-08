@@ -1,5 +1,4 @@
 import AppKit
-import KikiCommerceCore
 import KikiOnboarding
 import KikiSettings
 
@@ -8,9 +7,7 @@ final class CatKeyboardLockAppRouter {
     private(set) var lastPerformedLockAction: CatKeyboardLockCoreAction?
     private let lockSettings: LockSettings
     private let inputLockController: InputLockController
-    private let accessManager: KikiAccessManager
     private let onboardingState: CatKeyboardLockOnboardingState
-    private let settingsRoute: CatKeyboardLockSettingsRouteModel
     private let settingsCoordinator: KikiSettingsCoordinator<CatKeyboardLockSettingsTab>
     private let onboardingCoordinator: KikiOnboardingCoordinator
     private let quitApplication: () -> Void
@@ -18,18 +15,14 @@ final class CatKeyboardLockAppRouter {
     init(
         lockSettings: LockSettings,
         inputLockController: InputLockController,
-        accessManager: KikiAccessManager,
         onboardingState: CatKeyboardLockOnboardingState,
-        settingsRoute: CatKeyboardLockSettingsRouteModel,
         settingsCoordinator: KikiSettingsCoordinator<CatKeyboardLockSettingsTab>,
         onboardingCoordinator: KikiOnboardingCoordinator,
         quitApplication: (() -> Void)? = nil
     ) {
         self.lockSettings = lockSettings
         self.inputLockController = inputLockController
-        self.accessManager = accessManager
         self.onboardingState = onboardingState
-        self.settingsRoute = settingsRoute
         self.settingsCoordinator = settingsCoordinator
         self.onboardingCoordinator = onboardingCoordinator
         self.quitApplication = quitApplication ?? { NSApp.terminate(nil) }
@@ -38,7 +31,6 @@ final class CatKeyboardLockAppRouter {
     var lockEvaluation: CatKeyboardLockCoreEvaluation {
         CatKeyboardLockCore.evaluate(
             CatKeyboardLockCoreInput(
-                access: CatKeyboardLockCoreAccess(status: accessManager.status),
                 lockState: CatKeyboardLockCoreLockState(inputLockController.state),
                 accessibilityTrusted: inputLockController.permissionStatus.accessibilityTrusted,
                 lockKeyboard: lockSettings.lockKeyboard,
@@ -60,23 +52,13 @@ final class CatKeyboardLockAppRouter {
     }
 
     func openSettings(
-        initialTab: CatKeyboardLockInitialSettingsTab? = nil,
-        presentsPaywall: Bool = false
+        initialTab: CatKeyboardLockInitialSettingsTab? = nil
     ) {
         if let initialTab {
             settingsCoordinator.select(initialTab.settingsTab)
         }
 
-        if presentsPaywall {
-            settingsCoordinator.select(.about)
-            settingsRoute.isPaywallSheetPresented = true
-        }
-
         settingsCoordinator.open()
-    }
-
-    func openPaywall() {
-        openSettings(initialTab: .about, presentsPaywall: true)
     }
 
     func presentLaunchScene(_ scene: CatKeyboardLockLaunchScene, settingsTab: CatKeyboardLockInitialSettingsTab?) {
@@ -85,16 +67,15 @@ final class CatKeyboardLockAppRouter {
             onboardingCoordinator.start()
         case .settings:
             openSettings(initialTab: settingsTab)
-        case .paywall:
-            openPaywall()
         }
     }
 
-    func showAutomaticOnboardingIfAllowed() {
-        guard accessManager.readiness.allowsAutomaticPresentation else {
+    func showOnboardingIfNeeded() {
+        guard onboardingState.shouldShow() else {
             return
         }
-        showOnboardingIfNeeded()
+
+        onboardingCoordinator.start()
     }
 
     func triggerOnboarding() {
@@ -114,46 +95,10 @@ final class CatKeyboardLockAppRouter {
             inputLockController.lock()
         case .unlock:
             inputLockController.unlock(reason: .manual)
-        case .openPaywall:
-            openPaywall()
         case .openPermission:
             inputLockController.requestPermissions()
         case .chooseInput:
             openSettings(initialTab: .lock)
-        }
-    }
-
-    private func showOnboardingIfNeeded() {
-        guard onboardingState.shouldShow(
-            isPro: accessManager.status.isPro,
-            hasAccessOverride: hasDebugAccessOverride
-        ) else {
-            return
-        }
-
-        onboardingCoordinator.start()
-    }
-
-    private var hasDebugAccessOverride: Bool {
-#if DEBUG
-        accessManager.debugProAccessOverride != nil
-#else
-        false
-#endif
-    }
-}
-
-extension CatKeyboardLockCoreAccess {
-    init(status: KikiAccessState) {
-        switch status {
-        case .notStarted:
-            self = .notStarted
-        case .trial:
-            self = .trial
-        case .expired:
-            self = .expired
-        case .pro:
-            self = .pro
         }
     }
 }

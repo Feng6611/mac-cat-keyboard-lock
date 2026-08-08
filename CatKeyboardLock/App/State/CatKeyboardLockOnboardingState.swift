@@ -17,8 +17,8 @@ final class CatKeyboardLockOnboardingState {
 
     var hasCompleted: Bool { store.isCompleted(forKey: Self.completionKey) }
 
-    func shouldShow(isPro: Bool, hasAccessOverride: Bool = false) -> Bool {
-        !hasCompleted && !isPro && !hasAccessOverride
+    func shouldShow() -> Bool {
+        !hasCompleted
     }
 
     func markCompleted() { store.markCompleted(forKey: Self.completionKey) }

@@ -6,7 +6,5 @@
 	<string>Cat Keyboard Lock</string>
 	<key>CFBundleName</key>
 	<string>Cat Keyboard Lock</string>
-	<key>CatKeyboardLockRevenueCatAPIKey</key>
-	<string>$(CATLOCK_REVENUECAT_API_KEY)</string>
 </dict>
 </plist>

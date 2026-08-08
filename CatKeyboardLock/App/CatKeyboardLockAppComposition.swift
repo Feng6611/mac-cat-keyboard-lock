@@ -1,6 +1,5 @@
 import CoreGraphics
 import Foundation
-import KikiCommerceCore
 import KikiOnboarding
 import KikiSettings
 
@@ -9,9 +8,8 @@ final class CatKeyboardLockAppComposition {
     let definition: CatKeyboardLockAppDefinition
     let lockSettings: LockSettings
     let inputLockController: InputLockController
-    let accessManager: KikiAccessManager
     let onboardingState: CatKeyboardLockOnboardingState
-    let settingsRoute: CatKeyboardLockSettingsRouteModel
+    let supportState: CatKeyboardLockSupportState
     let settingsCoordinator: KikiSettingsCoordinator<CatKeyboardLockSettingsTab>
     let onboardingCoordinator: KikiOnboardingCoordinator
     let router: CatKeyboardLockAppRouter
@@ -20,7 +18,6 @@ final class CatKeyboardLockAppComposition {
     init(
         definition: CatKeyboardLockAppDefinition = .live(),
         defaults: UserDefaults = .standard,
-        commerceClient: (any CommerceClient)? = nil,
         permissionClient: InputLockPermissionClient = .live,
         presentPermissionHelp: (@MainActor () -> Void)? = nil,
         eventTapFactory: InputLockController.EventTapFactory? = nil
@@ -34,22 +31,8 @@ final class CatKeyboardLockAppComposition {
             presentPermissionHelp: presentPermissionHelp,
             eventTapFactory: eventTapFactory
         )
-        let accessManager: KikiAccessManager
-        if let commerceClient {
-            accessManager = KikiAccessManager(
-                configuration: definition.accessConfiguration,
-                defaults: defaults,
-                commerceClient: commerceClient
-            )
-        } else {
-            accessManager = KikiAccessManager(
-                configuration: definition.accessConfiguration,
-                revenueCatConfiguration: definition.revenueCatConfiguration,
-                defaults: defaults
-            )
-        }
         let onboardingState = CatKeyboardLockOnboardingState(defaults: defaults)
-        let settingsRoute = CatKeyboardLockSettingsRouteModel()
+        let supportState = CatKeyboardLockSupportState(defaults: defaults)
         let settingsCoordinator = KikiSettingsCoordinator(
             tabs: CatKeyboardLockSettingsTab.kikiTabs,
             initialTab: CatKeyboardLockSettingsTab.lock,
@@ -63,7 +46,6 @@ final class CatKeyboardLockAppComposition {
         )
         let onboardingCoordinator = CatKeyboardLockOnboardingFlow.makeCoordinator(
             config: definition.config,
-            accessManager: accessManager,
             onboardingState: onboardingState,
             lockSettings: lockSettings,
             inputLockController: inputLockController,
@@ -75,18 +57,15 @@ final class CatKeyboardLockAppComposition {
         let router = CatKeyboardLockAppRouter(
             lockSettings: lockSettings,
             inputLockController: inputLockController,
-            accessManager: accessManager,
             onboardingState: onboardingState,
-            settingsRoute: settingsRoute,
             settingsCoordinator: settingsCoordinator,
             onboardingCoordinator: onboardingCoordinator
         )
 
         self.lockSettings = lockSettings
         self.inputLockController = inputLockController
-        self.accessManager = accessManager
         self.onboardingState = onboardingState
-        self.settingsRoute = settingsRoute
+        self.supportState = supportState
         self.settingsCoordinator = settingsCoordinator
         self.onboardingCoordinator = onboardingCoordinator
         self.router = router
@@ -94,7 +73,7 @@ final class CatKeyboardLockAppComposition {
             definition: definition,
             lockSettings: lockSettings,
             inputLockController: inputLockController,
-            accessManager: accessManager,
+            supportState: supportState,
             router: router
         )
     }

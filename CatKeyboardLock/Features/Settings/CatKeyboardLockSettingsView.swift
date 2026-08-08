@@ -1,6 +1,5 @@
 import Foundation
 import KikiAuthorization
-import KikiCommerceCore
 import KikiSettings
 import KikiTriggerCorner
 import SwiftUI
@@ -58,11 +57,6 @@ enum CatKeyboardLockInitialSettingsTab: String {
     }
 }
 
-@MainActor
-final class CatKeyboardLockSettingsRouteModel: ObservableObject {
-    @Published var isPaywallSheetPresented = false
-}
-
 enum CatKeyboardLockSettingsTint {
     // Defined by Assets.xcassets/AccentColor so every system control shares
     // the brand tint and adapts with appearance changes.
@@ -73,26 +67,23 @@ struct CatKeyboardLockSettingsView: View {
     let config: CatKeyboardLockAppConfig
     @ObservedObject var lockSettings: LockSettings
     @ObservedObject var inputLockController: InputLockController
-    @ObservedObject var accessManager: KikiAccessManager
+    @ObservedObject var supportState: CatKeyboardLockSupportState
     let settingsCoordinator: KikiSettingsCoordinator<CatKeyboardLockSettingsTab>
-    @ObservedObject var route: CatKeyboardLockSettingsRouteModel
     let onTriggerOnboarding: () -> Void
 
     init(
         config: CatKeyboardLockAppConfig,
         lockSettings: LockSettings,
         inputLockController: InputLockController,
-        accessManager: KikiAccessManager,
+        supportState: CatKeyboardLockSupportState,
         settingsCoordinator: KikiSettingsCoordinator<CatKeyboardLockSettingsTab>,
-        route: CatKeyboardLockSettingsRouteModel,
         onTriggerOnboarding: @escaping () -> Void = {}
     ) {
         self.config = config
         self.lockSettings = lockSettings
         self.inputLockController = inputLockController
-        self.accessManager = accessManager
+        self.supportState = supportState
         self.settingsCoordinator = settingsCoordinator
-        self.route = route
         self.onTriggerOnboarding = onTriggerOnboarding
     }
 
@@ -106,13 +97,6 @@ struct CatKeyboardLockSettingsView: View {
             case .about:
                 aboutPane
             }
-        }
-        .sheet(isPresented: $route.isPaywallSheetPresented) {
-            CatKeyboardLockPaywallSheetView(
-                config: config,
-                accessManager: accessManager,
-                context: .settings
-            )
         }
     }
 
@@ -152,47 +136,6 @@ struct CatKeyboardLockSettingsView: View {
         }
     }
 
-#if DEBUG
-    private var debugTestingSection: some View {
-        Section {
-            KikiSettingsDebugPreviewRow(
-                "Paid access",
-                selection: debugModeBinding,
-                options: KikiAccessDebugMode.allCases,
-                isOverrideActive: accessManager.debugProAccessOverride != nil,
-                optionTitle: { $0.displayName }
-            )
-
-            KikiSettingsValueRow("Test flows", systemImage: "play.rectangle") {
-                Button("Onboarding", action: onTriggerOnboarding)
-                Button("Accessibility") {
-                    KikiAuthorizationAssistant.shared.present(
-                        panel: .accessibility,
-                        instruction: "Turn on Cat Keyboard Lock so it can block keyboard input while locked."
-                    )
-                }
-            }
-        } header: {
-            Text("Developer Testing")
-        } footer: {
-            KikiSettingsHelperText("Debug only. Live clears the paid-access override.")
-        }
-    }
-
-    private var debugModeBinding: Binding<KikiAccessDebugMode> {
-        Binding(
-            get: { accessManager.debugProAccessOverride ?? .live },
-            set: { mode in
-                if mode == .live {
-                    accessManager.clearDebugProAccessOverride()
-                } else {
-                    accessManager.setDebugProAccessOverride(mode)
-                }
-            }
-        )
-    }
-#endif
-
     private var systemPane: some View {
         KikiSettingsPane {
             Section {
@@ -207,9 +150,6 @@ struct CatKeyboardLockSettingsView: View {
                 KikiSettingsHelperText("Accessibility is required to block input while locked.")
             }
 
-#if DEBUG
-            debugTestingSection
-#endif
         }
     }
 
@@ -245,59 +185,62 @@ struct CatKeyboardLockSettingsView: View {
         )
     }
 
+    // Built from KikiAboutPane instead of KikiStandardAboutPane so the tip jar
+    // can be a real card rather than one more grey link row.
     private var aboutPane: some View {
-        KikiStandardAboutPane(
-            metadata: .bundle(),
-            accessStatus: accessStatusPresentation,
-            onAccessAction: {
-                route.isPaywallSheetPresented = true
+        let metadata = KikiAppMetadata.bundle()
+
+        return KikiAboutPane(
+            appName: metadata.appName,
+            versionText: metadata.displayVersion,
+            status: {
+                KikiSettingsStatusRow(
+                    title: "Status",
+                    value: "Free forever",
+                    systemImage: "info.circle",
+                    valueSystemImage: "checkmark.seal",
+                    tone: .accent,
+                    tint: CatKeyboardLockSettingsTint.brand,
+                    showsBadge: false
+                )
+                KikiSettingsHelperText("No trial, no subscription, no in-app purchase, and no account.")
             },
-            links: KikiStandardAboutLinks(
-                website: URL(string: config.officialURL),
-                feedback: URL(string: config.contactEmailURL),
-                github: URL(string: config.repositoryURL)
-            ),
-            tint: CatKeyboardLockSettingsTint.brand
+            links: {
+                supportRow
+
+                KikiSettingsLinkRow(
+                    title: "Official",
+                    value: config.officialDisplayName,
+                    urlString: config.officialURL,
+                    systemImage: "globe"
+                )
+                KikiSettingsCopyRow(
+                    title: "Email",
+                    value: config.contactEmailAddress,
+                    systemImage: "envelope"
+                )
+            }
         )
     }
 
-    private var accessStatusPresentation: KikiAccessStatusPresentation {
-        switch accessManager.status {
-        case .notStarted:
-            return KikiAccessStatusPresentation(
-                tone: .neutral,
-                title: "Free trial available",
-                subtitle: "Start a 2-day trial or choose a lifetime purchase.",
-                actionTitle: "View options"
+    @ViewBuilder
+    private var supportRow: some View {
+        if supportState.showsAboutCard {
+            CatKeyboardLockSupportCard(
+                tint: CatKeyboardLockSettingsTint.brand,
+                onTip: { CatKeyboardLockSupportLinks.openTipPage(config) },
+                onStar: { CatKeyboardLockSupportLinks.openRepository(config) },
+                onAlreadySupported: supportState.markSupported
             )
-        case .trial(.time(_, let expiresAt)):
-            return KikiAccessStatusPresentation(
-                tone: .trial,
-                title: "Trial active",
-                subtitle: "Ends \(expiresAt.formatted(date: .abbreviated, time: .shortened)). No renewal or charge.",
-                actionTitle: "View plans"
-            )
-        case .trial(.usage(_, let used, let limit)):
-            return KikiAccessStatusPresentation(
-                tone: .trial,
-                title: "Trial active",
-                subtitle: "Uses remaining: \(max(0, limit - used).formatted()). No renewal or charge.",
-                actionTitle: "View plans"
-            )
-        case .expired:
-            return KikiAccessStatusPresentation(
-                tone: .expired,
-                title: "Trial ended",
-                subtitle: "Upgrade to keep using input lock controls.",
-                actionTitle: "Upgrade"
-            )
-        case .pro(let plan, _):
-            return KikiAccessStatusPresentation(
-                tone: .lifetime,
-                title: plan.title,
-                subtitle: plan.billingDetail,
-                actionTitle: "View plans"
-            )
+        } else {
+            KikiSettingsValueRow(
+                "Thanks for the can",
+                systemImage: "heart.fill",
+                iconColor: CatKeyboardLockSettingsTint.brand
+            ) {
+                Text("Cat Lock will not ask again.")
+                    .foregroundStyle(.secondary)
+            }
         }
     }
 }

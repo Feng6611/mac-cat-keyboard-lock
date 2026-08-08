@@ -13,17 +13,15 @@ permission only on Macs you control. Do not use the app to interfere with
 another person's device or input without their permission.
 
 Cat Lock includes recovery paths, but no software can guarantee recovery in
-every operating-system or hardware failure. Keep the fallback shortcut and
-timeout in mind before enabling click blocking, and save important work before
-starting a lock.
+every operating-system or hardware failure. Keep the menu bar item, the trigger
+corner, and the timeout in mind before enabling click blocking, and save
+important work before starting a lock.
 
-## Trial and purchases
+## Free software
 
-The app-managed Pro trial lasts two days and does not renew or charge you
-automatically. Pro may be unlocked through the available one-time Apple
-purchases. Apple controls billing, refunds, taxes, localized prices, and
-payment terms. RevenueCat helps validate entitlements; it does not change the
-purchase terms shown by Apple.
+Cat Lock is available free of charge. There are no trials, subscriptions,
+in-app purchases, or account requirements. Optional donations are handled on
+the external Buy Me a Coffee website and are not required to use the app.
 
 ## Open-source code
 

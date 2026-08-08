@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-08-08
+
+- Removed trial, Pro, paywall, IAP, RevenueCat, and paid debug logic.
+- Made keyboard and click locking free forever with no account requirement.
+- Added an optional developer tip jar: a support card in Settings About, one
+  menu bar entry after ten completed locks, and a link on the last onboarding
+  step. "I already did" hides all of them permanently.
+- Onboarding now finishes after the lock/unlock practice.
+- Fixed the trigger corner staying armed while locked even after the feature
+  was turned off, and the About status reading as an orange warning.
+
 ## 2026-07-15
 
 - Removed the lock/unlock shortcut from the menu and input event filter.

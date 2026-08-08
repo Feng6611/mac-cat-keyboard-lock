@@ -17,7 +17,8 @@
 
 Cat Lock is a small macOS menu bar utility for temporarily blocking accidental
 input while the Mac stays awake and visible. It is built around recovery first:
-every lock has a timeout, a fallback shortcut, and disappears if the app quits.
+every lock has a timeout, an unlock path that never depends on the keyboard,
+and disappears if the app quits.
 
 ## What it does
 
@@ -26,7 +27,8 @@ every lock has a timeout, a fallback shortcut, and disappears if the app quits.
 - **Show the locked state** — the screen edges breathe orange while input is
   blocked, so a quiet keyboard does not become a mystery.
 - **Timed auto-unlock** — choose 5, 10, 30, or 60 minutes.
-- **Escape shortcut** — hold `Control + Option + Command + L` for one second.
+- **Unlock without the keyboard** — click the menu bar item, or hold the
+  pointer in the trigger corner; pointer movement is never blocked.
 - **Keyboard first** — clicks are blocked only when you explicitly enable it;
   pointer movement remains available for recovery.
 - **Crash-safe by design** — the event filter belongs to the app process, so
@@ -54,25 +56,21 @@ system API used to suppress input events. It does not read, store, or transmit
 the contents of keys or clicks. Trigger-corner monitoring only checks the
 current pointer position while the feature is enabled.
 
-## Cat Lock Pro
+## Free forever
 
-The full lock flow is available during the app-managed two-day Pro trial and
-after a one-time purchase. The trial starts from the app's onboarding flow and
-does not renew or charge automatically.
-
-- **Lifetime** — $6.99
-- **Supporter Lifetime** — $10.99
-
-Both purchases unlock the same features. Apple and RevenueCat process the
-purchase and entitlement data; Cat Lock does not receive payment-card details.
-Prices shown in the store may be localized by territory.
+Cat Lock's keyboard and click locking features are available indefinitely.
+There is no trial, subscription, in-app purchase, or account requirement.
+If the app helps you, you can optionally
+[buy the cat a can](https://buymeacoffee.com/kkuk?utm_source=catlock-readme).
 
 ## FAQ
 
 **What if I cannot unlock the keyboard?**
 
-Hold `Control + Option + Command + L` for one second, or wait for the selected
-timeout. If Cat Lock quits, the event filter disappears with it.
+Pointer movement is never blocked, so there is always a way out. If only the
+keyboard is locked, click the Cat Lock menu bar item. If clicks are locked too,
+hold the pointer in the trigger corner, or wait for the selected timeout.
+Quitting Cat Lock removes the event filter with it.
 
 **Does Cat Lock record what I type?**
 
@@ -111,9 +109,8 @@ xcodebuild test -project CatKeyboardLock.xcodeproj \
   -destination 'platform=macOS,arch=arm64'
 ```
 
-See [Docs/Architecture.md](Docs/Architecture.md), [Docs/Testing.md](Docs/Testing.md),
-and [Docs/RevenueCat.md](Docs/RevenueCat.md) for implementation and release
-notes.
+See [Docs/Architecture.md](Docs/Architecture.md) and [Docs/Testing.md](Docs/Testing.md)
+for implementation and release notes.
 
 ## Privacy and terms
 
