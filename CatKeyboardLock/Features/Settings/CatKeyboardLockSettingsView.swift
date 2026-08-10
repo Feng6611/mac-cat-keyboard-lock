@@ -150,8 +150,35 @@ struct CatKeyboardLockSettingsView: View {
                 KikiSettingsHelperText("Accessibility is required to block input while locked.")
             }
 
+#if DEBUG
+            debugSupportSection
+#endif
         }
     }
+
+#if DEBUG
+    private var debugSupportSection: some View {
+        Section {
+            KikiSettingsValueRow(
+                "Support status",
+                systemImage: "heart.fill",
+                iconColor: CatKeyboardLockSettingsTint.brand
+            ) {
+                Button(supportState.didSupport ? "Show support ask" : "Hide support ask") {
+                    supportState.toggleSupportedForDebug()
+                }
+                .buttonStyle(.bordered)
+
+                Text(supportState.didSupport ? "Supported" : "Not supported")
+                    .foregroundStyle(.secondary)
+            }
+        } header: {
+            Text("Developer Testing")
+        } footer: {
+            KikiSettingsHelperText("Debug only. Support is optional and never unlocks features.")
+        }
+    }
+#endif
 
     private var lockDurationRow: some View {
         KikiSettingsSegmentedPickerRow(
@@ -228,8 +255,10 @@ struct CatKeyboardLockSettingsView: View {
         if supportState.showsAboutCard {
             CatKeyboardLockSupportCard(
                 tint: CatKeyboardLockSettingsTint.brand,
-                onTip: { CatKeyboardLockSupportLinks.openTipPage(config) },
+                onTryCommandReopen: { CatKeyboardLockSupportLinks.openCommandReopen(config) },
                 onStar: { CatKeyboardLockSupportLinks.openRepository(config) },
+                onFollowX: { CatKeyboardLockSupportLinks.openXProfile(config) },
+                onTip: { CatKeyboardLockSupportLinks.openTipPage(config) },
                 onAlreadySupported: supportState.markSupported
             )
         } else {

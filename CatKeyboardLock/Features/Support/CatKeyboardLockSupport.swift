@@ -43,6 +43,14 @@ final class CatKeyboardLockSupportState: ObservableObject {
         didSupport = true
         defaults.set(true, forKey: Keys.didSupport)
     }
+
+#if DEBUG
+    /// Developer-only switch for previewing both sides of the optional support UI.
+    func toggleSupportedForDebug() {
+        didSupport.toggle()
+        defaults.set(didSupport, forKey: Keys.didSupport)
+    }
+#endif
 }
 
 enum CatKeyboardLockSupportLinks {
@@ -53,12 +61,30 @@ enum CatKeyboardLockSupportLinks {
     static func openRepository(_ config: CatKeyboardLockAppConfig) {
         KikiSettingsActions.openURL(config.repositoryURL)
     }
+
+    static func openCommandReopen(_ config: CatKeyboardLockAppConfig) {
+        KikiSettingsActions.openURL(config.commandReopenURL)
+    }
+
+    static func openXProfile(_ config: CatKeyboardLockAppConfig) {
+        KikiSettingsActions.openURL(config.xURL)
+    }
 }
 
+/// The one ask Cat Lock makes, once, in About.
+///
+/// The primary action is the developer's other app, not the tip jar: for a
+/// free app, "try the app I actually sell" costs the user nothing and is
+/// worth far more than a can — it opens a funnel that can end in a purchase
+/// and an App Store review, where a tip is a one-off. The can survives as a
+/// quiet link because it is the only money path Cat Lock itself has, and
+/// because the phrase is too much a part of this app to delete.
 struct CatKeyboardLockSupportCard: View {
     let tint: Color
-    let onTip: () -> Void
+    let onTryCommandReopen: () -> Void
     let onStar: () -> Void
+    let onFollowX: () -> Void
+    let onTip: () -> Void
     let onAlreadySupported: () -> Void
 
     var body: some View {
@@ -73,23 +99,29 @@ struct CatKeyboardLockSupportCard: View {
                             .fill(tint.opacity(0.14))
                     )
 
-                Text("Buy the cat a can")
+                Text("Like Cat Lock?")
                     .font(.headline)
 
                 Spacer(minLength: 0)
             }
 
-            Text("Cat Lock is free and complete, built by one person on weekends. A tip unlocks nothing — it just keeps the updates coming.")
+            Text("It's free and complete, built by one person on weekends — and the best support costs nothing: try Command Reopen, my other app. It brings minimized windows back when you Cmd+Tab.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 
             HStack(spacing: 12) {
-                Button("Buy the Cat a Can…", action: onTip)
+                Button("Try Command Reopen", action: onTryCommandReopen)
                     .buttonStyle(.borderedProminent)
                     .tint(tint)
 
                 Button("Star on GitHub", action: onStar)
+                    .buttonStyle(.link)
+
+                Button("Follow on X", action: onFollowX)
+                    .buttonStyle(.link)
+
+                Button("Buy the cat a can…", action: onTip)
                     .buttonStyle(.link)
 
                 Spacer(minLength: 0)

@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- The About support card now leads with Command Reopen, the developer's paid
+  app, instead of the tip jar. A free app's scarcest currency is attention, not
+  cans: trying the paid app costs the user nothing and can end in a purchase
+  and a review, where a tip ends at the tip. Buy Me a Coffee remains as a quiet
+  link — it is still Cat Lock's only money path — alongside Star on GitHub and
+  a new Follow on X. The menu bar entry is unchanged.
+
 ## 2026-08-08
 
 - Removed trial, Pro, paywall, IAP, RevenueCat, and paid debug logic.

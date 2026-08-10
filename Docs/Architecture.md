@@ -36,9 +36,14 @@ out to a payment page conflicts with App Review guideline 3.1.1.
 `CatKeyboardLockSupportState` decides when the ask is allowed to appear and
 persists two keys in `UserDefaults`:
 
-- the About pane shows a support card until the user says they already gave;
+- the About pane shows a support card until the user says they already gave.
+  Its primary action is Command Reopen, the developer's paid app: for a free
+  app with no paid tier, "try the app I do sell" costs the user nothing and is
+  worth more than a tip. The can stays as a quiet link beside Star and Follow;
 - the menu bar gains a single `Buy the Cat a Can…` item only after
-  `menuEntryLockThreshold` completed locks;
+  `menuEntryLockThreshold` completed locks, and gains nothing else. Settings
+  and About are opened deliberately; the menu bar is used, so promoting a
+  second product from it would outstay its welcome;
 - onboarding shows one low-key link on the final celebration step;
 - `I already did` hides every ask permanently. Payment happens on an external
   site, so the user's word is the only signal the app can have.
