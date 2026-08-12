@@ -32,9 +32,7 @@ final class CatKeyboardLockAppRouter {
         CatKeyboardLockCore.evaluate(
             CatKeyboardLockCoreInput(
                 lockState: CatKeyboardLockCoreLockState(inputLockController.state),
-                accessibilityTrusted: inputLockController.permissionStatus.accessibilityTrusted,
-                lockKeyboard: lockSettings.lockKeyboard,
-                lockMouseClicks: lockSettings.lockMouseClicks
+                accessibilityTrusted: inputLockController.permissionStatus.accessibilityTrusted
             )
         )
     }
@@ -97,8 +95,6 @@ final class CatKeyboardLockAppRouter {
             inputLockController.unlock(reason: .manual)
         case .openPermission:
             inputLockController.requestPermissions()
-        case .chooseInput:
-            openSettings(initialTab: .lock)
         }
     }
 }

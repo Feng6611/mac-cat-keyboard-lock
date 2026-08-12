@@ -4,44 +4,22 @@ struct CatKeyboardLockAppConfig: Equatable {
     let appName: String
     let statusItemTitle: String
     let bundleID: String
-    let officialURL: String
-    let officialDisplayName: String
-    let termsURL: String
-    let supportURL: String
-    let privacyURL: String
     let repositoryURL: String
-    let repositoryDisplayName: String
-    /// Optional developer tip jar. The query keeps the source attributable
-    /// because every kkuk app points at the same page.
-    let tipURL: String
-    /// The developer's other app, offered as the support ask that costs
-    /// nothing. Points at the App Store page because that is where trying
-    /// it can end in a purchase.
-    let commandReopenURL: String
-    /// The developer's X profile, from `sale/brand/identity.md`.
-    let xURL: String
+    let madeByName: String
+    let madeByURL: String
     let contactEmailAddress: String
-    let contactEmailURL: String
     let features: [String]
 
     static let `default` = CatKeyboardLockAppConfig(
         appName: "Cat Keyboard Lock",
         statusItemTitle: "Cat Lock",
         bundleID: "dev.kkuk.catkeyboardlock",
-        officialURL: "https://github.com/Feng6611/mac-cat-keyboard-lock#readme",
-        officialDisplayName: "GitHub README",
-        termsURL: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/",
-        supportURL: "https://github.com/Feng6611/mac-cat-keyboard-lock/issues",
-        privacyURL: "https://github.com/Feng6611/mac-cat-keyboard-lock/blob/main/PRIVACY.md",
         repositoryURL: "https://github.com/Feng6611/mac-cat-keyboard-lock",
-        repositoryDisplayName: "Feng6611/mac-cat-keyboard-lock",
-        tipURL: "https://buymeacoffee.com/kkuk?utm_source=catlock-app",
-        commandReopenURL: "https://apps.apple.com/app/id6757333924",
-        xURL: "https://x.com/chen31641727",
+        madeByName: "chenfeng",
+        madeByURL: "https://github.com/Feng6611",
         contactEmailAddress: "fchen6611@gmail.com",
-        contactEmailURL: "mailto:fchen6611@gmail.com",
         features: [
-            "Full keyboard and click lock",
+            "Keyboard lock",
             "Trigger corner and lock feedback controls",
             "Lock duration safety release"
         ]

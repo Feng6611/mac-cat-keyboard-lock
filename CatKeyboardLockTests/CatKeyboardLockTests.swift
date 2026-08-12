@@ -8,9 +8,7 @@ final class CatKeyboardLockTests: XCTestCase {
     func testFreeAccessAlwaysAllowsLockFlow() {
         let evaluation = CatKeyboardLockCore.evaluate(
             CatKeyboardLockCoreInput(
-                accessibilityTrusted: true,
-                lockKeyboard: true,
-                lockMouseClicks: false
+                accessibilityTrusted: true
             )
         )
 
@@ -22,9 +20,7 @@ final class CatKeyboardLockTests: XCTestCase {
     func testFreeAccessWithMissingAccessibilityRequestsPermission() {
         let evaluation = CatKeyboardLockCore.evaluate(
             CatKeyboardLockCoreInput(
-                accessibilityTrusted: false,
-                lockKeyboard: true,
-                lockMouseClicks: false
+                accessibilityTrusted: false
             )
         )
 
@@ -32,13 +28,12 @@ final class CatKeyboardLockTests: XCTestCase {
         XCTAssertEqual(evaluation.statusText, "Needs Accessibility")
     }
 
-    private func menuTitles(showsTipEntry: Bool = false) -> [String] {
+    private func menuTitles() -> [String] {
         CatKeyboardLockMenuModel.items(
             config: .default,
             lockState: .unlocked,
             lockSettings: LockSettings(defaults: isolatedDefaults()),
             accessibilityTrusted: true,
-            showsTipEntry: showsTipEntry,
             actions: CatKeyboardLockMenuActions(
                 requestLock: {},
                 openSettings: {},
@@ -57,62 +52,9 @@ final class CatKeyboardLockTests: XCTestCase {
         XCTAssertFalse(titles.contains { $0.localizedCaseInsensitiveContains("purchase") })
     }
 
-    func testTipEntryStaysHiddenUntilRepeatedUse() {
-        let support = CatKeyboardLockSupportState(defaults: isolatedDefaults())
-        XCTAssertFalse(support.showsMenuEntry)
-
-        for _ in 0..<(CatKeyboardLockSupportState.menuEntryLockThreshold - 1) {
-            support.recordLock()
-        }
-        XCTAssertFalse(support.showsMenuEntry)
-        XCTAssertFalse(menuTitles(showsTipEntry: support.showsMenuEntry).contains("Buy the Cat a Can…"))
-
-        support.recordLock()
-        XCTAssertTrue(support.showsMenuEntry)
-        XCTAssertTrue(menuTitles(showsTipEntry: support.showsMenuEntry).contains("Buy the Cat a Can…"))
-    }
-
-    func testMarkingSupportedRemovesEveryAsk() {
-        let defaults = isolatedDefaults()
-        let support = CatKeyboardLockSupportState(defaults: defaults)
-        for _ in 0..<CatKeyboardLockSupportState.menuEntryLockThreshold {
-            support.recordLock()
-        }
-
-        support.markSupported()
-
-        XCTAssertFalse(support.showsMenuEntry)
-        XCTAssertFalse(support.showsAboutCard)
-        XCTAssertFalse(CatKeyboardLockSupportState(defaults: defaults).showsAboutCard)
-    }
-
-    func testCoreEvaluationNamesClickLockAndEmptyPolicy() {
-        let clickEvaluation = CatKeyboardLockCore.evaluate(
-            CatKeyboardLockCoreInput(
-                accessibilityTrusted: true,
-                lockKeyboard: true,
-                lockMouseClicks: true
-            )
-        )
-
-        XCTAssertEqual(clickEvaluation.lockRequestAction, .lock)
-        XCTAssertEqual(clickEvaluation.policySummary, ["keyboard", "clicks"])
-
-        let emptyEvaluation = CatKeyboardLockCore.evaluate(
-            CatKeyboardLockCoreInput(
-                accessibilityTrusted: true,
-                lockKeyboard: false,
-                lockMouseClicks: false
-            )
-        )
-
-        XCTAssertEqual(emptyEvaluation.lockRequestAction, .chooseInput)
-        XCTAssertEqual(emptyEvaluation.statusText, "Choose input to lock")
-    }
-
     func testDefaultPolicyOnlyLocksKeyboardEvents() {
         XCTAssertEqual(
-            InputLockPolicy(lockKeyboard: true, lockMouseClicks: false).suppressedEventTypes,
+            InputLockPolicy().suppressedEventTypes,
             [.keyDown, .keyUp, .flagsChanged]
         )
     }

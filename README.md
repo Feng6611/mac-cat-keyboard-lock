@@ -22,15 +22,14 @@ and disappears if the app quits.
 
 ## What it does
 
-- **Lock with a click or trigger corner** — start from the menu bar, or throw
+- **Lock from the menu bar or trigger corner** — start from the menu bar, or throw
   the pointer into a selected screen corner when a cat jumps on the desk.
 - **Show the locked state** — the screen edges breathe orange while input is
   blocked, so a quiet keyboard does not become a mystery.
 - **Timed auto-unlock** — choose 5, 10, 30, or 60 minutes.
 - **Unlock without the keyboard** — click the menu bar item, or hold the
   pointer in the trigger corner; pointer movement is never blocked.
-- **Keyboard first** — clicks are blocked only when you explicitly enable it;
-  pointer movement remains available for recovery.
+- **Keyboard only** — pointer controls remain available for recovery.
 - **Crash-safe by design** — the event filter belongs to the app process, so
   quitting or crashing restores normal input.
 
@@ -53,34 +52,27 @@ the same time.
 
 Cat Lock needs macOS **Accessibility** permission because `CGEventTap` is the
 system API used to suppress input events. It does not read, store, or transmit
-the contents of keys or clicks. Trigger-corner monitoring only checks the
+the contents of keys. Trigger-corner monitoring only checks the
 current pointer position while the feature is enabled.
 
 ## Free forever
 
-Cat Lock's keyboard and click locking features are available indefinitely.
-There is no trial, subscription, in-app purchase, or account requirement.
-If the app helps you, you can optionally
+Cat Lock is free to use. There is no trial, subscription, in-app purchase, or
+account requirement. If the app helps you, you can optionally
 [buy the cat a can](https://buymeacoffee.com/kkuk?utm_source=catlock-readme).
 
 ## FAQ
 
 **What if I cannot unlock the keyboard?**
 
-Pointer movement is never blocked, so there is always a way out. If only the
-keyboard is locked, click the Cat Lock menu bar item. If clicks are locked too,
-hold the pointer in the trigger corner, or wait for the selected timeout.
-Quitting Cat Lock removes the event filter with it.
+Pointer controls are never blocked, so there is always a way out. Click the
+Cat Lock menu bar item, hold the pointer in the trigger corner, or wait for the
+selected timeout. Quitting Cat Lock removes the event filter with it.
 
 **Does Cat Lock record what I type?**
 
-No. Input events are suppressed locally only during an active lock. Key codes,
-typed text, click locations, and pointer coordinates are not stored or sent.
-
-**Does it block the mouse?**
-
-Only if click blocking is enabled in Settings. Pointer movement is never
-blocked, so the trigger corner and recovery path remain reachable.
+No. Keyboard events are suppressed locally only during an active lock. Key
+codes and typed text are not stored or sent.
 
 **Why does it need Accessibility?**
 

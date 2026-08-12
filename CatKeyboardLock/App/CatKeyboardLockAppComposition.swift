@@ -9,7 +9,6 @@ final class CatKeyboardLockAppComposition {
     let lockSettings: LockSettings
     let inputLockController: InputLockController
     let onboardingState: CatKeyboardLockOnboardingState
-    let supportState: CatKeyboardLockSupportState
     let settingsCoordinator: KikiSettingsCoordinator<CatKeyboardLockSettingsTab>
     let onboardingCoordinator: KikiOnboardingCoordinator
     let router: CatKeyboardLockAppRouter
@@ -32,7 +31,6 @@ final class CatKeyboardLockAppComposition {
             eventTapFactory: eventTapFactory
         )
         let onboardingState = CatKeyboardLockOnboardingState(defaults: defaults)
-        let supportState = CatKeyboardLockSupportState(defaults: defaults)
         let settingsCoordinator = KikiSettingsCoordinator(
             tabs: CatKeyboardLockSettingsTab.kikiTabs,
             initialTab: CatKeyboardLockSettingsTab.lock,
@@ -65,7 +63,6 @@ final class CatKeyboardLockAppComposition {
         self.lockSettings = lockSettings
         self.inputLockController = inputLockController
         self.onboardingState = onboardingState
-        self.supportState = supportState
         self.settingsCoordinator = settingsCoordinator
         self.onboardingCoordinator = onboardingCoordinator
         self.router = router
@@ -73,7 +70,6 @@ final class CatKeyboardLockAppComposition {
             definition: definition,
             lockSettings: lockSettings,
             inputLockController: inputLockController,
-            supportState: supportState,
             router: router
         )
     }

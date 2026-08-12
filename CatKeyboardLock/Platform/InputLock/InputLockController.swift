@@ -96,7 +96,7 @@ final class InputLockController: ObservableObject {
 
     func lockForOnboardingPractice(now: Date = Date()) {
         startLock(
-            policy: InputLockPolicy(lockKeyboard: true, lockMouseClicks: false),
+            policy: InputLockPolicy(),
             now: now,
             timeoutInterval: Self.onboardingPracticeTimeout
         )

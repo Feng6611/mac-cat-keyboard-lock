@@ -9,7 +9,6 @@ final class CatKeyboardLockLifecycleCoordinator {
     private let definition: CatKeyboardLockAppDefinition
     private let lockSettings: LockSettings
     private let inputLockController: InputLockController
-    private let supportState: CatKeyboardLockSupportState
     private let router: CatKeyboardLockAppRouter
 
     private lazy var screenEdgeOverlayController = KikiScreenEdgeOverlayController(
@@ -27,7 +26,6 @@ final class CatKeyboardLockLifecycleCoordinator {
     private var cancellables: Set<AnyCancellable> = []
     private var lastObservedLockState: InputLockState?
     private var lastTriggerCornerLockState = false
-    private var lastSupportCountedLockState = false
     private var didStart = false
 
     var isTriggerCornerMonitorRunning: Bool {
@@ -38,13 +36,11 @@ final class CatKeyboardLockLifecycleCoordinator {
         definition: CatKeyboardLockAppDefinition,
         lockSettings: LockSettings,
         inputLockController: InputLockController,
-        supportState: CatKeyboardLockSupportState,
         router: CatKeyboardLockAppRouter
     ) {
         self.definition = definition
         self.lockSettings = lockSettings
         self.inputLockController = inputLockController
-        self.supportState = supportState
         self.router = router
     }
 
@@ -101,14 +97,9 @@ final class CatKeyboardLockLifecycleCoordinator {
             lockState: inputLockController.state,
             lockSettings: lockSettings,
             accessibilityTrusted: inputLockController.permissionStatus.accessibilityTrusted,
-            showsTipEntry: supportState.showsMenuEntry,
             actions: CatKeyboardLockMenuActions(
                 requestLock: { [weak self] in self?.router.requestLockAction() },
                 openSettings: { [weak self] in self?.router.openSettings() },
-                openTipPage: { [weak self] in
-                    guard let self else { return }
-                    CatKeyboardLockSupportLinks.openTipPage(self.definition.config)
-                },
                 quit: { [weak self] in self?.router.quit() }
             )
         )
@@ -120,7 +111,6 @@ final class CatKeyboardLockLifecycleCoordinator {
                 self?.updateStatusItem(for: state)
                 self?.showEdgeHighlightIfNeeded(for: state)
                 self?.updateTriggerCornerMonitor(isLocked: state.isLocked)
-                self?.recordLockForSupport(state)
             }
             .store(in: &cancellables)
 
@@ -163,13 +153,6 @@ final class CatKeyboardLockLifecycleCoordinator {
         } else {
             triggerCornerMonitor.stop()
         }
-    }
-
-    private func recordLockForSupport(_ state: InputLockState) {
-        let isLocked = state.isLocked
-        defer { lastSupportCountedLockState = isLocked }
-        guard isLocked, !lastSupportCountedLockState else { return }
-        supportState.recordLock()
     }
 
     private func updateOverlayStyle(showPreview: Bool) {

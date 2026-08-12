@@ -5,18 +5,15 @@ import KikiMenuBar
 struct CatKeyboardLockMenuActions {
     let requestLock: () -> Void
     let openSettings: () -> Void
-    let openTipPage: () -> Void
     let quit: () -> Void
 
     init(
         requestLock: @escaping () -> Void,
         openSettings: @escaping () -> Void,
-        openTipPage: @escaping () -> Void = {},
         quit: @escaping () -> Void
     ) {
         self.requestLock = requestLock
         self.openSettings = openSettings
-        self.openTipPage = openTipPage
         self.quit = quit
     }
 }
@@ -28,7 +25,6 @@ enum CatKeyboardLockMenuModel {
         lockState: InputLockState,
         lockSettings: LockSettings,
         accessibilityTrusted: Bool,
-        showsTipEntry: Bool = false,
         actions: CatKeyboardLockMenuActions
     ) -> [KikiMenuItem] {
         var items: [KikiMenuItem] = [
@@ -43,14 +39,6 @@ enum CatKeyboardLockMenuModel {
             actions: actions
         ))
         items.append(.settings(title: "Settings…", action: actions.openSettings))
-
-        // Quiet, permanent, and only after the app has proven itself.
-        if showsTipEntry {
-            items.append(.action(
-                title: "Buy the Cat a Can…",
-                action: actions.openTipPage
-            ))
-        }
 
         items.append(contentsOf: [
             .separator,
@@ -72,9 +60,7 @@ enum CatKeyboardLockMenuModel {
     ) -> KikiMenuItem {
         let coreInput = CatKeyboardLockCoreInput(
             lockState: CatKeyboardLockCoreLockState(state),
-            accessibilityTrusted: accessibilityTrusted,
-            lockKeyboard: lockSettings.lockKeyboard,
-            lockMouseClicks: lockSettings.lockMouseClicks
+            accessibilityTrusted: accessibilityTrusted
         )
         let evaluation = CatKeyboardLockCore.evaluate(coreInput)
 

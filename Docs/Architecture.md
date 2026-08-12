@@ -7,8 +7,7 @@ corner infrastructure.
 ## Boundaries
 
 - `App/` composes the app, routes actions, and owns lifecycle startup/teardown.
-- `Features/` contains menu bar, Settings, onboarding, and developer-tip
-  presentation.
+- `Features/` contains menu bar, Settings, and onboarding presentation.
 - `Core/` contains pure lock-routing rules. It has no AppKit, persistence,
   network, commerce, or payment dependency.
 - `Platform/InputLock/` owns Accessibility checks, `CGEventTap`, timeout, and
@@ -23,39 +22,20 @@ only branch on selected input policy and Accessibility.
 
 The menu bar routes Lock/Unlock and Settings. First launch presents a skippable
 guided setup. After the user practices locking and unlocking from the trigger
-corner, onboarding completes directly. Settings About explains that the app is
-free forever and carries the tip jar.
+corner, onboarding completes directly. Settings About shows Free, Made by, and
+one optional Support action: Star on GitHub.
 
-## Developer tip jar
+## About links
 
-Cat Lock is distributed outside the Mac App Store, so the optional tip is an
-external Buy Me a Coffee link (`config.tipURL`) rather than an in-app purchase.
-A Mac App Store build would have to drop these entry points, because linking
-out to a payment page conflicts with App Review guideline 3.1.1.
-
-`CatKeyboardLockSupportState` decides when the ask is allowed to appear and
-persists two keys in `UserDefaults`:
-
-- the About pane shows a support card until the user says they already gave.
-  Its primary action is Command Reopen, the developer's paid app: for a free
-  app with no paid tier, "try the app I do sell" costs the user nothing and is
-  worth more than a tip. The can stays as a quiet link beside Star and Follow;
-- the menu bar gains a single `Buy the Cat a Can…` item only after
-  `menuEntryLockThreshold` completed locks, and gains nothing else. Settings
-  and About are opened deliberately; the menu bar is used, so promoting a
-  second product from it would outstay its welcome;
-- onboarding shows one low-key link on the final celebration step;
-- `I already did` hides every ask permanently. Payment happens on an external
-  site, so the user's word is the only signal the app can have.
-
-Nothing is ever presented as a modal, a badge, or a repeated prompt.
+The app uses Kiki's About pane for its standard identity and link presentation.
+Author identity and URLs remain app-owned configuration. The only Support
+action is Star on GitHub; the README contains the optional Buy Me a Coffee link.
 
 ## Safety model
 
 The event tap is installed only while locked and is removed on unlock, timeout,
-app termination, object deinitialization, or tap failure. The default policy
-blocks only keyboard events. Clicks are opt-in, and pointer movement remains
-available for trigger-corner recovery.
+app termination, object deinitialization, or tap failure. It blocks keyboard
+events only; pointer controls remain available for trigger-corner recovery.
 
 ## Testing shape
 

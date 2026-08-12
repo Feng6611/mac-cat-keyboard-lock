@@ -9,25 +9,18 @@ enum CatKeyboardLockCoreAction: String, Codable, Equatable {
     case lock
     case unlock
     case openPermission
-    case chooseInput
 }
 
 struct CatKeyboardLockCoreInput: Codable, Equatable {
     var lockState: CatKeyboardLockCoreLockState
     var accessibilityTrusted: Bool
-    var lockKeyboard: Bool
-    var lockMouseClicks: Bool
 
     init(
         lockState: CatKeyboardLockCoreLockState = .unlocked,
-        accessibilityTrusted: Bool,
-        lockKeyboard: Bool,
-        lockMouseClicks: Bool
+        accessibilityTrusted: Bool
     ) {
         self.lockState = lockState
         self.accessibilityTrusted = accessibilityTrusted
-        self.lockKeyboard = lockKeyboard
-        self.lockMouseClicks = lockMouseClicks
     }
 }
 
@@ -61,16 +54,12 @@ enum CatKeyboardLockCore {
             return "Unlock"
         }
 
-        return hasPointerLock(input) ? "Lock Input" : "Lock Keyboard"
+        return "Lock Keyboard"
     }
 
     private static func lockRequestAction(for input: CatKeyboardLockCoreInput) -> CatKeyboardLockCoreAction {
         if input.lockState == .locked {
             return .unlock
-        }
-
-        guard hasPolicy(input) else {
-            return .chooseInput
         }
 
         guard input.accessibilityTrusted else {
@@ -87,8 +76,6 @@ enum CatKeyboardLockCore {
         switch action {
         case .unlock:
             return "Locked"
-        case .chooseInput:
-            return "Choose input to lock"
         case .openPermission:
             return "Needs Accessibility"
         case .lock:
@@ -97,38 +84,17 @@ enum CatKeyboardLockCore {
     }
 
     private static func policySummary(for input: CatKeyboardLockCoreInput) -> [String] {
-        var summary: [String] = []
-
-        if input.lockKeyboard {
-            summary.append("keyboard")
-        }
-
-        if input.lockMouseClicks {
-            summary.append("clicks")
-        }
-
-        return summary
+        ["keyboard"]
     }
 
     private static func warnings(for input: CatKeyboardLockCoreInput) -> [String] {
         var warnings: [String] = []
 
-        if !hasPolicy(input) {
-            warnings.append("Choose at least one input type to lock.")
-        }
-
-        if hasPolicy(input) && !input.accessibilityTrusted {
+        if !input.accessibilityTrusted {
             warnings.append("Accessibility is required before input can be locked.")
         }
 
         return warnings
     }
 
-    private static func hasPolicy(_ input: CatKeyboardLockCoreInput) -> Bool {
-        input.lockKeyboard || input.lockMouseClicks
-    }
-
-    private static func hasPointerLock(_ input: CatKeyboardLockCoreInput) -> Bool {
-        input.lockMouseClicks
-    }
 }

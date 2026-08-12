@@ -12,7 +12,6 @@ struct CatKeyboardLockApp: App {
                 config: composition.definition.config,
                 lockSettings: composition.lockSettings,
                 inputLockController: composition.inputLockController,
-                supportState: composition.supportState,
                 settingsCoordinator: composition.settingsCoordinator,
                 onTriggerOnboarding: composition.router.triggerOnboarding
             )

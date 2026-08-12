@@ -155,23 +155,13 @@ private struct CatKeyboardLockOnboardingFlowView: View {
         case .unlockPractice:
             triggerCornerGuide(isUnlock: true)
         case .unlockSuccess:
-            VStack(spacing: 14) {
-                CatKeyboardLockCelebrationMark(tint: tint, title: "Keyboard restored")
-
-                // The one moment the app has demonstrably earned the ask.
-                Button("Cat Lock is free forever — buy the cat a can") {
-                    CatKeyboardLockSupportLinks.openTipPage(config)
-                }
-                .buttonStyle(.link)
-                .font(.callout)
-            }
+            CatKeyboardLockCelebrationMark(tint: tint, title: "Keyboard restored")
         }
     }
 
     private var featureRows: some View {
         VStack(alignment: .leading, spacing: 10) {
             featureRow("Block accidental keyboard input")
-            featureRow("Optionally block mouse and trackpad clicks")
             featureRow("Restore input automatically with a safety timer")
         }
         .frame(maxWidth: 380, alignment: .leading)
@@ -263,7 +253,7 @@ private extension CatKeyboardLockOnboardingPhase {
     var subtitle: String {
         switch self {
         case .welcome:
-            return "Cat Keyboard Lock blocks accidental typing and can optionally block clicks. Everything is free to use, with no subscription or purchase required."
+            return "Cat Keyboard Lock blocks accidental typing. Everything is free to use, with no subscription or purchase required."
         case .permission:
             return "macOS requires this permission before the app can block keyboard input."
         case .permissionSuccess:

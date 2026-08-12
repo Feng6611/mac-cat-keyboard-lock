@@ -20,20 +20,16 @@ struct CatLockCoreCLI {
         let options = try parseOptions(arguments)
         let input = CatKeyboardLockCoreInput(
             lockState: try enumValue(options["lock-state"] ?? "unlocked", CatKeyboardLockCoreLockState.self),
-            accessibilityTrusted: try boolValue(options["accessibility"] ?? "allowed"),
-            lockKeyboard: try boolValue(options["keyboard"] ?? "on"),
-            lockMouseClicks: try boolValue(options["clicks"] ?? "off")
+            accessibilityTrusted: try boolValue(options["accessibility"] ?? "allowed")
         )
         try printJSON(CatKeyboardLockCore.evaluate(input))
     }
 
     private static func matrix() throws {
         let cases: [(String, CatKeyboardLockCoreInput, String, CatKeyboardLockCoreAction, [String])] = [
-            ("free-lock-ready", .init(accessibilityTrusted: true, lockKeyboard: true, lockMouseClicks: false), "Lock Keyboard", .lock, []),
-            ("free-needs-accessibility", .init(accessibilityTrusted: false, lockKeyboard: true, lockMouseClicks: false), "Lock Keyboard", .openPermission, ["Accessibility is required before input can be locked."]),
-            ("free-click-policy", .init(accessibilityTrusted: true, lockKeyboard: true, lockMouseClicks: true), "Lock Input", .lock, []),
-            ("free-empty-policy", .init(accessibilityTrusted: true, lockKeyboard: false, lockMouseClicks: false), "Lock Keyboard", .chooseInput, ["Choose at least one input type to lock."]),
-            ("locked-always-unlocks", .init(lockState: .locked, accessibilityTrusted: false, lockKeyboard: false, lockMouseClicks: false), "Unlock", .unlock, ["Choose at least one input type to lock."])
+            ("free-lock-ready", .init(accessibilityTrusted: true), "Lock Keyboard", .lock, []),
+            ("free-needs-accessibility", .init(accessibilityTrusted: false), "Lock Keyboard", .openPermission, ["Accessibility is required before input can be locked."]),
+            ("locked-always-unlocks", .init(lockState: .locked, accessibilityTrusted: false), "Unlock", .unlock, ["Accessibility is required before input can be locked."])
         ]
 
         let results = cases.map { name, input, title, action, warnings in
@@ -85,7 +81,7 @@ struct CatLockCoreCLI {
     }
 
     private static func printHelp() {
-        print("usage: script/catlock_core.sh evaluate [--lock-state unlocked|locked] [--accessibility allowed|denied] [--keyboard on|off] [--clicks on|off]\n       script/catlock_core.sh matrix")
+        print("usage: script/catlock_core.sh evaluate [--lock-state unlocked|locked] [--accessibility allowed|denied]\n       script/catlock_core.sh matrix")
     }
 }
 

@@ -67,7 +67,6 @@ struct CatKeyboardLockSettingsView: View {
     let config: CatKeyboardLockAppConfig
     @ObservedObject var lockSettings: LockSettings
     @ObservedObject var inputLockController: InputLockController
-    @ObservedObject var supportState: CatKeyboardLockSupportState
     let settingsCoordinator: KikiSettingsCoordinator<CatKeyboardLockSettingsTab>
     let onTriggerOnboarding: () -> Void
 
@@ -75,14 +74,12 @@ struct CatKeyboardLockSettingsView: View {
         config: CatKeyboardLockAppConfig,
         lockSettings: LockSettings,
         inputLockController: InputLockController,
-        supportState: CatKeyboardLockSupportState,
         settingsCoordinator: KikiSettingsCoordinator<CatKeyboardLockSettingsTab>,
         onTriggerOnboarding: @escaping () -> Void = {}
     ) {
         self.config = config
         self.lockSettings = lockSettings
         self.inputLockController = inputLockController
-        self.supportState = supportState
         self.settingsCoordinator = settingsCoordinator
         self.onTriggerOnboarding = onTriggerOnboarding
     }
@@ -103,12 +100,12 @@ struct CatKeyboardLockSettingsView: View {
     private var lockPane: some View {
         KikiSettingsPane {
             Section {
-                KikiSettingsToggleRow("Keyboard", isOn: $lockSettings.lockKeyboard, systemImage: "keyboard")
-                KikiSettingsToggleRow("Clicks", isOn: $lockSettings.lockMouseClicks)
+                KikiSettingsValueRow("Input", systemImage: "keyboard") {
+                    Text("Keyboard")
+                        .foregroundStyle(.secondary)
+                }
             } footer: {
-                KikiSettingsHelperText(
-                    "Keyboard input is blocked by default. Turn on Clicks to block mouse and trackpad clicks too."
-                )
+                KikiSettingsHelperText("Cat Lock blocks keyboard input only. Pointer controls stay available for recovery.")
             }
 
             Section {
@@ -118,7 +115,7 @@ struct CatKeyboardLockSettingsView: View {
                 Text("Safety")
             } footer: {
                 KikiSettingsHelperText(
-                    "Unlock from the menu bar or trigger corner. If clicks are locked and the trigger corner is off, input returns when the selected duration ends."
+                    "Unlock from the menu bar or trigger corner. Input also returns when the selected duration ends."
                 )
             }
 
@@ -150,35 +147,8 @@ struct CatKeyboardLockSettingsView: View {
                 KikiSettingsHelperText("Accessibility is required to block input while locked.")
             }
 
-#if DEBUG
-            debugSupportSection
-#endif
         }
     }
-
-#if DEBUG
-    private var debugSupportSection: some View {
-        Section {
-            KikiSettingsValueRow(
-                "Support status",
-                systemImage: "heart.fill",
-                iconColor: CatKeyboardLockSettingsTint.brand
-            ) {
-                Button(supportState.didSupport ? "Show support ask" : "Hide support ask") {
-                    supportState.toggleSupportedForDebug()
-                }
-                .buttonStyle(.bordered)
-
-                Text(supportState.didSupport ? "Supported" : "Not supported")
-                    .foregroundStyle(.secondary)
-            }
-        } header: {
-            Text("Developer Testing")
-        } footer: {
-            KikiSettingsHelperText("Debug only. Support is optional and never unlocks features.")
-        }
-    }
-#endif
 
     private var lockDurationRow: some View {
         KikiSettingsSegmentedPickerRow(
@@ -212,8 +182,6 @@ struct CatKeyboardLockSettingsView: View {
         )
     }
 
-    // Built from KikiAboutPane instead of KikiStandardAboutPane so the tip jar
-    // can be a real card rather than one more grey link row.
     private var aboutPane: some View {
         let metadata = KikiAppMetadata.bundle()
 
@@ -223,23 +191,23 @@ struct CatKeyboardLockSettingsView: View {
             status: {
                 KikiSettingsStatusRow(
                     title: "Status",
-                    value: "Free forever",
+                    value: "Free",
                     systemImage: "info.circle",
-                    valueSystemImage: "checkmark.seal",
-                    tone: .accent,
-                    tint: CatKeyboardLockSettingsTint.brand,
+                    tone: .neutral,
                     showsBadge: false
                 )
-                KikiSettingsHelperText("No trial, no subscription, no in-app purchase, and no account.")
             },
             links: {
-                supportRow
+                CatKeyboardLockSupportCard(
+                    tint: CatKeyboardLockSettingsTint.brand,
+                    onStar: { CatKeyboardLockSupportLinks.openRepository(config) }
+                )
 
                 KikiSettingsLinkRow(
-                    title: "Official",
-                    value: config.officialDisplayName,
-                    urlString: config.officialURL,
-                    systemImage: "globe"
+                    title: "Made by",
+                    value: config.madeByName,
+                    urlString: config.madeByURL,
+                    systemImage: "person"
                 )
                 KikiSettingsCopyRow(
                     title: "Email",
@@ -248,28 +216,5 @@ struct CatKeyboardLockSettingsView: View {
                 )
             }
         )
-    }
-
-    @ViewBuilder
-    private var supportRow: some View {
-        if supportState.showsAboutCard {
-            CatKeyboardLockSupportCard(
-                tint: CatKeyboardLockSettingsTint.brand,
-                onTryCommandReopen: { CatKeyboardLockSupportLinks.openCommandReopen(config) },
-                onStar: { CatKeyboardLockSupportLinks.openRepository(config) },
-                onFollowX: { CatKeyboardLockSupportLinks.openXProfile(config) },
-                onTip: { CatKeyboardLockSupportLinks.openTipPage(config) },
-                onAlreadySupported: supportState.markSupported
-            )
-        } else {
-            KikiSettingsValueRow(
-                "Thanks for the can",
-                systemImage: "heart.fill",
-                iconColor: CatKeyboardLockSettingsTint.brand
-            ) {
-                Text("Cat Lock will not ask again.")
-                    .foregroundStyle(.secondary)
-            }
-        }
     }
 }

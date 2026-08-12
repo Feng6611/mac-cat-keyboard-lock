@@ -200,20 +200,20 @@
 			name = Features;
 			sourceTree = "<group>";
 		};
-		A00700000000000000000090 /* Support */ = {
-			isa = PBXGroup;
-			children = (
-				A00200000000000000000090 /* Features/Support/CatKeyboardLockSupport.swift */,
-			);
-			name = Support;
-			sourceTree = "<group>";
-		};
 		A0070000000000000000000B /* MenuBar */ = {
 			isa = PBXGroup;
 			children = (
 				A00200000000000000000004 /* Features/MenuBar/CatKeyboardLockMenuModel.swift */,
 			);
 			name = MenuBar;
+			sourceTree = "<group>";
+		};
+		A00700000000000000000090 /* Support */ = {
+			isa = PBXGroup;
+			children = (
+				A00200000000000000000090 /* Features/Support/CatKeyboardLockSupport.swift */,
+			);
+			name = Support;
 			sourceTree = "<group>";
 		};
 		A0070000000000000000000C /* Settings */ = {
@@ -730,7 +730,7 @@
 			repositoryURL = "https://github.com/Feng6611/Kiki_mackit.git";
 			requirement = {
 				kind = exactVersion;
-				version = 0.9.0;
+				version = 0.9.1;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */

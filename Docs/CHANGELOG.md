@@ -2,12 +2,11 @@
 
 ## Unreleased
 
-- The About support card now leads with Command Reopen, the developer's paid
-  app, instead of the tip jar. A free app's scarcest currency is attention, not
-  cans: trying the paid app costs the user nothing and can end in a purchase
-  and a review, where a tip ends at the tip. Buy Me a Coffee remains as a quiet
-  link — it is still Cat Lock's only money path — alongside Star on GitHub and
-  a new Follow on X. The menu bar entry is unchanged.
+- Updated to Kiki_mackit 0.9.1.
+- Simplified About to Free, Made by, and one Support action: Star on GitHub.
+  Buy Me a Coffee now lives in the README only.
+- Removed mouse-click locking. Cat Lock now blocks keyboard events only, while
+  pointer controls remain available for recovery.
 
 ## 2026-08-08
 

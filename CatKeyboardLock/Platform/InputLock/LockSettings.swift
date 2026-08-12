@@ -11,12 +11,6 @@ final class LockSettings: ObservableObject {
     static let defaultTriggerCorner = KikiTriggerCorner.topRight
     static let triggerCornerEdgeSize: CGFloat = 40
 
-    @Published var lockKeyboard: Bool {
-        didSet { defaults.set(lockKeyboard, forKey: Keys.lockKeyboard) }
-    }
-    @Published var lockMouseClicks: Bool {
-        didSet { defaults.set(lockMouseClicks, forKey: Keys.lockMouseClicks) }
-    }
     @Published var lockDurationMinutes: Int {
         didSet { defaults.set(lockDurationMinutes, forKey: Keys.lockDurationMinutes) }
     }
@@ -34,8 +28,6 @@ final class LockSettings: ObservableObject {
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
-        self.lockKeyboard = defaults.object(forKey: Keys.lockKeyboard) as? Bool ?? true
-        self.lockMouseClicks = defaults.object(forKey: Keys.lockMouseClicks) as? Bool ?? false
         self.lockDurationMinutes = Self.validLockDurationMinutes(
             defaults.object(forKey: Keys.lockDurationMinutes) as? Int
         )
@@ -49,14 +41,7 @@ final class LockSettings: ObservableObject {
     }
 
     var policy: InputLockPolicy {
-        InputLockPolicy(
-            lockKeyboard: lockKeyboard,
-            lockMouseClicks: lockMouseClicks
-        )
-    }
-
-    var hasPointerLock: Bool {
-        lockMouseClicks
+        InputLockPolicy()
     }
 
     var lockDurationInterval: TimeInterval {
@@ -97,8 +82,6 @@ final class LockSettings: ObservableObject {
     }
 
     private enum Keys {
-        static let lockKeyboard = "LockSettings.lockKeyboard"
-        static let lockMouseClicks = "LockSettings.lockMouseClicks"
         static let lockDurationMinutes = "LockSettings.lockDurationMinutes"
         static let overlayEffectLevel = "LockSettings.overlayEffectLevel"
         static let triggerCornerEnabled = "LockSettings.triggerCornerEnabled"
@@ -107,32 +90,12 @@ final class LockSettings: ObservableObject {
 }
 
 struct InputLockPolicy: Equatable {
-    let lockKeyboard: Bool
-    let lockMouseClicks: Bool
-
     var eventTypes: [CGEventType] {
         suppressedEventTypes
     }
 
     var suppressedEventTypes: [CGEventType] {
-        var types: [CGEventType] = []
-
-        if lockKeyboard {
-            types.appendUnique(contentsOf: [.keyDown, .keyUp, .flagsChanged])
-        }
-
-        if lockMouseClicks {
-            types.appendUnique(contentsOf: [
-                .leftMouseDown,
-                .leftMouseUp,
-                .rightMouseDown,
-                .rightMouseUp,
-                .otherMouseDown,
-                .otherMouseUp
-            ])
-        }
-
-        return types
+        [.keyDown, .keyUp, .flagsChanged]
     }
 
     var eventMask: CGEventMask {
@@ -142,7 +105,7 @@ struct InputLockPolicy: Equatable {
     }
 
     var isEmpty: Bool {
-        suppressedEventTypes.isEmpty
+        false
     }
 
     func shouldSuppress(_ eventType: CGEventType) -> Bool {
@@ -151,19 +114,5 @@ struct InputLockPolicy: Equatable {
 
     static func mask(for eventType: CGEventType) -> CGEventMask {
         CGEventMask(1) << CGEventMask(eventType.rawValue)
-    }
-}
-
-private extension Array where Element == CGEventType {
-    mutating func appendUnique(_ eventType: CGEventType) {
-        if !contains(eventType) {
-            append(eventType)
-        }
-    }
-
-    mutating func appendUnique(contentsOf eventTypes: [CGEventType]) {
-        for eventType in eventTypes {
-            appendUnique(eventType)
-        }
     }
 }
