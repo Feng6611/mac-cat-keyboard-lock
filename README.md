@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="#install">Install</a> · <a href="#what-it-does">What it does</a> ·
+  <a href="#download">Download</a> · <a href="#what-it-does">What it does</a> ·
   <a href="#faq">FAQ</a> · <a href="PRIVACY.md">Privacy</a> ·
   <a href="TERMS.md">Terms</a>
 </p>
@@ -33,12 +33,15 @@ and disappears if the app quits.
 - **Crash-safe by design** — the event filter belongs to the app process, so
   quitting or crashing restores normal input.
 
-## Install
+## Download
 
 > Requires macOS 13 Ventura or later.
 
-The Mac App Store listing will be linked here when Cat Lock is released.
-Until then, build it from source:
+Download [CatLock-1.0.0.zip](https://github.com/Feng6611/mac-cat-keyboard-lock/releases/download/1.0.0/CatLock-1.0.0.zip)
+from the [1.0.0 release](https://github.com/Feng6611/mac-cat-keyboard-lock/releases/tag/1.0.0).
+Unzip it, then move Cat Lock to Applications before opening it.
+
+## Build from source
 
 ```sh
 ./script/build_and_run.sh
