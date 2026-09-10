@@ -37,9 +37,9 @@ and disappears if the app quits.
 
 > Requires macOS 13 Ventura or later.
 
-Download [CatLock-1.0.0.zip](https://github.com/Feng6611/mac-cat-keyboard-lock/releases/download/1.0.0/CatLock-1.0.0.zip)
+Download [CatLock-1.0.0.dmg](https://github.com/Feng6611/mac-cat-keyboard-lock/releases/download/1.0.0/CatLock-1.0.0.dmg)
 from the [1.0.0 release](https://github.com/Feng6611/mac-cat-keyboard-lock/releases/tag/1.0.0).
-Unzip it, then move Cat Lock to Applications before opening it.
+Open the DMG and drag Cat Lock to Applications before opening it.
 
 ## Build from source
 
