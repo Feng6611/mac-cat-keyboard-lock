@@ -6,8 +6,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/Feng6611/Kiki_mackit.git",
       "state" : {
-        "revision" : "367b13464d2049d7d9cf721b94b6e57d0ff2e318",
-        "version" : "0.10.0"
+        "revision" : "471fdc7b6a015a6c274bd3e7febe8904e2a435c9",
+        "version" : "0.12.0"
       }
     }
   ],
